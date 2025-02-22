@@ -27,8 +27,11 @@ class CartographersGame {
         this.initScoringCards();
         this.explorationDeck = new ExplorationDeck();
         this.currentCard = null;
+        this.isDragging = false;
+        this.selectedTerrainType = null;
 
         this.initGame();
+        this.initDragAndDrop();
     }
 
     initGame() {
@@ -121,44 +124,95 @@ class CartographersGame {
         card.shapes.forEach((shapeOption, index) => {
             const optionContainer = document.createElement('div');
             optionContainer.className = 'terrain-option';
+            optionContainer.draggable = true;
 
             // 创建形状预览
             const previewGrid = document.createElement('div');
             previewGrid.className = 'terrain-preview-grid';
 
-            // 始终创建3x3的网格
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 3; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'preview-cell';
-                    // 只在形状范围内的格子添加地形
-                    if (i < shapeOption.shape.length &&
-                        j < shapeOption.shape[0].length &&
-                        shapeOption.shape[i][j] === 1) {
-                        cell.classList.add(shapeOption.terrainType);
+            // 计算实际的形状边界
+            const shape = shapeOption.shape;
+            let minRow = shape.length, maxRow = 0;
+            let minCol = shape[0].length, maxCol = 0;
+
+            for (let i = 0; i < shape.length; i++) {
+                for (let j = 0; j < shape[i].length; j++) {
+                    if (shape[i][j] === 1) {
+                        minRow = Math.min(minRow, i);
+                        maxRow = Math.max(maxRow, i);
+                        minCol = Math.min(minCol, j);
+                        maxCol = Math.max(maxCol, j);
                     }
-                    previewGrid.appendChild(cell);
                 }
             }
 
-            // 添加地形类型标签
+            // 创建用于显示的预览网格
+            const displayGrid = document.createElement('div');
+            displayGrid.className = 'terrain-preview-grid display-grid';
+
+            // 创建用于拖动的预览网格（克隆）
+            const dragGrid = document.createElement('div');
+            dragGrid.className = 'terrain-preview-grid drag-grid';
+
+            // 填充两个网格
+            for (let i = minRow; i <= maxRow; i++) {
+                for (let j = minCol; j <= maxCol; j++) {
+                    // 显示用网格
+                    const displayCell = document.createElement('div');
+                    displayCell.className = 'preview-cell';
+                    if (shape[i][j] === 1) {
+                        displayCell.classList.add(shapeOption.terrainType);
+                    } else {
+                        displayCell.style.visibility = 'hidden';
+                    }
+                    displayGrid.appendChild(displayCell);
+
+                    // 拖动用网格
+                    const dragCell = document.createElement('div');
+                    dragCell.className = 'preview-cell';
+                    if (shape[i][j] === 1) {
+                        dragCell.classList.add(shapeOption.terrainType);
+                    } else {
+                        dragCell.style.visibility = 'hidden';
+                    }
+                    dragGrid.appendChild(dragCell);
+                }
+            }
+
+            displayGrid.style.gridTemplateColumns = `repeat(${maxCol - minCol + 1}, 1fr)`;
+            dragGrid.style.gridTemplateColumns = `repeat(${maxCol - minCol + 1}, 1fr)`;
+
+            // 添加拖动事件
+            optionContainer.addEventListener('dragstart', (e) => {
+                this.selectedTerrainType = shapeOption.terrainType;
+                this.currentCard.selectedShapeIndex = index;
+
+                // 设置拖动时的预览图像
+                dragGrid.style.position = 'absolute';
+                dragGrid.style.top = '-1000px';
+                document.body.appendChild(dragGrid);
+                e.dataTransfer.setDragImage(dragGrid, 20, 20);
+
+                // 清理
+                setTimeout(() => {
+                    document.body.removeChild(dragGrid);
+                }, 0);
+
+                optionContainer.classList.add('dragging');
+            });
+
+            optionContainer.addEventListener('dragend', () => {
+                optionContainer.classList.remove('dragging');
+            });
+
+            optionContainer.appendChild(displayGrid);
+
+            // 添加地形标签
             const terrainLabel = document.createElement('div');
             terrainLabel.className = 'terrain-label';
             terrainLabel.textContent = shapeOption.terrainType === 'village' ? '村庄' : '农场';
-
-            // 添加点击事件
-            optionContainer.onclick = () => {
-                // 移除其他选项的选中状态
-                document.querySelectorAll('.terrain-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                // 添加选中状态
-                optionContainer.classList.add('selected');
-                this.currentCard.selectedShapeIndex = index;
-            };
-
-            optionContainer.appendChild(previewGrid);
             optionContainer.appendChild(terrainLabel);
+
             optionsContainer.appendChild(optionContainer);
         });
 
@@ -425,6 +479,94 @@ class CartographersGame {
             `;
             container.appendChild(cardElement);
         });
+    }
+
+    initDragAndDrop() {
+        const mapGrid = document.getElementById('mapGrid');
+
+        // 必须阻止默认行为才能接受拖放
+        mapGrid.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            mapGrid.classList.add('drag-over');
+        });
+
+        mapGrid.addEventListener('dragover', (e) => {
+            e.preventDefault(); // 这行很重要，移除禁止标记
+            mapGrid.classList.add('drag-over');
+        });
+
+        mapGrid.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            mapGrid.classList.remove('drag-over');
+        });
+
+        mapGrid.addEventListener('drop', (e) => {
+            e.preventDefault();
+            mapGrid.classList.remove('drag-over');
+            console.log('Drop event triggered'); // 调试日志
+
+            if (!this.selectedTerrainType) {
+                console.log('No terrain type selected');
+                return;
+            }
+
+            const rect = mapGrid.getBoundingClientRect();
+            const cellSize = 40;
+            const row = Math.floor((e.clientY - rect.top) / cellSize);
+            const col = Math.floor((e.clientX - rect.left) / cellSize);
+
+            console.log('Drop position:', { row, col });
+            console.log('Selected terrain:', this.selectedTerrainType);
+
+            this.tryPlaceTerrain(row, col);
+        });
+    }
+
+    tryPlaceTerrain(row, col) {
+        try {
+            if (!this.currentCard) {
+                console.log('No current card');
+                return;
+            }
+
+            const selectedShape = this.currentCard.getSelectedShape();
+            if (!selectedShape) {
+                console.log('No shape selected');
+                return;
+            }
+
+            const shape = selectedShape.shape;
+            const terrainType = selectedShape.terrainType;
+
+            console.log('Trying to place:', {
+                shape,
+                terrainType,
+                at: { row, col }
+            });
+
+            // 检查是否可以放置
+            let canPlace = true;
+            for (let i = 0; i < shape.length && canPlace; i++) {
+                for (let j = 0; j < shape[i].length && canPlace; j++) {
+                    if (shape[i][j] === 1) {
+                        if (!this.board.canPlace(row + i, col + j)) {
+                            console.log('Cannot place at:', row + i, col + j);
+                            canPlace = false;
+                        }
+                    }
+                }
+            }
+
+            // 如果可以放置，执行放置
+            if (canPlace) {
+                console.log('Placing terrain');
+                this.placeTerrain(row, col);
+            } else {
+                console.log('Cannot place terrain at this location');
+            }
+        } catch (error) {
+            console.error('Error in tryPlaceTerrain:', error);
+        }
     }
 }
 
