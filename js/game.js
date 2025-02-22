@@ -94,19 +94,24 @@ class CartographersGame {
         const cardContainer = document.createElement('div');
         cardContainer.className = 'exploration-card';
 
+        // 创建标题行容器
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'card-header';
+
+        // 添加卡片名称
+        const cardName = document.createElement('div');
+        cardName.className = 'card-name';
+        cardName.textContent = card.shapes[0].name;
+
         // 添加时限值显示
         const timeValue = document.createElement('div');
         timeValue.className = 'time-value';
         timeValue.textContent = `时限: ${card.timeValue}`;
-        cardContainer.appendChild(timeValue);
 
-        // 添加卡片名称
-        if (card.shapes[0].name) {
-            const cardName = document.createElement('div');
-            cardName.className = 'card-name';
-            cardName.textContent = card.shapes[0].name;
-            cardContainer.appendChild(cardName);
-        }
+        // 将名称和时限添加到标题行
+        cardHeader.appendChild(cardName);
+        cardHeader.appendChild(timeValue);
+        cardContainer.appendChild(cardHeader);
 
         // 创建地形选项容器
         const optionsContainer = document.createElement('div');
