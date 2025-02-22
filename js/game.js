@@ -6,6 +6,13 @@ class CartographersGame {
         this.board = new GameBoard();
         this.terrainDeck = new TerrainDeck();
         this.currentCard = null;
+        this.seasonTimeLimits = {
+            0: 8,  // 春季 8个时间单位
+            1: 8,  // 夏季 8个时间单位
+            2: 7,  // 秋季 7个时间单位
+            3: 6   // 冬季 6个时间单位
+        };
+        this.currentTime = 0;
 
         this.initGame();
     }
@@ -14,6 +21,7 @@ class CartographersGame {
         this.createGrid();
         this.initEventListeners();
         this.drawNewTerrainCard();
+        this.updateSeasonDisplay();
     }
 
     createGrid() {
@@ -143,6 +151,14 @@ class CartographersGame {
             }
         }
 
+        // 增加时间并检查季节是否结束
+        this.currentTime += this.currentCard.timeValue;
+        const currentTimeLimit = this.seasonTimeLimits[this.currentSeason];
+        if (this.currentTime >= currentTimeLimit) {
+            this.endSeason();
+        }
+
+        this.updateSeasonDisplay();
         this.updateGridDisplay();
         this.drawNewTerrainCard();
     }
@@ -201,9 +217,42 @@ class CartographersGame {
         });
     }
 
-    checkSeasonEnd() {
-        // 检查季节是否结束
-        // 计算分数并更新季节
+    updateSeasonDisplay() {
+        const seasonSpan = document.getElementById('current-season');
+        const progressDiv = document.getElementById('season-progress');
+
+        // 更新季节文本
+        seasonSpan.textContent = this.seasons[this.currentSeason];
+
+        // 更新进度条
+        const progressBar = progressDiv.querySelector('.progress-bar');
+        const progressText = progressDiv.querySelector('.progress-text');
+
+        const currentTimeLimit = this.seasonTimeLimits[this.currentSeason];
+        const progress = (this.currentTime / currentTimeLimit) * 100;
+        progressBar.style.width = `${progress}%`;
+        progressText.textContent = `${this.currentTime}/${currentTimeLimit}`;
+    }
+
+    endSeason() {
+        // 计算当前季节分数
+        this.calculateSeasonScore();
+
+        // 进入下一个季节
+        this.currentSeason = (this.currentSeason + 1) % 4;
+        this.currentTime = 0;
+
+        if (this.currentSeason === 0) {
+            this.endGame(); // 游戏结束
+        }
+    }
+
+    calculateSeasonScore() {
+        // TODO: 实现季节分数计算
+    }
+
+    endGame() {
+        // TODO: 实现游戏结束逻辑
     }
 }
 

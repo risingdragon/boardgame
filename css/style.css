@@ -142,3 +142,63 @@
 .coin-collected {
     animation: collectCoin 0.5s ease-out forwards;
 }
+
+.season-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.season-display {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.season-progress {
+    width: 200px;
+    height: 20px;
+    background-color: #eee;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #4CAF50;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* 为不同季节设置不同的进度条颜色 */
+[data-season="0"] .progress-bar {
+    background-color: #4CAF50;
+}
+
+/* 春季-绿色 */
+[data-season="1"] .progress-bar {
+    background-color: #FFC107;
+}
+
+/* 夏季-黄色 */
+[data-season="2"] .progress-bar {
+    background-color: #FF5722;
+}
+
+/* 秋季-橙色 */
+[data-season="3"] .progress-bar {
+    background-color: #2196F3;
+}
+
+/* 冬季-蓝色 */

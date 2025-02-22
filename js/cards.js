@@ -1,7 +1,8 @@
 class TerrainCard {
-    constructor(shape, terrainType) {
+    constructor(shape, terrainType, timeValue) {
         this.shape = shape;        // 形状矩阵
         this.terrainType = terrainType;  // 地形类型
+        this.timeValue = timeValue;  // 添加时间值属性
         this.rotation = 0;         // 当前旋转角度 (0, 90, 180, 270)
         this.isFlipped = false;    // 是否翻转
     }
@@ -45,39 +46,21 @@ class TerrainDeck {
             MONSTER: 'monster'      // 怪物
         };
 
-        // 定义所有可能的形状
-        const shapes = [
-            // 1x1
-            [[1]],
-
-            // 2x2
-            [[1, 1],
-            [1, 1]],
-
-            // L形
-            [[1, 0],
-            [1, 1]],
-
-            // T形
-            [[1, 1, 1],
-            [0, 1, 0]],
-
-            // I形
-            [[1],
-            [1],
-            [1]],
-
-            // Z形
-            [[1, 1, 0],
-            [0, 1, 1]]
+        const cardConfigs = [
+            { shape: [[1]], timeValue: 1 },
+            { shape: [[1, 1], [1, 1]], timeValue: 2 },
+            { shape: [[1, 0], [1, 1]], timeValue: 2 },
+            { shape: [[1, 1, 1], [0, 1, 0]], timeValue: 3 },
+            { shape: [[1], [1], [1]], timeValue: 2 },
+            { shape: [[1, 1, 0], [0, 1, 1]], timeValue: 3 }
         ];
 
         const cards = [];
 
         // 为每种地形类型创建对应的形状卡牌
         for (let type of Object.values(TERRAIN_TYPES)) {
-            for (let shape of shapes) {
-                cards.push(new TerrainCard(shape, type));
+            for (let config of cardConfigs) {
+                cards.push(new TerrainCard(config.shape, type, config.timeValue));
             }
         }
 
