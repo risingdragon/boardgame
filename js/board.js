@@ -38,6 +38,7 @@ class GameBoard {
 
     // 检查某个位置是否可以放置新的地形
     canPlace(row, col) {
+        // 检查边界
         if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
             return false;
         }
@@ -47,11 +48,8 @@ class GameBoard {
         if (cell && cell.type === 'mountain') {
             return false;
         }
-        // 如果是遗迹，只能放置村庄
-        if (cell && cell.type === 'ruins') {
-            return this.currentTerrainType === 'village';
-        }
-        return true;
+        // 如果是空格子或遗迹，都可以放置
+        return !cell || cell.type === 'ruins';
     }
 
     // 获取单元格的类型
