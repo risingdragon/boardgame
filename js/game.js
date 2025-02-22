@@ -4,8 +4,6 @@ class CartographersGame {
         this.seasons = ['春季', '夏季', '秋季', '冬季'];
         this.score = 0;
         this.board = new GameBoard();
-        this.terrainDeck = new TerrainDeck();
-        this.currentCard = null;
         this.seasonTimeLimits = {
             0: 8,  // 春季 8个时间单位
             1: 8,  // 夏季 8个时间单位
@@ -27,6 +25,8 @@ class CartographersGame {
         };
         this.selectedScoringCards = null;
         this.initScoringCards();
+        this.explorationDeck = new ExplorationDeck();
+        this.currentCard = null;
 
         this.initGame();
     }
@@ -34,9 +34,9 @@ class CartographersGame {
     initGame() {
         this.createGrid();
         this.initEventListeners();
-        this.drawNewTerrainCard();
+        this.initScoringCards();
+        this.drawNewCard(); // 抽取第一张探索牌
         this.updateSeasonDisplay();
-        this.updateScoreBoard();
     }
 
     createGrid() {
@@ -68,39 +68,96 @@ class CartographersGame {
     }
 
     initEventListeners() {
-        document.getElementById('mapGrid').addEventListener('click', (e) => {
-            if (e.target.classList.contains('grid-cell')) {
-                const row = parseInt(e.target.dataset.row);
-                const col = parseInt(e.target.dataset.col);
+        const mapGrid = document.getElementById('mapGrid');
+        mapGrid.addEventListener('click', (e) => {
+            const cell = e.target;
+            if (cell.classList.contains('grid-cell')) {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
                 this.placeTerrain(row, col);
             }
         });
     }
 
-    drawNewTerrainCard() {
-        this.currentCard = this.terrainDeck.drawCard();
-        this.updateTerrainCardDisplay();
+    drawNewCard() {
+        this.currentCard = this.explorationDeck.drawCard();
+        this.updateCardDisplay();
     }
 
-    updateTerrainCardDisplay() {
+    updateCardDisplay() {
         const cardDisplay = document.getElementById('currentCard');
         cardDisplay.innerHTML = '';
 
-        // 创建地形预览网格
-        const previewGrid = document.createElement('div');
-        previewGrid.className = 'terrain-preview-grid';
+        const card = this.currentCard;
+        if (!card) return;
 
-        const shape = this.currentCard.shape;
-        for (let i = 0; i < shape.length; i++) {
-            for (let j = 0; j < shape[i].length; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'preview-cell';
-                if (shape[i][j] === 1) {
-                    cell.classList.add(this.currentCard.terrainType);
-                }
-                previewGrid.appendChild(cell);
-            }
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'exploration-card';
+
+        // 添加时限值显示
+        const timeValue = document.createElement('div');
+        timeValue.className = 'time-value';
+        timeValue.textContent = `时限: ${card.timeValue}`;
+        cardContainer.appendChild(timeValue);
+
+        // 添加卡片名称
+        if (card.shapes[0].name) {
+            const cardName = document.createElement('div');
+            cardName.className = 'card-name';
+            cardName.textContent = card.shapes[0].name;
+            cardContainer.appendChild(cardName);
         }
+
+        // 创建地形选项容器
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'terrain-options';
+
+        // 显示所有可选地形
+        card.shapes.forEach((shapeOption, index) => {
+            const optionContainer = document.createElement('div');
+            optionContainer.className = 'terrain-option';
+
+            // 创建形状预览
+            const previewGrid = document.createElement('div');
+            previewGrid.className = 'terrain-preview-grid';
+
+            // 始终创建3x3的网格
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'preview-cell';
+                    // 只在形状范围内的格子添加地形
+                    if (i < shapeOption.shape.length &&
+                        j < shapeOption.shape[0].length &&
+                        shapeOption.shape[i][j] === 1) {
+                        cell.classList.add(shapeOption.terrainType);
+                    }
+                    previewGrid.appendChild(cell);
+                }
+            }
+
+            // 添加地形类型标签
+            const terrainLabel = document.createElement('div');
+            terrainLabel.className = 'terrain-label';
+            terrainLabel.textContent = shapeOption.terrainType === 'village' ? '村庄' : '农场';
+
+            // 添加点击事件
+            optionContainer.onclick = () => {
+                // 移除其他选项的选中状态
+                document.querySelectorAll('.terrain-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                // 添加选中状态
+                optionContainer.classList.add('selected');
+                this.currentCard.selectedShapeIndex = index;
+            };
+
+            optionContainer.appendChild(previewGrid);
+            optionContainer.appendChild(terrainLabel);
+            optionsContainer.appendChild(optionContainer);
+        });
+
+        cardContainer.appendChild(optionsContainer);
 
         // 添加控制按钮
         const controls = document.createElement('div');
@@ -109,28 +166,47 @@ class CartographersGame {
         const rotateBtn = document.createElement('button');
         rotateBtn.textContent = '旋转';
         rotateBtn.onclick = () => {
-            this.currentCard.rotate();
-            this.updateTerrainCardDisplay();
+            // 旋转所有形状选项
+            this.currentCard.shapes.forEach(shapeOption => {
+                shapeOption.shape = this.rotateMatrix(shapeOption.shape);
+            });
+            this.updateCardDisplay();
         };
 
         const flipBtn = document.createElement('button');
         flipBtn.textContent = '翻转';
         flipBtn.onclick = () => {
-            this.currentCard.flip();
-            this.updateTerrainCardDisplay();
+            // 翻转所有形状选项
+            this.currentCard.shapes.forEach(shapeOption => {
+                shapeOption.shape = shapeOption.shape.map(row => [...row].reverse());
+            });
+            this.updateCardDisplay();
         };
 
         controls.appendChild(rotateBtn);
         controls.appendChild(flipBtn);
+        cardContainer.appendChild(controls);
 
-        cardDisplay.appendChild(previewGrid);
-        cardDisplay.appendChild(controls);
+        cardDisplay.appendChild(cardContainer);
+    }
+
+    rotateMatrix(matrix) {
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        const result = Array(cols).fill().map(() => Array(rows).fill(0));
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                result[j][rows - 1 - i] = matrix[i][j];
+            }
+        }
+        return result;
     }
 
     isValidPlacement(row, col) {
         if (!this.currentCard) return false;
 
-        const shape = this.currentCard.shape;
+        const shape = this.currentCard.getSelectedShape().shape;
         // 检查是否超出边界
         if (row + shape.length > 11 || col + shape[0].length > 11) return false;
 
@@ -151,31 +227,33 @@ class CartographersGame {
     placeTerrain(row, col) {
         if (!this.currentCard || !this.isValidPlacement(row, col)) return;
 
-        const shape = this.currentCard.shape;
+        const currentShape = this.currentCard.getSelectedShape();
+        const shape = currentShape.shape;
+        const terrainType = currentShape.terrainType;
+
+        // 放置地形
         for (let i = 0; i < shape.length; i++) {
             for (let j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] === 1) {
-                    // 检查是否与有金币的山脉相邻
-                    this.checkAndCollectAdjacentCoins(row + i, col + j);
-
                     this.board.grid[row + i][col + j] = {
-                        type: this.currentCard.terrainType,
+                        type: terrainType,
                         fixed: false
                     };
+                    this.checkAndCollectAdjacentCoins(row + i, col + j);
                 }
             }
         }
 
-        // 增加时间并检查季节是否结束
-        this.currentTime += this.currentCard.timeValue;
-        const currentTimeLimit = this.seasonTimeLimits[this.currentSeason];
-        if (this.currentTime >= currentTimeLimit) {
+        this.updateGridDisplay();
+        this.currentTime += this.currentCard.timeValue; // 使用卡片的时限值
+
+        if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
             this.endSeason();
+        } else {
+            this.drawNewCard();
         }
 
         this.updateSeasonDisplay();
-        this.updateGridDisplay();
-        this.drawNewTerrainCard();
     }
 
     updateGridDisplay() {
