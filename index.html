@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王国绘图师</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>王国绘图师</h1>
+            <div class="season-display">当前季节: <span id="current-season">春季</span></div>
+        </div>
+
+        <div class="game-main">
+            <div class="map-grid" id="mapGrid">
+                <!-- 地图网格将通过JavaScript动态生成 -->
+            </div>
+
+            <div class="game-controls">
+                <div class="current-card" id="currentCard">
+                    <!-- 当前地形卡显示区域 -->
+                </div>
+                <div class="scoring-cards">
+                    <!-- 计分卡显示区域 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/cards.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>
