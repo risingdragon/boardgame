@@ -298,7 +298,7 @@ class CartographersGame {
                         type: terrainType,
                         fixed: false
                     };
-                    this.checkAndCollectAdjacentCoins(row + i, col + j);
+                    this.checkAndCollectAdjacentCoins();
                 }
             }
         }
@@ -341,33 +341,47 @@ class CartographersGame {
         });
     }
 
-    checkAndCollectAdjacentCoins(row, col) {
+    checkAndCollectAdjacentCoins() {
         // 检查相邻的四个方向
         const directions = [
-            [-1, 0], [1, 0], [0, -1], [0, 1]
+            [-1, 0], // 上
+            [1, 0],  // 下
+            [0, -1], // 左
+            [0, 1]   // 右
         ];
 
-        directions.forEach(([dx, dy]) => {
-            const newRow = row + dx;
-            const newCol = col + dy;
+        // 检查每个山脉格子
+        for (let i = 0; i < this.board.size; i++) {
+            for (let j = 0; j < this.board.size; j++) {
+                // 如果是山脉且还有金币
+                if (this.board.getCellType(i, j) === 'mountain' && this.board.hasCoin(i, j)) {
+                    // 检查四个相邻格子是否都有地形
+                    let allAdjacent = true;
 
-            // 检查边界
-            if (newRow >= 0 && newRow < this.board.size &&
-                newCol >= 0 && newCol < this.board.size) {
+                    for (const [dx, dy] of directions) {
+                        const newRow = i + dx;
+                        const newCol = j + dy;
 
-                // 如果相邻格子是山脉且有金币
-                if (this.board.getCellType(newRow, newCol) === 'mountain' &&
-                    this.board.hasCoin(newRow, newCol)) {
+                        // 如果相邻格子超出边界或没有地形，则不满足条件
+                        if (newRow < 0 || newRow >= this.board.size ||
+                            newCol < 0 || newCol >= this.board.size ||
+                            !this.board.grid[newRow][newCol] ||  // 检查格子是否为空
+                            this.board.grid[newRow][newCol].type === 'mountain') {  // 山脉不算作有效地形
+                            allAdjacent = false;
+                            break;
+                        }
+                    }
 
-                    // 收集金币
-                    if (this.board.collectCoin(newRow, newCol)) {
-                        this.scores.coins += 1;
-                        this.updateScoreBoard();
-                        // 可以在这里添加金币收集的动画或提示
+                    // 只有当四个相邻格子都有地形时才收集金币
+                    if (allAdjacent) {
+                        if (this.board.collectCoin(i, j)) {
+                            this.scores.coins += 1;
+                            this.updateScoreBoard();
+                        }
                     }
                 }
             }
-        });
+        }
     }
 
     updateSeasonDisplay() {
