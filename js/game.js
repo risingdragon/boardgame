@@ -388,18 +388,8 @@ class CartographersGame {
     }
 
     updateScoreBoard() {
-        // 更新金币分数
+        // 只更新金币分数
         document.getElementById('coin-score').textContent = this.scores.coins;
-
-        // 更新季节分数
-        const seasonIds = ['spring', 'summer', 'autumn', 'winter'];
-        seasonIds.forEach((season, index) => {
-            const scoreElement = document.getElementById(`${season}-score`);
-            scoreElement.textContent = this.scores.seasons[index] === -1 ? '-' : this.scores.seasons[index];
-        });
-
-        // 更新总分
-        document.getElementById('total-score').textContent = this.calculateTotalScore();
     }
 
     calculateTotalScore() {
