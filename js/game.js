@@ -13,6 +13,20 @@ class CartographersGame {
             3: 6   // 冬季 6个时间单位
         };
         this.currentTime = 0;
+        this.scores = {
+            coins: 0,
+            seasons: [-1, -1, -1, -1], // -1 表示未计分
+            total: 0
+        };
+        this.scoringDeck = new ScoringDeck();
+        this.seasonScoringCards = {
+            spring: ['A', 'B'],     // 春季使用A、B类规则卡
+            summer: ['B', 'C'],     // 夏季使用B、C类规则卡
+            autumn: ['C', 'D'],     // 秋季使用C、D类规则卡
+            winter: ['A', 'D']      // 冬季使用A、D类规则卡
+        };
+        this.selectedScoringCards = null;
+        this.initScoringCards();
 
         this.initGame();
     }
@@ -22,6 +36,7 @@ class CartographersGame {
         this.initEventListeners();
         this.drawNewTerrainCard();
         this.updateSeasonDisplay();
+        this.updateScoreBoard();
     }
 
     createGrid() {
@@ -209,7 +224,8 @@ class CartographersGame {
 
                     // 收集金币
                     if (this.board.collectCoin(newRow, newCol)) {
-                        this.score += 1; // 增加分数
+                        this.scores.coins += 1;
+                        this.updateScoreBoard();
                         // 可以在这里添加金币收集的动画或提示
                     }
                 }
@@ -234,25 +250,98 @@ class CartographersGame {
         progressText.textContent = `${this.currentTime}/${currentTimeLimit}`;
     }
 
+    updateScoreBoard() {
+        // 更新金币分数
+        document.getElementById('coin-score').textContent = this.scores.coins;
+
+        // 更新季节分数
+        const seasonIds = ['spring', 'summer', 'autumn', 'winter'];
+        seasonIds.forEach((season, index) => {
+            const scoreElement = document.getElementById(`${season}-score`);
+            scoreElement.textContent = this.scores.seasons[index] === -1 ? '-' : this.scores.seasons[index];
+        });
+
+        // 更新总分
+        document.getElementById('total-score').textContent = this.calculateTotalScore();
+    }
+
+    calculateTotalScore() {
+        const seasonScore = this.scores.seasons
+            .filter(score => score !== -1)
+            .reduce((sum, score) => sum + score, 0);
+        return this.scores.coins + seasonScore;
+    }
+
     endSeason() {
         // 计算当前季节分数
-        this.calculateSeasonScore();
+        const seasonScore = this.calculateSeasonScore();
+        this.scores.seasons[this.currentSeason] = seasonScore;
+        this.updateScoreBoard();
 
         // 进入下一个季节
         this.currentSeason = (this.currentSeason + 1) % 4;
         this.currentTime = 0;
 
         if (this.currentSeason === 0) {
-            this.endGame(); // 游戏结束
+            this.endGame();
         }
+
+        this.displayScoringCards(); // 更新规则卡显示状态
     }
 
     calculateSeasonScore() {
-        // TODO: 实现季节分数计算
+        const currentSeasonName = ['spring', 'summer', 'autumn', 'winter'][this.currentSeason];
+        const cardTypes = this.seasonScoringCards[currentSeasonName];
+
+        return cardTypes.reduce((total, type) => {
+            const card = this.selectedScoringCards[type];
+            return total + card.scoringFunction(this.board);
+        }, 0);
     }
 
     endGame() {
         // TODO: 实现游戏结束逻辑
+    }
+
+    initScoringCards() {
+        // 抽取每种类型的计分卡
+        this.selectedScoringCards = this.scoringDeck.drawCardsByType();
+        this.displayScoringCards();
+    }
+
+    displayScoringCards() {
+        const container = document.getElementById('scoringCards');
+        container.innerHTML = '';
+
+        // 创建一个映射，记录每种类型的规则卡在哪些季节使用
+        const cardSeasons = {
+            'A': ['春季', '冬季'],
+            'B': ['春季', '夏季'],
+            'C': ['夏季', '秋季'],
+            'D': ['秋季', '冬季']
+        };
+
+        // 按照ABCD顺序显示规则卡
+        ['A', 'B', 'C', 'D'].forEach(type => {
+            const card = this.selectedScoringCards[type];
+            const cardElement = document.createElement('div');
+
+            // 检查当前卡片是否在当前季节生效
+            const currentSeasonName = this.seasons[this.currentSeason];
+            const isActive = cardSeasons[type].includes(currentSeasonName);
+
+            cardElement.className = `scoring-card ${isActive ? 'active' : ''}`;
+            cardElement.innerHTML = `
+                <div class="scoring-card-title">
+                    ${card.name} (${type}类)
+                </div>
+                <div class="scoring-card-seasons">
+                    使用季节: ${cardSeasons[type].join('、')}
+                </div>
+                <div class="scoring-card-description">${card.description}</div>
+            `;
+            container.appendChild(cardElement);
+        });
     }
 }
 

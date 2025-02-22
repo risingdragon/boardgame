@@ -19,6 +19,32 @@
                     <div class="progress-text">0/8</div>
                 </div>
             </div>
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="score-label">金币:</span>
+                    <span class="score-value" id="coin-score">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">春季:</span>
+                    <span class="score-value" id="spring-score">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">夏季:</span>
+                    <span class="score-value" id="summer-score">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">秋季:</span>
+                    <span class="score-value" id="autumn-score">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">冬季:</span>
+                    <span class="score-value" id="winter-score">-</span>
+                </div>
+                <div class="score-item total">
+                    <span class="score-label">总分:</span>
+                    <span class="score-value" id="total-score">0</span>
+                </div>
+            </div>
         </div>
 
         <div class="game-main">
@@ -30,14 +56,18 @@
                 <div class="current-card" id="currentCard">
                     <!-- 当前地形卡显示区域 -->
                 </div>
-                <div class="scoring-cards">
-                    <!-- 计分卡显示区域 -->
+                <div class="scoring-rules">
+                    <h3>计分规则</h3>
+                    <div class="scoring-cards" id="scoringCards">
+                        <!-- 计分规则卡将在这里显示 -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <script src="js/cards.js"></script>
     <script src="js/board.js"></script>
+    <script src="js/scoring.js"></script>
     <script src="js/game.js"></script>
 </body>
 

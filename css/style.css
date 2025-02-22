@@ -202,3 +202,124 @@
 }
 
 /* 冬季-蓝色 */
+
+.score-board {
+    background-color: #f5f5f5;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: fit-content;
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.score-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.score-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    min-width: 30px;
+    text-align: right;
+}
+
+.score-item.total {
+    grid-column: span 3;
+    background-color: #e8f5e9;
+    border: 1px solid #c8e6c9;
+}
+
+/* 为不同季节的分数添加不同的颜色 */
+#spring-score {
+    color: #4CAF50;
+}
+
+#summer-score {
+    color: #FFC107;
+}
+
+#autumn-score {
+    color: #FF5722;
+}
+
+#winter-score {
+    color: #2196F3;
+}
+
+.scoring-rules {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.scoring-rules h3 {
+    margin: 0 0 15px 0;
+    color: #495057;
+}
+
+.scoring-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.scoring-card {
+    background-color: white;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.scoring-card.active {
+    opacity: 1;
+    border-left: 4px solid #4CAF50;
+    background-color: #f8fff8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scoring-card-title {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.scoring-card-seasons {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.scoring-card-description {
+    color: #495057;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* 移除之前的季节相关的边框颜色 */
+.scoring-card.spring,
+.scoring-card.summer,
+.scoring-card.autumn,
+.scoring-card.winter {
+    border-left: 1px solid #ced4da;
+}
