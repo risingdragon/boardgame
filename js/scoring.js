@@ -29,11 +29,42 @@ class ScoringDeck {
                     }
                 ),
                 new ScoringCard(
-                    "树林小径",
-                    "每个完整的森林格列（从地图顶部到底部）让你获得4点声望。",
+                    "丰饶之地",
+                    "每个与一个遗迹格相邻的湖水格让你获得1点声望。每个在遗迹格上的农场格让你获得三点声望。",
                     (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
+                        let score = 0;
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                // 检查农场是否在遗迹上
+                                if (board.getCellType(i, j) === 'farm' && board.isRuin(i, j)) {
+                                    score += 3;
+                                }
+
+                                // 检查湖水是否与遗迹相邻
+                                if (board.getCellType(i, j) === 'water') {
+                                    // 检查四个相邻格子
+                                    const adjacentCells = [
+                                        [i - 1, j], // 上
+                                        [i + 1, j], // 下
+                                        [i, j - 1], // 左
+                                        [i, j + 1]  // 右
+                                    ];
+
+                                    for (const [x, y] of adjacentCells) {
+                                        if (x >= 0 && x < board.size && y >= 0 && y < board.size) {
+                                            if (board.isRuin(x, y)) {
+                                                score += 1;
+                                                break; // 每个湖水格只计算一次
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        return score;
                     }
                 )
             ],
