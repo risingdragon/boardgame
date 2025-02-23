@@ -574,15 +574,13 @@ class CartographersGame {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
-        // 获取当前季节的活跃规则卡
         const activeCardTypes = {
-            0: ['A', 'B'],  // spring
-            1: ['B', 'C'],  // summer
-            2: ['C', 'D'],  // autumn
-            3: ['A', 'D']   // winter
+            0: ['A', 'B'],
+            1: ['B', 'C'],
+            2: ['C', 'D'],
+            3: ['A', 'D']
         }[this.currentSeason];
 
-        // 更新每个规则卡的显示
         const scoringCards = scoringCardsContainer.querySelectorAll('.scoring-card');
         scoringCards.forEach((cardElement, index) => {
             const card = this.scoringCards[index];
@@ -591,16 +589,15 @@ class CartographersGame {
             if (activeCardTypes.includes(cardType)) {
                 const currentScore = card.scoringFunction(this.board);
 
-                // 移除旧的分数显示（如果存在）
                 const oldScore = cardElement.querySelector('.current-score');
                 if (oldScore) {
                     oldScore.remove();
                 }
 
-                // 添加新的分数显示，使用"声望"替代"分"
                 const scoreElement = document.createElement('div');
                 scoreElement.className = 'current-score';
-                scoreElement.textContent = `当前可得：${currentScore}声望`;
+                // 使用五角星图标替代"声望"文字
+                scoreElement.innerHTML = `当前可得：${currentScore}<span class="star-icon">★</span>`;
                 cardElement.appendChild(scoreElement);
             }
         });
