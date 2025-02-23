@@ -416,6 +416,61 @@ class ScoringDeck {
                         return score;
                     },
                     3
+                ),
+                new ScoringCard(
+                    "肥沃平原",
+                    "每个与三种及以上不同地形相邻的村庄群落获得3点声望。",
+                    (board) => {
+                        let score = 0;
+                        const visited = new Set();
+                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
+                                    // 找到一个新的村庄群落
+                                    const stack = [{row: i, col: j}];
+                                    const adjacentTypes = new Set();
+
+                                    // 使用深度优先搜索找到整个群落
+                                    while (stack.length > 0) {
+                                        const current = stack.pop();
+                                        const key = `${current.row},${current.col}`;
+                                        
+                                        if (visited.has(key)) continue;
+                                        visited.add(key);
+
+                                        // 检查相邻格子的地形类型
+                                        for (const [dx, dy] of directions) {
+                                            const newRow = current.row + dx;
+                                            const newCol = current.col + dy;
+
+                                            if (newRow >= 0 && newRow < board.size &&
+                                                newCol >= 0 && newCol < board.size) {
+                                                const adjacentType = board.getCellType(newRow, newCol);
+                                                if (adjacentType && adjacentType !== 'village') {
+                                                    adjacentTypes.add(adjacentType);
+                                                }
+                                                
+                                                // 如果是村庄，加入搜索栈
+                                                if (adjacentType === 'village') {
+                                                    stack.push({row: newRow, col: newCol});
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // 如果相邻不同地形数量大于等于3，得3分
+                                    if (adjacentTypes.size >= 3) {
+                                        score += 3;
+                                    }
+                                }
+                            }
+                        }
+                        return score;
+                    },
+                    3
                 )
             ],
             // 第4组
