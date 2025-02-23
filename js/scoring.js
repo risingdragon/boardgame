@@ -532,7 +532,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "围困之地",
-                    "每个被已填绘的格子或地图边缘包围的空格，获得1点声望。",
+                    "每个被已填绘的格子或地图边缘包围的空格（包括遗迹），获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -540,8 +540,8 @@ class ScoringDeck {
                         // 检查每个格子
                         for (let i = 0; i < board.size; i++) {
                             for (let j = 0; j < board.size; j++) {
-                                // 只检查空格
-                                if (!board.getCellType(i, j)) {
+                                // 检查是否是空格或遗迹
+                                if (!board.getCellType(i, j) || board.isRuin(i, j)) {
                                     let isSurrounded = true;
 
                                     // 检查四个相邻位置

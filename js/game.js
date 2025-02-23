@@ -618,7 +618,7 @@ class CartographersGame {
             if (currentScores.has(card.name)) {
                 const scoreElement = document.createElement('div');
                 scoreElement.className = 'current-score';
-                scoreElement.innerHTML = currentScores.get(card.name);
+                scoreElement.innerHTML = `${currentScores.get(card.name)}<span class="star-icon">★</span>`;
                 cardElement.appendChild(scoreElement);
             }
 
@@ -807,7 +807,7 @@ class CartographersGame {
                 cardElement.appendChild(scoreElement);
             }
 
-            scoreElement.innerHTML = `当前可得：${currentScore}<span class="star-icon">★</span>`;
+            scoreElement.innerHTML = `${currentScore}<span class="star-icon">★</span>`;
         });
     }
 }
