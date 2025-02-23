@@ -18,7 +18,7 @@ class ScoringDeck {
             [
                 new ScoringCard(
                     "前哨森林",
-                    "每个相邻地图边缘的森林格让你获得1点声望。",
+                    "每个相邻地图边缘的森林格获得1点声望。",
                     (board) => {
                         let score = 0;
                         for (let i = 0; i < board.size; i++) {
@@ -33,7 +33,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "树塔",
-                    "每个四边被包围的森林格（被已填绘的格子或地图边缘所包围）让你获得1点声望。",
+                    "每个四边被已填绘的格子或地图边缘所包围的森林格获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [
@@ -82,7 +82,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "葱郁林海",
-                    "每一行或每一列如果有森林格就让你获得1点声望。同一个森林格可以累计。",
+                    "每一行或每一列如果有森林格就获得1点声望。同一个森林格可以累计。",
                     (board) => {
                         let score = 0;
 
@@ -114,7 +114,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "巨石山林",
-                    "每个通过森林群落与另一个高山格相连的高山格，让你获得3点声望。",
+                    "每个通过森林群落与另一个高山格相连的高山格，获得3点声望。",
                     (board) => {
                         let score = 0;
                         const visited = new Set();
@@ -260,7 +260,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "魔法山谷",
-                    "每个与一个高山格相邻的湖泊格让你获得2点声望。每个与一个高山格相邻的农场格让你获得1点声望。",
+                    "每个与高山格相邻的湖泊格获得2点声望。每个与高山格相邻的农场格获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [
