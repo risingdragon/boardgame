@@ -120,6 +120,26 @@ class ExplorationDeck {
             new ExplorationCard([
                 {
                     shape: [
+                        [1, 1],
+                        [0, 1]
+                    ],
+                    terrainType: 'village',
+                    name: 'Hamlet',
+                    coinReward: 1  // 中间格有金币
+                },
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 1, 1]
+                    ],
+                    terrainType: 'village',
+                    name: 'Hamlet',
+                    coinReward: 0  // 无金币奖励
+                }
+            ], 1),
+            new ExplorationCard([
+                {
+                    shape: [
                         [1, 1, 1],
                         [0, 0, 1],
                         [0, 0, 1]
