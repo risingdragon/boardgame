@@ -310,6 +310,7 @@
     margin: 0 0 15px 0;
     color: #495057;
 }
+
 .scoring-cards {
     flex: 0 0 auto;
     background: white;
@@ -317,8 +318,10 @@
     padding: 16px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     min-width: 300px;
-    max-width: 300px;  /* 添加最大宽度限制 */
+    max-width: 300px;
+    /* 添加最大宽度限制 */
 }
+
 .scoring-card {
     position: relative;
     padding: 12px;
@@ -328,37 +331,47 @@
     border: 2px solid transparent;
     transition: all 0.3s ease;
 }
+
 .scoring-card-description {
     font-size: 14px;
     color: #666;
-    white-space: normal;  /* 允许文字换行 */
-    word-wrap: break-word;  /* 长单词也可以换行 */
-    line-height: 1.4;  /* 增加行高，提高可读性 */
+    white-space: normal;
+    /* 允许文字换行 */
+    word-wrap: break-word;
+    /* 长单词也可以换行 */
+    line-height: 1.4;
+    /* 增加行高，提高可读性 */
     margin-top: 5px;
 }
+
 .scoring-card.active-card {
     border-color: #4CAF50;
     background: #f0f7f0;
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
 }
+
 .scoring-card-title {
     font-weight: bold;
     margin-bottom: 8px;
 }
+
 .active-card .scoring-card-title {
     color: #2E7D32;
 }
+
 .scoring-card-seasons {
     color: #666;
     font-size: 0.9em;
     margin-bottom: 8px;
 }
+
 .scoring-card.spring,
 .scoring-card.summer,
 .scoring-card.autumn,
 .scoring-card.winter {
     border-left: 1px solid #ced4da;
 }
+
 .exploration-card {
     background-color: white;
     border: 1px solid #ddd;
@@ -366,10 +379,12 @@
     padding: 15px;
     margin-bottom: 20px;
 }
+
 .exploration-card.monster-attack {
     border: 2px solid #ff4444;
     background-color: #fff8f8;
 }
+
 .shape-preview {
     display: flex;
     flex-direction: column;
@@ -377,6 +392,7 @@
     gap: 10px;
     margin-bottom: 15px;
 }
+
 .shape-preview button {
     padding: 5px 10px;
     background-color: #f0f0f0;
@@ -384,12 +400,15 @@
     border-radius: 4px;
     cursor: pointer;
 }
+
 .shape-preview button:hover {
     background-color: #e0e0e0;
 }
+
 .monster-attack .shape-preview {
     position: relative;
 }
+
 .monster-attack .shape-preview::before {
     content: "怪物入侵!";
     position: absolute;
@@ -399,6 +418,7 @@
     color: #ff4444;
     font-weight: bold;
 }
+
 .time-value {
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
@@ -408,11 +428,13 @@
     color: #495057;
     font-size: 0.9em;
 }
+
 .monster-attack .time-value {
     background-color: #fff3f3;
     border-color: #ffcdd2;
     color: #d32f2f;
 }
+
 .terrain-options {
     display: flex;
     flex-direction: column;
@@ -420,6 +442,7 @@
     align-items: center;
     margin: 10px 0;
 }
+
 .terrain-option {
     position: relative;
     cursor: pointer;
@@ -432,22 +455,27 @@
     flex-direction: column;
     align-items: center;
 }
+
 .terrain-option:hover {
     background-color: rgba(0, 0, 0, 0.02);
 }
+
 .terrain-option.selected {
     border-color: #4CAF50;
     background-color: rgba(76, 175, 80, 0.1);
 }
+
 .terrain-label {
     display: none;
 }
+
 .card-name {
     font-size: 1.1em;
     font-weight: bold;
     color: #333;
     margin: 0;
 }
+
 .card-header {
     display: flex;
     align-items: center;
@@ -455,16 +483,20 @@
     gap: 10px;
     margin-bottom: 10px;
 }
+
 .map-grid.drag-over {
     outline: 2px dashed #4CAF50;
 }
+
 .terrain-preview-grid.display-grid {
     gap: 2px;
     margin-bottom: 5px;
 }
+
 .terrain-preview-grid.drag-grid {
     gap: 0;
 }
+
 .terrain-type-label {
     text-align: center;
     color: #666;
@@ -475,12 +507,14 @@
     font-size: 0.9em;
     border: 1px solid #dee2e6;
 }
+
 .shape-buttons {
     display: flex;
     gap: 8px;
     margin: 8px 0;
     justify-content: center;
 }
+
 .drag-preview {
     position: absolute;
     top: -1000px;
@@ -492,6 +526,7 @@
     pointer-events: none;
     gap: 0;
 }
+
 .drag-preview .preview-cell {
     width: 40px;
     /* 与地图格子大小一致 */
@@ -499,16 +534,19 @@
     /* 与地图格子大小一致 */
     border: none;
 }
+
 /* 确保地图格子大小一致 */
 .grid-cell {
     width: 40px;
     height: 40px;
 }
+
 /* 探索区域的预览格子保持原样 */
 .terrain-preview-grid:not(.drag-preview) .preview-cell {
     width: 40px;
     height: 40px;
 }
+
 .current-score {
     margin-top: 8px;
     padding: 4px 8px;
@@ -518,10 +556,12 @@
     color: #2E7D32;
     display: inline-block;
 }
+
 .scoring-card.active-card .current-score {
     background: rgba(76, 175, 80, 0.2);
     font-weight: bold;
 }
+
 .flying-coin {
     position: fixed;
     width: 20px;
@@ -534,20 +574,24 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: none;
 }
+
 .flying-coin.flying {
     transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
     /* 延长到1秒 */
     transform: scale(0.5);
 }
+
 #coin-score {
     position: relative;
     transition: transform 0.2s ease;
 }
+
 #coin-score.highlight {
     transform: scale(1.3);
     color: gold;
     text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
 }
+
 .star-icon {
     color: #FFD700;
     /* 金色 */
@@ -558,10 +602,12 @@
     display: inline-block;
     vertical-align: middle;
 }
+
 .current-score .star-icon {
     font-size: 0.9em;
     vertical-align: baseline;
 }
+
 .coin-icon {
     color: #FFD700;
     /* 金色 */
@@ -571,6 +617,7 @@
     display: inline-block;
     vertical-align: middle;
 }
+
 .flying-prestige {
     position: fixed;
     color: #FFD700;
@@ -580,23 +627,47 @@
     z-index: 1000;
     transition: none;
 }
+
 .flying-prestige.flying {
     transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(0.5);
 }
+
 #season-scores.highlight {
     transform: scale(1.3);
     color: #FFD700;
     text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
     transition: transform 0.2s ease;
 }
+
 .flying-prestige.coin-prestige {
     color: #FFD700;
     font-size: 20px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     opacity: 0.9;
 }
+
 .flying-prestige.coin-prestige.flying {
     transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(0.5);
+}
+
+.grid-cell[data-ruins="true"]::after {
+    content: '🏛️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* 确保地形在遗迹下面 */
+.grid-cell.farm,
+.grid-cell.forest,
+.grid-cell.village,
+.grid-cell.water {
+    z-index: 1;
 }

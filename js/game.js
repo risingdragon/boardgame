@@ -141,24 +141,22 @@ class CartographersGame {
         for (let i = 0; i < shape.length; i++) {
             for (let j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] === 1) {
-                    this.board.grid[row + i][col + j] = {
-                        type: terrainType,
-                        fixed: false
-                    };
+                    this.board.placeTerrain(row + i, col + j, terrainType);
                 }
             }
         }
 
         // 检查是否有金币奖励
         if (currentShape.coinReward) {
-            // 使用相同的动画效果收集金币
             this.animateCoinCollection(row, col, true);
         }
 
         // 检查高山格的金币收集
         this.checkAndCollectAdjacentCoins();
 
-        this.updateGridDisplay();
+        // 使用 board 的 updateDisplay 方法
+        this.board.updateDisplay();
+
         this.currentTime += this.currentCard.timeValue;
 
         if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
@@ -169,32 +167,6 @@ class CartographersGame {
 
         this.updateSeasonDisplay();
         this.updateScoringCardScores();
-    }
-
-    updateGridDisplay() {
-        const cells = document.querySelectorAll('.grid-cell');
-        cells.forEach(cell => {
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-
-            // 移除所有地形类型的类和金币
-            cell.classList.remove('forest', 'village', 'farm', 'water', 'monster', 'mountain', 'ruins', 'has-coin');
-            cell.innerHTML = '';
-
-            // 添加当前地形类型的类
-            const cellType = this.board.getCellType(row, col);
-            if (cellType) {
-                cell.classList.add(cellType);
-
-                // 如果是山脉且有未收集的金币，显示金币图标
-                if (cellType === 'mountain' && this.board.hasCoin(row, col)) {
-                    cell.classList.add('has-coin');
-                    const coinIcon = document.createElement('div');
-                    coinIcon.className = 'coin-icon';
-                    cell.appendChild(coinIcon);
-                }
-            }
-        });
     }
 
     checkAndCollectAdjacentCoins() {
@@ -235,7 +207,7 @@ class CartographersGame {
         // 如果是高山的金币，立即移除原始金币图标
         if (!isShapeReward) {
             this.board.collectCoin(row, col);
-            this.updateGridDisplay();
+            this.board.updateDisplay();
         }
 
         // 获取起点和终点位置

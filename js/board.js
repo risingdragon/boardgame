@@ -76,4 +76,63 @@ class GameBoard {
         }
         return this.grid[row][col]?.type === 'ruins';
     }
+
+    placeTerrain(row, col, type) {
+        if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
+            return false;
+        }
+
+        // 如果是固定地形，不能放置
+        if (this.grid[row][col]?.fixed) {
+            return false;
+        }
+
+        // 保存是否是遗迹的信息
+        const wasRuin = this.grid[row][col]?.type === 'ruins';
+
+        // 设置新地形，同时保留遗迹标记
+        this.grid[row][col] = {
+            type: type,
+            fixed: false,
+            ruins: wasRuin  // 添加遗迹标记
+        };
+
+        return true;
+    }
+
+    updateDisplay() {
+        const mapGrid = document.getElementById('mapGrid');
+        if (!mapGrid) return;
+
+        const cells = mapGrid.querySelectorAll('.grid-cell');
+        cells.forEach(cell => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+
+            // 移除所有地形类型的类和金币
+            cell.classList.remove('forest', 'village', 'farm', 'water', 'monster', 'mountain', 'ruins');
+            cell.innerHTML = '';
+
+            // 获取当前格子的地形信息
+            const terrain = this.grid[row][col];
+            if (terrain) {
+                cell.classList.add(terrain.type);
+
+                // 如果是山脉且有未收集的金币，显示金币图标
+                if (terrain.type === 'mountain' && this.hasCoin(row, col)) {
+                    cell.classList.add('has-coin');
+                    const coinIcon = document.createElement('div');
+                    coinIcon.className = 'coin-icon';
+                    cell.appendChild(coinIcon);
+                }
+
+                // 如果格子有遗迹标记，添加遗迹属性
+                if (terrain.ruins) {
+                    cell.setAttribute('data-ruins', 'true');
+                } else {
+                    cell.removeAttribute('data-ruins');
+                }
+            }
+        });
+    }
 } 
