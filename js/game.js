@@ -541,37 +541,8 @@ class CartographersGame {
     }
 
     initScoringCards() {
-        // 定义4组计分卡
-        const cardGroups = [
-            // 第1组
-            [
-                new ScoringCard("边境探索", "计算与地图边界相邻的森林格数量", board => {
-                    // ... 现有的计分逻辑 ...
-                }),
-                // 该组的其他卡
-            ],
-            // 第2组
-            [
-                new ScoringCard("农田规划", "计算最大的农田连通区域的格子数", board => {
-                    // ... 现有的计分逻辑 ...
-                }),
-                // 该组的其他卡
-            ],
-            // 第3组
-            [
-                new ScoringCard("村庄建设", "计算与农田相邻的村庄格数量", board => {
-                    // ... 现有的计分逻辑 ...
-                }),
-                // 该组的其他卡
-            ],
-            // 第4组
-            [
-                new ScoringCard("森林保护", "计算森林格的数量", board => {
-                    // ... 现有的计分逻辑 ...
-                }),
-                // 该组的其他卡
-            ]
-        ];
+        // 使用 ScoringDeck 中定义的卡组
+        const cardGroups = this.scoringDeck.getCardGroups();
 
         // 从每组中随机选择一张卡
         const selectedCards = cardGroups.map(group => {
