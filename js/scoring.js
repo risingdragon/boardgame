@@ -9,7 +9,7 @@ class ScoringCard {
 
 class ScoringDeck {
     constructor() {
-        this.cardsByType = this.initializeScoringCards();
+        this.cardGroups = this.initializeScoringCards();
     }
 
     initializeScoringCards() {
@@ -578,13 +578,13 @@ class ScoringDeck {
         ];
     }
 
-    drawCardsByType() {
-        // 从每种类型中随机抽取一张卡
-        const selectedCards = {};
-        for (const type of ['A', 'B', 'C', 'D']) {
-            const cards = this.cardsByType[type];
-            const randomIndex = Math.floor(Math.random() * cards.length);
-            selectedCards[type] = cards[randomIndex];
+    // 从每组中随机选择一张卡
+    getRandomCards() {
+        const selectedCards = [];
+        for (let i = 0; i < 4; i++) {
+            const group = this.cardGroups[i];
+            const randomIndex = Math.floor(Math.random() * group.length);
+            selectedCards.push(group[randomIndex]);
         }
         return selectedCards;
     }

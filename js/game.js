@@ -541,21 +541,15 @@ class CartographersGame {
     }
 
     initScoringCards() {
-        // 使用 ScoringDeck 中定义的卡组
-        const cardGroups = this.scoringDeck.getCardGroups();
-
         // 从每组中随机选择一张卡
-        const selectedCards = cardGroups.map(group => {
-            const randomIndex = Math.floor(Math.random() * group.length);
-            return group[randomIndex];
-        });
+        this.scoringCards = this.scoringDeck.getRandomCards();
 
         // 随机分配ABCD类型
         const cardTypes = ['A', 'B', 'C', 'D'];
         this.shuffleArray(cardTypes);
 
         // 将选中的卡片与类型对应
-        this.scoringCards = selectedCards.map((card, index) => {
+        this.scoringCards = this.scoringCards.map((card, index) => {
             card.type = cardTypes[index];
             return card;
         });
