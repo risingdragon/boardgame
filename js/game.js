@@ -316,7 +316,7 @@ class CartographersGame {
     }
 
     endSeason() {
-        // 计算当前季节分数
+        // 计算当前季节分数（包括金币带来的声望）
         const seasonScore = this.calculateSeasonScore();
         this.scores.seasons[this.currentSeason] = seasonScore;
         this.updateScoreBoard();
@@ -341,7 +341,8 @@ class CartographersGame {
             3: ['A', 'D']   // winter
         }[this.currentSeason];
 
-        return activeCardTypes.reduce((total, type) => {
+        // 计算规则卡得分
+        const rulesScore = activeCardTypes.reduce((total, type) => {
             const card = this.scoringCards.find(card => this.getCardType(card) === type);
             if (card) {
                 const score = card.scoringFunction(this.board);
@@ -349,6 +350,9 @@ class CartographersGame {
             }
             return total;
         }, 0);
+
+        // 加上金币带来的声望
+        return rulesScore + this.scores.coins;
     }
 
     endGame() {
