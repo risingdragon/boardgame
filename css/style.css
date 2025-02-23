@@ -46,6 +46,7 @@
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 300px;
 }
 
 .game-controls {
@@ -437,8 +438,9 @@
 
 .terrain-options {
     display: flex;
-    gap: 20px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
     margin: 10px 0;
 }
 
@@ -449,6 +451,10 @@
     border: 2px solid transparent;
     border-radius: 8px;
     transition: all 0.2s ease;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .terrain-option:hover {
@@ -495,7 +501,7 @@
 .terrain-type-label {
     text-align: center;
     color: #666;
-    margin: 8px 0;
+    margin-top: 8px;
     padding: 4px 8px;
     background-color: #f8f9fa;
     border-radius: 4px;
@@ -503,39 +509,11 @@
     border: 1px solid #dee2e6;
 }
 
-.terrain-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px;
-    gap: 8px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: white;
-    margin: 8px;
-}
-
-/* 拖动时的样式保持不变 */
-.preview-cell {
-    width: 40px;
-    height: 40px;
-}
-
 .shape-buttons {
     display: flex;
     gap: 8px;
     margin: 8px 0;
     justify-content: center;
-}
-
-.terrain-option {
-    position: relative;
-    cursor: pointer;
-}
-
-.terrain-option.selected {
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 .drag-preview {
@@ -555,6 +533,7 @@
     /* 与地图格子大小一致 */
     height: 40px;
     /* 与地图格子大小一致 */
+    border: none;
 }
 
 /* 确保地图格子大小一致 */
