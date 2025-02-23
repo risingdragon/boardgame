@@ -60,41 +60,43 @@ class ExplorationDeck {
             new ExplorationCard([
                 {
                     shape: [
-                        [1, 1, 1],
-                        [0, 1, 0]
+                        [1, 0],
+                        [0, 1]
                     ],
-                    terrainType: 'village',
-                    name: 'Homestead'
+                    terrainType: 'forest',
+                    name: 'Forgotten Forest',
+                    coinReward: 1  // 添加钱币奖励标记
                 },
                 {
                     shape: [
-                        [1, 1, 1],
-                        [0, 1, 0]
+                        [1, 1, 0],
+                        [0, 1, 1]
                     ],
-                    terrainType: 'farm',
-                    name: 'Homestead'
+                    terrainType: 'forest',
+                    name: 'Forgotten Forest',
+                    coinReward: 0  // 无钱币奖励
                 }
             ], 2),
-
             new ExplorationCard([
                 {
                     shape: [
-                        [1, 1, 1, 0],
-                        [0, 0, 1, 1]
+                        [1, 1, 1]
                     ],
-                    terrainType: 'forest',
-                    name: 'Treetop Village'
+                    terrainType: 'water',
+                    name: 'Great River',
+                    coinReward: 1  // 中间格有金币
                 },
                 {
                     shape: [
-                        [1, 1, 1, 0],
-                        [0, 0, 1, 1]
+                        [1, 1, 0],
+                        [0, 1, 1],
+                        [0, 0, 1]
                     ],
-                    terrainType: 'village',
-                    name: 'Treetop Village'
+                    terrainType: 'water',
+                    name: 'Great River',
+                    coinReward: 0  // 无金币奖励
                 }
-            ], 2),
-
+            ], 1),
             new ExplorationCard([
                 {
                     shape: [
@@ -115,28 +117,43 @@ class ExplorationDeck {
                     name: 'Hinterland Stream'
                 }
             ], 2),
-
-            // 新增的 Forgotten Forest 探索卡
             new ExplorationCard([
                 {
                     shape: [
-                        [1, 0],
-                        [0, 1]
+                        [1, 1, 1],
+                        [0, 1, 0]
                     ],
-                    terrainType: 'forest',
-                    name: 'Forgotten Forest',
-                    coinReward: 1  // 添加钱币奖励标记
+                    terrainType: 'village',
+                    name: 'Homestead'
                 },
                 {
                     shape: [
-                        [1, 1, 0],
-                        [0, 1, 1]
+                        [1, 1, 1],
+                        [0, 1, 0]
+                    ],
+                    terrainType: 'farm',
+                    name: 'Homestead'
+                }
+            ], 2),
+
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 1, 1, 0],
+                        [0, 0, 1, 1]
                     ],
                     terrainType: 'forest',
-                    name: 'Forgotten Forest',
-                    coinReward: 0  // 无钱币奖励
+                    name: 'Treetop Village'
+                },
+                {
+                    shape: [
+                        [1, 1, 1, 0],
+                        [0, 0, 1, 1]
+                    ],
+                    terrainType: 'village',
+                    name: 'Treetop Village'
                 }
-            ], 2)
+            ], 2),
         ];
     }
 

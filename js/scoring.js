@@ -114,7 +114,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "巨石山林",
-                    "每个通过森林群集与另一个高山格相连的高山格，让你获得3点声望。",
+                    "每个通过森林群落与另一个高山格相连的高山格，让你获得3点声望。",
                     (board) => {
                         let score = 0;
                         const visited = new Set();
@@ -299,7 +299,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "广阔湖岸",
-                    "每个不与湖泊格或地图边缘相邻的农场群获得3点声望。每个不与农场格或地图边缘相邻的湖泊群获得3点声望。",
+                    "每个不与湖泊格或地图边缘相邻的农场群落获得3点声望。每个不与农场格或地图边缘相邻的湖泊群落获得3点声望。",
                     (board) => {
                         let score = 0;
                         const visited = new Set();
@@ -312,7 +312,7 @@ class ScoringDeck {
                                 if ((cellType === 'farm' || cellType === 'water') && !visited.has(`${i},${j}`)) {
                                     // 找到一个新的群组
                                     const group = [];
-                                    const stack = [{row: i, col: j}];
+                                    const stack = [{ row: i, col: j }];
                                     let touchesEdge = false;
                                     let touchesOpposite = false;
 
@@ -320,7 +320,7 @@ class ScoringDeck {
                                     while (stack.length > 0) {
                                         const current = stack.pop();
                                         const key = `${current.row},${current.col}`;
-                                        
+
                                         if (visited.has(key)) continue;
                                         visited.add(key);
                                         group.push(current);
@@ -339,7 +339,7 @@ class ScoringDeck {
                                             if (newRow >= 0 && newRow < board.size &&
                                                 newCol >= 0 && newCol < board.size) {
                                                 const adjacentType = board.getCellType(newRow, newCol);
-                                                
+
                                                 // 检查是否接触相反类型
                                                 if ((cellType === 'farm' && adjacentType === 'water') ||
                                                     (cellType === 'water' && adjacentType === 'farm')) {
@@ -348,7 +348,7 @@ class ScoringDeck {
 
                                                 // 如果是同类型，加入搜索栈
                                                 if (adjacentType === cellType) {
-                                                    stack.push({row: newRow, col: newCol});
+                                                    stack.push({ row: newRow, col: newCol });
                                                 }
                                             }
                                         }
@@ -382,13 +382,13 @@ class ScoringDeck {
                                 if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
                                     // 找到一个新的村庄群落
                                     let groupSize = 0;
-                                    const stack = [{row: i, col: j}];
+                                    const stack = [{ row: i, col: j }];
 
                                     // 使用深度优先搜索找到整个群落
                                     while (stack.length > 0) {
                                         const current = stack.pop();
                                         const key = `${current.row},${current.col}`;
-                                        
+
                                         if (visited.has(key)) continue;
                                         visited.add(key);
                                         groupSize++;
@@ -401,7 +401,7 @@ class ScoringDeck {
                                             if (newRow >= 0 && newRow < board.size &&
                                                 newCol >= 0 && newCol < board.size &&
                                                 board.getCellType(newRow, newCol) === 'village') {
-                                                stack.push({row: newRow, col: newCol});
+                                                stack.push({ row: newRow, col: newCol });
                                             }
                                         }
                                     }
@@ -416,7 +416,7 @@ class ScoringDeck {
                         return score;
                     },
                     3
-                )           ],
+                )],
             // 第4组
             [
                 new ScoringCard(

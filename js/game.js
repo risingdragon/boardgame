@@ -783,10 +783,22 @@ class CartographersGame {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
-        const scoringCards = scoringCardsContainer.querySelectorAll('.scoring-card');
-        scoringCards.forEach((cardElement, index) => {
-            const card = this.scoringCards[index];
-            const currentScore = card.scoringFunction(this.board);
+        // 获取显示在界面上的规则卡元素
+        const displayedCards = scoringCardsContainer.querySelectorAll('.scoring-card');
+
+        // 为每个显示的规则卡找到对应的计分卡
+        displayedCards.forEach(cardElement => {
+            // 获取显示的卡片名称
+            const titleElement = cardElement.querySelector('.scoring-card-title');
+            if (!titleElement) return;
+            const displayedName = titleElement.textContent;
+
+            // 在已选择的规则卡中找到对应的卡片
+            const matchingCard = this.scoringCards.find(card => card.name === displayedName);
+            if (!matchingCard) return;
+
+            // 计算并显示分数
+            const currentScore = matchingCard.scoringFunction(this.board);
 
             let scoreElement = cardElement.querySelector('.current-score');
             if (!scoreElement) {
