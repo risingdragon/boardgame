@@ -151,22 +151,8 @@ class CartographersGame {
 
         // 检查是否有金币奖励
         if (currentShape.coinReward) {
-            this.scores.coins += 1;
-            this.updateScoreBoard();
-
-            // 创建金币收集动画
-            const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
-            if (cell) {
-                const coinIcon = document.createElement('div');
-                coinIcon.className = 'coin-icon coin-collected';
-                cell.appendChild(coinIcon);
-
-                setTimeout(() => {
-                    if (coinIcon.parentNode === cell) {
-                        cell.removeChild(coinIcon);
-                    }
-                }, 500);
-            }
+            // 使用相同的动画效果收集金币
+            this.animateCoinCollection(row, col, true);
         }
 
         // 检查高山格的金币收集
@@ -240,15 +226,17 @@ class CartographersGame {
         }
     }
 
-    animateCoinCollection(row, col) {
+    animateCoinCollection(row, col, isShapeReward = false) {
         const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
         const coinScore = document.getElementById('coin-score');
 
         if (!cell || !coinScore) return;
 
-        // 立即移除原始金币图标
-        this.board.collectCoin(row, col);
-        this.updateGridDisplay();
+        // 如果是高山的金币，立即移除原始金币图标
+        if (!isShapeReward) {
+            this.board.collectCoin(row, col);
+            this.updateGridDisplay();
+        }
 
         // 获取起点和终点位置
         const cellRect = cell.getBoundingClientRect();
@@ -260,8 +248,8 @@ class CartographersGame {
         document.body.appendChild(flyingCoin);
 
         // 设置金币初始位置和样式
-        flyingCoin.style.left = `${cellRect.left + 2}px`;
-        flyingCoin.style.top = `${cellRect.top + 2}px`;
+        flyingCoin.style.left = `${cellRect.left + cellRect.width / 2}px`;
+        flyingCoin.style.top = `${cellRect.top + cellRect.height / 2}px`;
 
         // 强制重排以确保初始位置生效
         flyingCoin.offsetHeight;
@@ -289,7 +277,7 @@ class CartographersGame {
                 coinScore.classList.remove('highlight');
             }, 200);
 
-            // 更新游戏状态（只更新分数，因为金币标记已经在开始时移除）
+            // 更新游戏状态
             this.scores.coins++;
             this.updateScoreBoard();
         }, 1000);
