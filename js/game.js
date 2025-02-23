@@ -374,10 +374,7 @@ class CartographersGame {
     }
 
     proceedWithSeasonEnd() {
-        // 计算当前季节分数
         const seasonScore = this.calculateSeasonScore();
-
-        // 获取当前季节的活跃规则卡
         const activeCardTypes = {
             0: ['A', 'B'],
             1: ['B', 'C'],
@@ -385,7 +382,10 @@ class CartographersGame {
             3: ['A', 'D']
         }[this.currentSeason];
 
-        // 为每个活跃的规则卡播放声望收集动画
+        // 初始化当前季节的声望
+        this.scores.seasons[this.currentSeason] = 0;
+        this.updateScoreBoard();
+
         const scoringCards = document.querySelectorAll('.scoring-card');
         let animationDelay = 0;
 
@@ -404,11 +404,8 @@ class CartographersGame {
             }
         });
 
-        // 在所有动画完成后更新分数和季节
+        // 在所有动画完成后进入下一个季节
         setTimeout(() => {
-            this.scores.seasons[this.currentSeason] = seasonScore;
-            this.updateScoreBoard();
-
             this.currentSeason = (this.currentSeason + 1) % 4;
             this.currentTime = 0;
 
@@ -425,37 +422,34 @@ class CartographersGame {
         const prestigeScore = document.getElementById('season-scores');
         if (!cardElement || !prestigeScore) return;
 
-        // 获取起点（规则卡上的当前得分位置）
         const scoreElement = cardElement.querySelector('.current-score');
         const startRect = scoreElement.getBoundingClientRect();
         const endRect = prestigeScore.getBoundingClientRect();
 
-        // 创建飞行的声望图标，但不移除原始分数显示
         const flyingPrestige = document.createElement('div');
         flyingPrestige.className = 'flying-prestige';
         flyingPrestige.innerHTML = '★';
         document.body.appendChild(flyingPrestige);
 
-        // 设置初始位置
         flyingPrestige.style.left = `${startRect.left + startRect.width / 2}px`;
         flyingPrestige.style.top = `${startRect.top + startRect.height / 2}px`;
 
-        // 强制重排
         flyingPrestige.offsetHeight;
 
-        // 开始动画
         requestAnimationFrame(() => {
             flyingPrestige.classList.add('flying');
             flyingPrestige.style.left = `${endRect.left}px`;
             flyingPrestige.style.top = `${endRect.top}px`;
         });
 
-        // 添加高亮效果
+        // 在动画快结束时更新分数
         setTimeout(() => {
             prestigeScore.classList.add('highlight');
+            // 更新当前季节的声望分数
+            this.scores.seasons[this.currentSeason] += score;
+            this.updateScoreBoard();
         }, 800);
 
-        // 动画结束后的清理，但保持规则卡上的分数显示
         setTimeout(() => {
             if (document.body.contains(flyingPrestige)) {
                 document.body.removeChild(flyingPrestige);
