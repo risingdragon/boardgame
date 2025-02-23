@@ -212,7 +212,34 @@ class ExplorationDisplay {
             optionContainer.addEventListener('dragstart', (e) => {
                 this.game.selectedTerrainType = shapeOption.terrainType;
                 card.selectedShapeIndex = index;
-                optionContainer.classList.add('dragging');
+
+                // 创建拖动时的预览元素
+                const dragPreview = document.createElement('div');
+                dragPreview.className = 'terrain-preview-grid drag-preview';
+                dragPreview.style.gridTemplateColumns = previewGrid.style.gridTemplateColumns;
+
+                // 只复制地形颜色块
+                for (let i = minRow; i <= maxRow; i++) {
+                    for (let j = minCol; j <= maxCol; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'preview-cell';
+                        if (shapeOption.shape[i][j] === 1) {
+                            cell.classList.add(shapeOption.terrainType);
+                        } else {
+                            cell.style.visibility = 'hidden';
+                        }
+                        dragPreview.appendChild(cell);
+                    }
+                }
+
+                // 设置拖动预览
+                document.body.appendChild(dragPreview);
+                e.dataTransfer.setDragImage(dragPreview, 0, 0);
+
+                // 在拖动结束后移除预览元素
+                setTimeout(() => {
+                    document.body.removeChild(dragPreview);
+                }, 0);
             });
 
             optionContainer.addEventListener('dragend', () => {

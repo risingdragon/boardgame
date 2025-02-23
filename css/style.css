@@ -527,3 +527,34 @@
     border-color: #4CAF50;
     box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
+
+.drag-preview {
+    position: absolute;
+    top: -1000px;
+    /* 放在视图外 */
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
+    gap: 0;
+}
+
+.drag-preview .preview-cell {
+    width: 40px;
+    /* 与地图格子大小一致 */
+    height: 40px;
+    /* 与地图格子大小一致 */
+}
+
+/* 确保地图格子大小一致 */
+.grid-cell {
+    width: 40px;
+    height: 40px;
+}
+
+/* 探索区域的预览格子保持原样 */
+.terrain-preview-grid:not(.drag-preview) .preview-cell {
+    width: 40px;
+    height: 40px;
+}
