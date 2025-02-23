@@ -10,31 +10,21 @@
 
 <body>
     <div class="game-container">
-        <div class="game-main">
-            <div class="game-board">
-                <div class="season-info">
-                    <div class="season-name">当前季节：<span id="current-season">春季</span></div>
-                    <div class="season-progress" id="season-progress">
-                        <div class="progress-bar"></div>
-                        <div class="progress-text">0/8</div>
-                    </div>
-                    <div class="coin-display">
-                        <span id="coin-score">0</span>
-                        <span class="coin-symbol">¥</span>
-                    </div>
-                </div>
-                <div id="mapGrid" class="map-grid"></div>
-                <div class="current-card" id="currentCard">
-                    <!-- 当前探索卡显示区域 -->
-                </div>
+        <div class="season-info">
+            <div class="season-name">当前季节：<span id="current-season">春季</span></div>
+            <div class="season-progress" id="season-progress">
+                <div class="progress-bar"></div>
+                <div class="progress-text">0/8</div>
             </div>
-            <div class="game-controls">
-                <div class="scoring-rules">
-                    <div class="scoring-cards" id="scoringCards">
-                        <!-- 计分规则卡显示区域 -->
-                    </div>
-                </div>
+            <div class="coin-display">
+                <span id="coin-score">0</span>
+                <span class="coin-symbol">¥</span>
             </div>
+        </div>
+        <div class="game-content">
+            <div id="mapGrid" class="map-grid"></div>
+            <div id="currentCard" class="current-card"></div>
+            <div class="scoring-cards"></div>
         </div>
     </div>
     <script src="js/board.js"></script>

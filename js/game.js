@@ -288,43 +288,37 @@ class CartographersGame {
     }
 
     initScoringCards() {
-        // 抽取每种类型的计分卡
-        this.selectedScoringCards = this.scoringDeck.drawCardsByType();
+        const scoringDeck = new ScoringDeck();
+        this.scoringCards = [
+            scoringDeck.cardsByType.A[0],  // 前哨森林
+            scoringDeck.cardsByType.B[0],  // 睡谷
+            scoringDeck.cardsByType.C[0],  // 运河
+            scoringDeck.cardsByType.D[0]   // 边境之地
+        ];
         this.displayScoringCards();
     }
 
     displayScoringCards() {
-        const container = document.getElementById('scoringCards');
-        container.innerHTML = '';
+        // 修改选择器以匹配新的 HTML 结构
+        const scoringCardsContainer = document.querySelector('.scoring-cards');
+        if (!scoringCardsContainer) return;  // 添加安全检查
 
-        // 创建一个映射，记录每种类型的规则卡在哪些季节使用
-        const cardSeasons = {
-            'A': ['春季', '冬季'],
-            'B': ['春季', '夏季'],
-            'C': ['夏季', '秋季'],
-            'D': ['秋季', '冬季']
-        };
+        scoringCardsContainer.innerHTML = '';
 
-        // 按照ABCD顺序显示规则卡
-        ['A', 'B', 'C', 'D'].forEach(type => {
-            const card = this.selectedScoringCards[type];
+        // 添加标题
+        const title = document.createElement('h3');
+        title.textContent = '计分规则';
+        scoringCardsContainer.appendChild(title);
+
+        // 显示当前激活的计分卡
+        this.scoringCards.forEach(card => {
             const cardElement = document.createElement('div');
-
-            // 检查当前卡片是否在当前季节生效
-            const currentSeasonName = this.seasons[this.currentSeason];
-            const isActive = cardSeasons[type].includes(currentSeasonName);
-
-            cardElement.className = `scoring-card ${isActive ? 'active' : ''}`;
+            cardElement.className = 'scoring-card';
             cardElement.innerHTML = `
-                <div class="scoring-card-title">
-                    ${card.name} (${type}类)
-                </div>
-                <div class="scoring-card-seasons">
-                    使用季节: ${cardSeasons[type].join('、')}
-                </div>
+                <div class="scoring-card-title">${card.name}</div>
                 <div class="scoring-card-description">${card.description}</div>
             `;
-            container.appendChild(cardElement);
+            scoringCardsContainer.appendChild(cardElement);
         });
     }
 
