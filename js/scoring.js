@@ -471,6 +471,68 @@ class ScoringDeck {
                         return score;
                     },
                     3
+                ),
+                new ScoringCard(
+                    "大城市",
+                    "最大且不与高山格相邻的村庄群落中，每个村庄格获得1点声望。",
+                    (board) => {
+                        const visited = new Set();
+                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                        let maxGroupSize = 0;
+                        let maxGroupScore = 0;
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
+                                    // 找到一个新的村庄群落
+                                    const group = [];
+                                    const stack = [{row: i, col: j}];
+                                    let touchesMountain = false;
+
+                                    // 使用深度优先搜索找到整个群落
+                                    while (stack.length > 0) {
+                                        const current = stack.pop();
+                                        const key = `${current.row},${current.col}`;
+                                        
+                                        if (visited.has(key)) continue;
+                                        visited.add(key);
+                                        group.push(current);
+
+                                        // 检查相邻格子
+                                        for (const [dx, dy] of directions) {
+                                            const newRow = current.row + dx;
+                                            const newCol = current.col + dy;
+
+                                            if (newRow >= 0 && newRow < board.size &&
+                                                newCol >= 0 && newCol < board.size) {
+                                                const adjacentType = board.getCellType(newRow, newCol);
+                                                
+                                                // 检查是否接触高山
+                                                if (adjacentType === 'mountain') {
+                                                    touchesMountain = true;
+                                                }
+                                                
+                                                // 如果是村庄，加入搜索栈
+                                                if (adjacentType === 'village') {
+                                                    stack.push({row: newRow, col: newCol});
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // 如果这个群落不接触高山且是最大的
+                                    if (!touchesMountain && group.length > maxGroupSize) {
+                                        maxGroupSize = group.length;
+                                        maxGroupScore = group.length; // 每个村庄格1分
+                                    }
+                                }
+                            }
+                        }
+
+                        return maxGroupScore;
+                    },
+                    3
                 )
             ],
             // 第4组
