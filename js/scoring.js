@@ -533,6 +533,61 @@ class ScoringDeck {
                         return maxGroupScore;
                     },
                     3
+                ),
+                new ScoringCard(
+                    "神盾门",
+                    "第二大的村庄群落中，每个村庄格获得2点声望。",
+                    (board) => {
+                        const visited = new Set();
+                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                        const groupSizes = [];
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
+                                    // 找到一个新的村庄群落
+                                    let groupSize = 0;
+                                    const stack = [{row: i, col: j}];
+
+                                    // 使用深度优先搜索找到整个群落
+                                    while (stack.length > 0) {
+                                        const current = stack.pop();
+                                        const key = `${current.row},${current.col}`;
+                                        
+                                        if (visited.has(key)) continue;
+                                        visited.add(key);
+                                        groupSize++;
+
+                                        // 检查相邻格子
+                                        for (const [dx, dy] of directions) {
+                                            const newRow = current.row + dx;
+                                            const newCol = current.col + dy;
+
+                                            if (newRow >= 0 && newRow < board.size &&
+                                                newCol >= 0 && newCol < board.size &&
+                                                board.getCellType(newRow, newCol) === 'village') {
+                                                stack.push({row: newRow, col: newCol});
+                                            }
+                                        }
+                                    }
+
+                                    // 记录群落大小
+                                    if (groupSize > 0) {
+                                        groupSizes.push(groupSize);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 如果群落数量少于2，返回0分
+                        if (groupSizes.length < 2) return 0;
+
+                        // 排序找到第二大的群落
+                        groupSizes.sort((a, b) => b - a);
+                        return groupSizes[1] * 2; // 第二大群落中每个村庄格2分
+                    },
+                    3
                 )
             ],
             // 第4组
