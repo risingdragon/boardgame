@@ -158,19 +158,67 @@ class ScoringDeck {
             ],
             B: [
                 new ScoringCard(
-                    "农田小镇",
-                    "每个与农田相邻的村庄格让你获得1点声望。",
+                    "巨石山林",
+                    "每个通过森林群集与另一个高山格相连的高山格，让你获得3点声望。",
                     (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
-                    }
-                ),
-                new ScoringCard(
-                    "睡谷",
-                    "每个完整的空格行（从地图左侧到右侧）让你获得3点声望。",
-                    (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
+                        let score = 0;
+                        const visited = new Set();
+
+                        // 找到所有高山格
+                        const mountains = [];
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                if (board.getCellType(i, j) === 'mountain') {
+                                    mountains.push({ row: i, col: j });
+                                }
+                            }
+                        }
+
+                        // 检查每个高山格是否通过森林与其他高山相连
+                        for (const mountain of mountains) {
+                            const key = `${mountain.row},${mountain.col}`;
+                            if (visited.has(key)) continue;
+
+                            const connectedMountains = new Set();
+                            const stack = [{ row: mountain.row, col: mountain.col }];
+                            const forestVisited = new Set();
+
+                            while (stack.length > 0) {
+                                const current = stack.pop();
+                                const currentKey = `${current.row},${current.col}`;
+
+                                if (forestVisited.has(currentKey)) continue;
+                                forestVisited.add(currentKey);
+
+                                if (board.getCellType(current.row, current.col) === 'mountain') {
+                                    connectedMountains.add(currentKey);
+                                    visited.add(currentKey);
+                                }
+
+                                if (board.getCellType(current.row, current.col) === 'forest' ||
+                                    board.getCellType(current.row, current.col) === 'mountain') {
+                                    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                                    for (const [dx, dy] of directions) {
+                                        const newRow = current.row + dx;
+                                        const newCol = current.col + dy;
+
+                                        if (newRow >= 0 && newRow < board.size &&
+                                            newCol >= 0 && newCol < board.size) {
+                                            const nextCell = board.getCellType(newRow, newCol);
+                                            if (nextCell === 'forest' || nextCell === 'mountain') {
+                                                stack.push({ row: newRow, col: newCol });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (connectedMountains.size > 1) {
+                                score += 3 * connectedMountains.size;
+                            }
+                        }
+
+                        return score;
                     }
                 )
             ],
