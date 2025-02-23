@@ -24,7 +24,6 @@ class CartographersGame {
             winter: ['A', 'D']      // 冬季使用A、D类规则卡
         };
         this.selectedScoringCards = null;
-        this.initScoringCards();
         this.explorationDeck = new ExplorationDeck();
         this.currentCard = null;
         this.isDragging = false;
@@ -35,7 +34,6 @@ class CartographersGame {
         this.initGame();
         this.initDragAndDrop();
         this.drawNewCard();
-        this.initScoringCards();
         this.updateScoreBoard();
     }
 
@@ -43,7 +41,7 @@ class CartographersGame {
         this.createGrid();
         this.initEventListeners();
         this.initScoringCards();
-        this.drawNewCard(); // 抽取第一张探索牌
+        this.drawNewCard();
         this.updateSeasonDisplay();
     }
 
@@ -525,6 +523,14 @@ class CartographersGame {
             card.type = cardTypes[index];
             return card;
         });
+
+        // 打印每张卡片的名称和对应的类型
+        console.log('规则卡分配结果：',
+            this.scoringCards.map(card => ({
+                name: card.name,
+                type: card.type
+            }))
+        );
 
         this.displayScoringCards();
     }
