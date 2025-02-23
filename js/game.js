@@ -386,6 +386,7 @@ class CartographersGame {
         this.scores.seasons[this.currentSeason] = 0;
         this.updateScoreBoard();
 
+        // 先播放规则卡的声望收集动画
         const scoringCards = document.querySelectorAll('.scoring-card');
         let animationDelay = 0;
 
@@ -404,6 +405,11 @@ class CartographersGame {
             }
         });
 
+        // 在规则卡声望收集完成后，播放金币转声望的动画
+        setTimeout(() => {
+            this.animateCoinToPrestige();
+        }, animationDelay + 1000);
+
         // 在所有动画完成后进入下一个季节
         setTimeout(() => {
             this.currentSeason = (this.currentSeason + 1) % 4;
@@ -415,7 +421,7 @@ class CartographersGame {
 
             this.displayScoringCards();
             this.updateSeasonDisplay();
-        }, animationDelay + 1000);
+        }, animationDelay + 3000); // 延长等待时间，确保金币转声望动画完成
     }
 
     animatePrestigeCollection(cardElement, score) {
@@ -458,6 +464,54 @@ class CartographersGame {
                 prestigeScore.classList.remove('highlight');
             }, 200);
         }, 1000);
+    }
+
+    animateCoinToPrestige() {
+        const coinScore = document.getElementById('coin-score');
+        const prestigeScore = document.getElementById('season-scores');
+
+        if (!coinScore || !prestigeScore || this.scores.coins === 0) return;
+
+        const startRect = coinScore.getBoundingClientRect();
+        const endRect = prestigeScore.getBoundingClientRect();
+
+        // 为每个金币创建一个声望动画
+        for (let i = 0; i < this.scores.coins; i++) {
+            setTimeout(() => {
+                const flyingPrestige = document.createElement('div');
+                flyingPrestige.className = 'flying-prestige coin-prestige';
+                flyingPrestige.innerHTML = '★';
+                document.body.appendChild(flyingPrestige);
+
+                flyingPrestige.style.left = `${startRect.left + startRect.width / 2}px`;
+                flyingPrestige.style.top = `${startRect.top + startRect.height / 2}px`;
+
+                flyingPrestige.offsetHeight;
+
+                requestAnimationFrame(() => {
+                    flyingPrestige.classList.add('flying');
+                    flyingPrestige.style.left = `${endRect.left}px`;
+                    flyingPrestige.style.top = `${endRect.top}px`;
+                });
+
+                // 在动画快结束时更新分数
+                setTimeout(() => {
+                    prestigeScore.classList.add('highlight');
+                    // 每个金币增加1点声望
+                    this.scores.seasons[this.currentSeason] += 1;
+                    this.updateScoreBoard();
+                }, 800);
+
+                setTimeout(() => {
+                    if (document.body.contains(flyingPrestige)) {
+                        document.body.removeChild(flyingPrestige);
+                    }
+                    setTimeout(() => {
+                        prestigeScore.classList.remove('highlight');
+                    }, 200);
+                }, 1000);
+            }, i * 200); // 每个金币的动画间隔0.2秒
+        }
     }
 
     calculateSeasonScore() {
