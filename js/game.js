@@ -246,6 +246,10 @@ class CartographersGame {
 
         if (!cell || !coinScore) return;
 
+        // 立即移除原始金币图标
+        this.board.collectCoin(row, col);
+        this.updateGridDisplay();
+
         // 获取起点和终点位置
         const cellRect = cell.getBoundingClientRect();
         const scoreRect = coinScore.getBoundingClientRect();
@@ -274,7 +278,7 @@ class CartographersGame {
         // 添加高亮效果
         setTimeout(() => {
             coinScore.classList.add('highlight');
-        }, 800); // 调整为动画快结束时
+        }, 800);
 
         // 动画结束后的清理
         setTimeout(() => {
@@ -285,12 +289,10 @@ class CartographersGame {
                 coinScore.classList.remove('highlight');
             }, 200);
 
-            // 更新游戏状态
+            // 更新游戏状态（只更新分数，因为金币标记已经在开始时移除）
             this.scores.coins++;
             this.updateScoreBoard();
-            this.board.collectCoin(row, col);
-            this.updateGridDisplay();
-        }, 1000); // 延长到1秒
+        }, 1000);
     }
 
     updateSeasonDisplay() {
