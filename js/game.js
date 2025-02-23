@@ -166,6 +166,9 @@ class CartographersGame {
             }
         }
 
+        // 检查高山格的金币收集
+        this.checkAndCollectAdjacentCoins();
+
         this.updateGridDisplay();
         this.currentTime += this.currentCard.timeValue;
 
@@ -176,8 +179,6 @@ class CartographersGame {
         }
 
         this.updateSeasonDisplay();
-
-        // 更新计分规则卡显示
         this.updateScoringCardScores();
     }
 
@@ -240,10 +241,26 @@ class CartographersGame {
 
                     // 只有当四个相邻格子都有地形时才收集金币
                     if (allAdjacent) {
-                        if (this.board.collectCoin(i, j)) {
-                            this.scores.coins += 1;
-                            this.updateScoreBoard();
+                        // 创建金币收集动画
+                        const cell = document.querySelector(`.grid-cell[data-row="${i}"][data-col="${j}"]`);
+                        if (cell) {
+                            const coinIcon = document.createElement('div');
+                            coinIcon.className = 'coin-icon coin-collected';
+                            cell.appendChild(coinIcon);
+
+                            setTimeout(() => {
+                                if (coinIcon.parentNode === cell) {
+                                    cell.removeChild(coinIcon);
+                                }
+                            }, 500);
                         }
+
+                        // 更新金币数量和显示
+                        this.scores.coins += 1;
+                        this.updateScoreBoard();
+
+                        // 移除这个山脉格的金币标记
+                        this.board.collectCoin(i, j);
                     }
                 }
             }
@@ -297,12 +314,20 @@ class CartographersGame {
     }
 
     calculateSeasonScore() {
-        const currentSeasonName = ['spring', 'summer', 'autumn', 'winter'][this.currentSeason];
-        const cardTypes = this.seasonScoringCards[currentSeasonName];
+        const activeCardTypes = {
+            0: ['A', 'B'],  // spring
+            1: ['B', 'C'],  // summer
+            2: ['C', 'D'],  // autumn
+            3: ['A', 'D']   // winter
+        }[this.currentSeason];
 
-        return cardTypes.reduce((total, type) => {
-            const card = this.selectedScoringCards[type];
-            return total + card.scoringFunction(this.board);
+        return activeCardTypes.reduce((total, type) => {
+            const card = this.scoringCards.find(card => this.getCardType(card) === type);
+            if (card) {
+                const score = card.scoringFunction(this.board);
+                return total + score;
+            }
+            return total;
         }, 0);
     }
 
@@ -311,12 +336,11 @@ class CartographersGame {
     }
 
     initScoringCards() {
-        const scoringDeck = new ScoringDeck();
         this.scoringCards = [
-            scoringDeck.cardsByType.A[0],  // 前哨森林
-            scoringDeck.cardsByType.B[0],  // 睡谷
-            scoringDeck.cardsByType.C[0],  // 运河
-            scoringDeck.cardsByType.D[0]   // 边境之地
+            this.scoringDeck.cardsByType.A[0],
+            this.scoringDeck.cardsByType.B[0],
+            this.scoringDeck.cardsByType.C[0],
+            this.scoringDeck.cardsByType.D[0]
         ];
         this.displayScoringCards();
     }
@@ -366,9 +390,7 @@ class CartographersGame {
     }
 
     getCardType(card) {
-        const scoringDeck = new ScoringDeck();
-        // 遍历 cardsByType 找到对应的类型
-        for (const [type, cards] of Object.entries(scoringDeck.cardsByType)) {
+        for (const [type, cards] of Object.entries(this.scoringDeck.cardsByType)) {
             if (cards.some(c => c.name === card.name)) {
                 return type;
             }
