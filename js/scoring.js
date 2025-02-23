@@ -459,7 +459,38 @@ class ScoringDeck {
                     },
                     4
                 ),
-                
+                new ScoringCard(
+                    "崎岖之路",
+                    "每条从地图左侧连接到地图底部完整填绘的斜线，获得3点声望。",
+                    (board) => {
+                        let score = 0;
+
+                        // 从左侧边缘的每个格子开始检查
+                        for (let startRow = 0; startRow < board.size; startRow++) {
+                            let isPathComplete = true;
+                            let row = startRow;
+                            let col = 0;
+
+                            // 沿着斜线检查每个格子
+                            while (row < board.size && col < board.size) {
+                                if (!board.getCellType(row, col)) {
+                                    isPathComplete = false;
+                                    break;
+                                }
+                                row++;
+                                col++;
+                            }
+
+                            // 检查是否到达底部
+                            if (isPathComplete && row === board.size) {
+                                score += 3;
+                            }
+                        }
+
+                        return score;
+                    },
+                    4
+                ),
             ]
         ];
     }
