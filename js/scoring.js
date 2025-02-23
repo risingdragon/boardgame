@@ -529,6 +529,50 @@ class ScoringDeck {
                         return maxSize * 3;
                     },
                     4
+                ),
+                new ScoringCard(
+                    "围困之地",
+                    "每个被已填绘的格子或地图边缘包围的空格，获得1点声望。",
+                    (board) => {
+                        let score = 0;
+                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                // 只检查空格
+                                if (!board.getCellType(i, j)) {
+                                    let isSurrounded = true;
+
+                                    // 检查四个相邻位置
+                                    for (const [dx, dy] of directions) {
+                                        const newRow = i + dx;
+                                        const newCol = j + dy;
+
+                                        // 如果在边界外，继续检查其他方向
+                                        if (newRow < 0 || newRow >= board.size ||
+                                            newCol < 0 || newCol >= board.size) {
+                                            continue;
+                                        }
+
+                                        // 如果相邻格子是空的，则不被包围
+                                        if (!board.getCellType(newRow, newCol)) {
+                                            isSurrounded = false;
+                                            break;
+                                        }
+                                    }
+
+                                    // 如果四边都被包围，得1分
+                                    if (isSurrounded) {
+                                        score += 1;
+                                    }
+                                }
+                            }
+                        }
+
+                        return score;
+                    },
+                    4
                 )
             ]
         ];
