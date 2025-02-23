@@ -386,6 +386,9 @@ class CartographersGame {
 
             if (this.currentSeason === 0) {
                 this.endGame();
+            } else {
+                // 新季节开始时抽一张新卡
+                this.drawNewCard();
             }
 
             this.displayScoringCards();
