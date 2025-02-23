@@ -1,7 +1,7 @@
 class CartographersGame {
     constructor() {
-        this.currentSeason = 0; // 0-春 1-夏 2-秋 3-冬
-        this.seasons = ['春季', '夏季', '秋季', '冬季'];
+        this.currentSeason = 0; // 0: spring, 1: summer, 2: autumn, 3: winter
+        this.seasons = ['spring', 'summer', 'autumn', 'winter'];
         this.score = 0;
         this.board = new GameBoard();
         this.seasonTimeLimits = {
@@ -30,6 +30,7 @@ class CartographersGame {
         this.isDragging = false;
         this.selectedTerrainType = null;
         this.explorationDisplay = new ExplorationDisplay(this);
+        this.seasonNames = ['春季', '夏季', '秋季', '冬季'];
 
         this.initGame();
         this.initDragAndDrop();
@@ -250,8 +251,8 @@ class CartographersGame {
         const seasonSpan = document.getElementById('current-season');
         const progressDiv = document.getElementById('season-progress');
 
-        // 更新季节文本
-        seasonSpan.textContent = this.seasons[this.currentSeason];
+        // 更新季节文本为中文
+        seasonSpan.textContent = this.seasonNames[this.currentSeason];
 
         // 更新进度条
         const progressBar = progressDiv.querySelector('.progress-bar');
@@ -318,9 +319,8 @@ class CartographersGame {
     }
 
     displayScoringCards() {
-        // 修改选择器以匹配新的 HTML 结构
         const scoringCardsContainer = document.querySelector('.scoring-cards');
-        if (!scoringCardsContainer) return;  // 添加安全检查
+        if (!scoringCardsContainer) return;
 
         scoringCardsContainer.innerHTML = '';
 
@@ -333,12 +333,44 @@ class CartographersGame {
         this.scoringCards.forEach(card => {
             const cardElement = document.createElement('div');
             cardElement.className = 'scoring-card';
+
+            // 检查是否在当前季节生效
+            const isActive = this.isCardActiveInCurrentSeason(card);
+            if (isActive) {
+                cardElement.classList.add('active-card');
+            }
+
             cardElement.innerHTML = `
                 <div class="scoring-card-title">${card.name}</div>
                 <div class="scoring-card-description">${card.description}</div>
             `;
             scoringCardsContainer.appendChild(cardElement);
         });
+    }
+
+    isCardActiveInCurrentSeason(card) {
+        // 根据卡片类型和当前季节判断是否生效
+        const seasonRules = {
+            0: ['A', 'B'],  // spring
+            1: ['B', 'C'],  // summer
+            2: ['C', 'D'],  // autumn
+            3: ['A', 'D']   // winter
+        };
+
+        // 从卡片名称中获取类型
+        const cardType = this.getCardType(card);
+        return seasonRules[this.currentSeason].includes(cardType);
+    }
+
+    getCardType(card) {
+        const scoringDeck = new ScoringDeck();
+        // 遍历 cardsByType 找到对应的类型
+        for (const [type, cards] of Object.entries(scoringDeck.cardsByType)) {
+            if (cards.some(c => c.name === card.name)) {
+                return type;
+            }
+        }
+        return null;
     }
 
     initDragAndDrop() {
