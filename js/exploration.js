@@ -60,6 +60,26 @@ class ExplorationDeck {
             new ExplorationCard([
                 {
                     shape: [
+                        [1, 1]
+                    ],
+                    terrainType: 'farm',
+                    name: 'Farmland',
+                    coinReward: 1  // 添加钱币奖励标记
+                },
+                {
+                    shape: [
+                        [0, 1, 0],
+                        [1, 1, 1],
+                        [0, 1, 0]
+                    ],
+                    terrainType: 'farm',
+                    name: 'Farmland',
+                    coinReward: 0  // 无钱币奖励
+                }
+            ], 1),
+            new ExplorationCard([
+                {
+                    shape: [
                         [1, 0],
                         [0, 1]
                     ],
