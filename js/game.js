@@ -31,6 +31,7 @@ class CartographersGame {
         this.explorationDisplay = new ExplorationDisplay(this);
         this.seasonNames = ['春季', '夏季', '秋季', '冬季'];
         this.tempPlacement = null; // 存储临时放置的地形
+        this.isPlacing = false;   // 添加标记表示是否正在放置地形
 
         this.initGame();
         this.initDragAndDrop();
@@ -129,11 +130,15 @@ class CartographersGame {
     }
 
     placeTerrain(row, col) {
-        if (!this.currentCard || !this.isValidPlacement(row, col)) return;
+        // 如果正在放置地形，不允许新的放置
+        if (this.isPlacing || !this.currentCard || !this.isValidPlacement(row, col)) return;
 
         const currentShape = this.currentCard.getSelectedShape();
         const shape = currentShape.shape;
         const terrainType = currentShape.terrainType;
+
+        // 标记正在放置地形
+        this.isPlacing = true;
 
         // 存储当前状态，以便取消时恢复
         this.tempPlacement = {
@@ -187,9 +192,10 @@ class CartographersGame {
         this.updateSeasonDisplay();
         this.updateScoringCardScores();
 
-        // 隐藏按钮
+        // 隐藏按钮并重置状态
         this.explorationDisplay.hideActionButtons();
         this.tempPlacement = null;
+        this.isPlacing = false;
     }
 
     cancelPlacement() {
@@ -199,9 +205,10 @@ class CartographersGame {
         this.board.grid = JSON.parse(JSON.stringify(this.tempPlacement.previousState));
         this.board.updateDisplay();
 
-        // 隐藏按钮
+        // 隐藏按钮并重置状态
         this.explorationDisplay.hideActionButtons();
         this.tempPlacement = null;
+        this.isPlacing = false;
     }
 
     checkAndCollectAdjacentCoins() {
