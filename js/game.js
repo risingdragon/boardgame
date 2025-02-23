@@ -541,13 +541,68 @@ class CartographersGame {
     }
 
     initScoringCards() {
-        this.scoringCards = [
-            this.scoringDeck.cardsByType.A[0],
-            this.scoringDeck.cardsByType.B[0],
-            this.scoringDeck.cardsByType.C[0],
-            this.scoringDeck.cardsByType.D[0]
+        // 定义4组计分卡
+        const cardGroups = [
+            // 第1组
+            [
+                new ScoringCard("边境探索", "计算与地图边界相邻的森林格数量", board => {
+                    // ... 现有的计分逻辑 ...
+                }),
+                // 该组的其他卡
+            ],
+            // 第2组
+            [
+                new ScoringCard("农田规划", "计算最大的农田连通区域的格子数", board => {
+                    // ... 现有的计分逻辑 ...
+                }),
+                // 该组的其他卡
+            ],
+            // 第3组
+            [
+                new ScoringCard("村庄建设", "计算与农田相邻的村庄格数量", board => {
+                    // ... 现有的计分逻辑 ...
+                }),
+                // 该组的其他卡
+            ],
+            // 第4组
+            [
+                new ScoringCard("森林保护", "计算森林格的数量", board => {
+                    // ... 现有的计分逻辑 ...
+                }),
+                // 该组的其他卡
+            ]
         ];
+
+        // 从每组中随机选择一张卡
+        const selectedCards = cardGroups.map(group => {
+            const randomIndex = Math.floor(Math.random() * group.length);
+            return group[randomIndex];
+        });
+
+        // 随机分配ABCD类型
+        const cardTypes = ['A', 'B', 'C', 'D'];
+        this.shuffleArray(cardTypes);
+
+        // 将选中的卡片与类型对应
+        this.scoringCards = selectedCards.map((card, index) => {
+            card.type = cardTypes[index];
+            return card;
+        });
+
         this.displayScoringCards();
+    }
+
+    // Fisher-Yates 洗牌算法
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // 获取卡片类型的方法也需要修改
+    getCardType(card) {
+        return card.type;  // 直接返回卡片的类型属性
     }
 
     displayScoringCards() {
@@ -615,15 +670,6 @@ class CartographersGame {
         // 从卡片名称中获取类型
         const cardType = this.getCardType(card);
         return seasonRules[this.currentSeason].includes(cardType);
-    }
-
-    getCardType(card) {
-        for (const [type, cards] of Object.entries(this.scoringDeck.cardsByType)) {
-            if (cards.some(c => c.name === card.name)) {
-                return type;
-            }
-        }
-        return null;
     }
 
     initDragAndDrop() {

@@ -1,8 +1,9 @@
 class ScoringCard {
-    constructor(name, description, scoringFunction) {
+    constructor(name, description, scoringFunction, groupNumber) {
         this.name = name;
         this.description = description;
         this.scoringFunction = scoringFunction;
+        this.groupNumber = groupNumber;
     }
 }
 
@@ -12,8 +13,9 @@ class ScoringDeck {
     }
 
     initializeScoringCards() {
-        return {
-            A: [
+        return [
+            // 第1组
+            [
                 new ScoringCard(
                     "前哨森林",
                     "每个相邻地图边缘的森林格让你获得1点声望。",
@@ -26,7 +28,8 @@ class ScoringDeck {
                             if (board.getCellType(board.size - 1, i) === 'forest') score++;
                         }
                         return score;
-                    }
+                    },
+                    1  // 组号
                 ),
                 new ScoringCard(
                     "丰饶之地",
@@ -65,7 +68,8 @@ class ScoringDeck {
                         }
 
                         return score;
-                    }
+                    },
+                    1  // 组号
                 ),
                 new ScoringCard(
                     "魔法山谷",
@@ -105,7 +109,8 @@ class ScoringDeck {
                         }
 
                         return score;
-                    }
+                    },
+                    1  // 组号
                 ),
                 new ScoringCard(
                     "树塔",
@@ -153,10 +158,12 @@ class ScoringDeck {
                         }
 
                         return score;
-                    }
+                    },
+                    1  // 组号
                 )
             ],
-            B: [
+            // 第2组
+            [
                 new ScoringCard(
                     "巨石山林",
                     "每个通过森林群集与另一个高山格相连的高山格，让你获得3点声望。",
@@ -219,17 +226,20 @@ class ScoringDeck {
                         }
 
                         return score;
-                    }
+                    },
+                    2  // 组号
                 )
             ],
-            C: [
+            // 第3组
+            [
                 new ScoringCard(
                     "大聚落",
                     "最大的村庄区域（正方形或长方形）的格子数量平方得分。",
                     (board) => {
                         // TODO: 实现计分逻辑
                         return 0;
-                    }
+                    },
+                    3  // 组号
                 ),
                 new ScoringCard(
                     "运河",
@@ -237,17 +247,20 @@ class ScoringDeck {
                     (board) => {
                         // TODO: 实现计分逻辑
                         return 0;
-                    }
+                    },
+                    3  // 组号
                 )
             ],
-            D: [
+            // 第4组
+            [
                 new ScoringCard(
                     "破碎之地",
                     "每个不同地形（包括空格）相邻的格子让你获得1点声望。",
                     (board) => {
                         // TODO: 实现计分逻辑
                         return 0;
-                    }
+                    },
+                    4  // 组号
                 ),
                 new ScoringCard(
                     "边境之地",
@@ -255,10 +268,11 @@ class ScoringDeck {
                     (board) => {
                         // TODO: 实现计分逻辑
                         return 0;
-                    }
+                    },
+                    4  // 组号
                 )
             ]
-        };
+        ];
     }
 
     drawCardsByType() {
