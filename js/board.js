@@ -1,4 +1,8 @@
 class GameBoard {
+    static RUINS_POSITIONS = [
+        [1, 5], [2, 1], [2, 9], [8, 1], [8, 9], [9, 5]
+    ];
+
     constructor() {
         this.size = 11;
         this.grid = Array(this.size).fill().map(() => Array(this.size).fill(null));
@@ -12,11 +16,6 @@ class GameBoard {
             [1, 3], [2, 8], [5, 5], [8, 2], [9, 7]
         ];
 
-        // 设置固定的遗迹位置
-        const ruins = [
-            [1, 5], [2, 1], [2, 9], [8, 1], [8, 9], [9, 5]
-        ];
-
         // 放置山脉并初始化金币
         mountains.forEach(([row, col]) => {
             this.grid[row][col] = {
@@ -28,7 +27,7 @@ class GameBoard {
         });
 
         // 放置遗迹 (可以被村庄覆盖获得额外分数)
-        ruins.forEach(([row, col]) => {
+        GameBoard.RUINS_POSITIONS.forEach(([row, col]) => {
             this.grid[row][col] = {
                 type: 'ruins',
                 fixed: false
@@ -49,7 +48,7 @@ class GameBoard {
             return false;
         }
         // 如果是空格子或遗迹，都可以放置
-        return !cell || cell.type === 'ruins';
+        return !cell || this.isCurrentlyRuin(row, col);
     }
 
     // 获取单元格的类型
@@ -70,11 +69,21 @@ class GameBoard {
         return this.coins.delete(`${row},${col}`);
     }
 
-    isRuin(row, col) {
+    // 检查当前是否是遗迹
+    isCurrentlyRuin(row, col) {
         if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
             return false;
         }
         return this.grid[row][col]?.type === 'ruins';
+    }
+
+    // 检查是否曾经是遗迹（包括当前是遗迹的情况）
+    wasRuin(row, col) {
+        if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
+            return false;
+        }
+        const cell = this.grid[row][col];
+        return cell?.ruins === true || cell?.type === 'ruins';
     }
 
     placeTerrain(row, col, type) {

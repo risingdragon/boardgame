@@ -524,6 +524,9 @@ class CartographersGame {
             return card;
         });
 
+        // 按ABCD顺序排序
+        this.scoringCards.sort((a, b) => a.type.localeCompare(b.type));
+
         // 打印每张卡片的名称和对应的类型
         console.log('规则卡分配结果：',
             this.scoringCards.map(card => ({
