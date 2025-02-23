@@ -491,6 +491,45 @@ class ScoringDeck {
                     },
                     4
                 ),
+                new ScoringCard(
+                    "失落的庄园",
+                    "最大已填绘的四方形中，一侧的每个格子获得3点声望。",
+                    (board) => {
+                        let maxSize = 0;
+
+                        // 检查每个可能的起始点
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                // 从当前点开始尝试不同大小的正方形
+                                let size = 1;
+                                while (i + size <= board.size && j + size <= board.size) {
+                                    let isSquareComplete = true;
+
+                                    // 检查这个正方形区域是否完全填满
+                                    for (let r = i; r < i + size; r++) {
+                                        for (let c = j; c < j + size; c++) {
+                                            if (!board.getCellType(r, c)) {
+                                                isSquareComplete = false;
+                                                break;
+                                            }
+                                        }
+                                        if (!isSquareComplete) break;
+                                    }
+
+                                    // 更新最大尺寸
+                                    if (isSquareComplete) {
+                                        maxSize = Math.max(maxSize, size);
+                                    }
+                                    size++;
+                                }
+                            }
+                        }
+
+                        // 返回最大正方形一边的得分（每格3分）
+                        return maxSize * 3;
+                    },
+                    4
+                )
             ]
         ];
     }
