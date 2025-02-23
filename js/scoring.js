@@ -416,182 +416,49 @@ class ScoringDeck {
                         return score;
                     },
                     3
-                ),
-                new ScoringCard(
-                    "肥沃平原",
-                    "每个与三种及以上不同地形相邻的村庄群落获得3点声望。",
-                    (board) => {
-                        let score = 0;
-                        const visited = new Set();
-                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-                        // 检查每个格子
-                        for (let i = 0; i < board.size; i++) {
-                            for (let j = 0; j < board.size; j++) {
-                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
-                                    // 找到一个新的村庄群落
-                                    const stack = [{row: i, col: j}];
-                                    const adjacentTypes = new Set();
-
-                                    // 使用深度优先搜索找到整个群落
-                                    while (stack.length > 0) {
-                                        const current = stack.pop();
-                                        const key = `${current.row},${current.col}`;
-                                        
-                                        if (visited.has(key)) continue;
-                                        visited.add(key);
-
-                                        // 检查相邻格子的地形类型
-                                        for (const [dx, dy] of directions) {
-                                            const newRow = current.row + dx;
-                                            const newCol = current.col + dy;
-
-                                            if (newRow >= 0 && newRow < board.size &&
-                                                newCol >= 0 && newCol < board.size) {
-                                                const adjacentType = board.getCellType(newRow, newCol);
-                                                if (adjacentType && adjacentType !== 'village') {
-                                                    adjacentTypes.add(adjacentType);
-                                                }
-                                                
-                                                // 如果是村庄，加入搜索栈
-                                                if (adjacentType === 'village') {
-                                                    stack.push({row: newRow, col: newCol});
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // 如果相邻不同地形数量大于等于3，得3分
-                                    if (adjacentTypes.size >= 3) {
-                                        score += 3;
-                                    }
-                                }
-                            }
-                        }
-                        return score;
-                    },
-                    3
-                ),
-                new ScoringCard(
-                    "大城市",
-                    "最大且不与高山格相邻的村庄群落中，每个村庄格获得1点声望。",
-                    (board) => {
-                        const visited = new Set();
-                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-                        let maxGroupSize = 0;
-                        let maxGroupScore = 0;
-
-                        // 检查每个格子
-                        for (let i = 0; i < board.size; i++) {
-                            for (let j = 0; j < board.size; j++) {
-                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
-                                    // 找到一个新的村庄群落
-                                    const group = [];
-                                    const stack = [{row: i, col: j}];
-                                    let touchesMountain = false;
-
-                                    // 使用深度优先搜索找到整个群落
-                                    while (stack.length > 0) {
-                                        const current = stack.pop();
-                                        const key = `${current.row},${current.col}`;
-                                        
-                                        if (visited.has(key)) continue;
-                                        visited.add(key);
-                                        group.push(current);
-
-                                        // 检查相邻格子
-                                        for (const [dx, dy] of directions) {
-                                            const newRow = current.row + dx;
-                                            const newCol = current.col + dy;
-
-                                            if (newRow >= 0 && newRow < board.size &&
-                                                newCol >= 0 && newCol < board.size) {
-                                                const adjacentType = board.getCellType(newRow, newCol);
-                                                
-                                                // 检查是否接触高山
-                                                if (adjacentType === 'mountain') {
-                                                    touchesMountain = true;
-                                                }
-                                                
-                                                // 如果是村庄，加入搜索栈
-                                                if (adjacentType === 'village') {
-                                                    stack.push({row: newRow, col: newCol});
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // 如果这个群落不接触高山且是最大的
-                                    if (!touchesMountain && group.length > maxGroupSize) {
-                                        maxGroupSize = group.length;
-                                        maxGroupScore = group.length; // 每个村庄格1分
-                                    }
-                                }
-                            }
-                        }
-
-                        return maxGroupScore;
-                    },
-                    3
-                ),
-                new ScoringCard(
-                    "神盾门",
-                    "第二大的村庄群落中，每个村庄格获得2点声望。",
-                    (board) => {
-                        const visited = new Set();
-                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-                        const groupSizes = [];
-
-                        // 检查每个格子
-                        for (let i = 0; i < board.size; i++) {
-                            for (let j = 0; j < board.size; j++) {
-                                if (board.getCellType(i, j) === 'village' && !visited.has(`${i},${j}`)) {
-                                    // 找到一个新的村庄群落
-                                    let groupSize = 0;
-                                    const stack = [{row: i, col: j}];
-
-                                    // 使用深度优先搜索找到整个群落
-                                    while (stack.length > 0) {
-                                        const current = stack.pop();
-                                        const key = `${current.row},${current.col}`;
-                                        
-                                        if (visited.has(key)) continue;
-                                        visited.add(key);
-                                        groupSize++;
-
-                                        // 检查相邻格子
-                                        for (const [dx, dy] of directions) {
-                                            const newRow = current.row + dx;
-                                            const newCol = current.col + dy;
-
-                                            if (newRow >= 0 && newRow < board.size &&
-                                                newCol >= 0 && newCol < board.size &&
-                                                board.getCellType(newRow, newCol) === 'village') {
-                                                stack.push({row: newRow, col: newCol});
-                                            }
-                                        }
-                                    }
-
-                                    // 记录群落大小
-                                    if (groupSize > 0) {
-                                        groupSizes.push(groupSize);
-                                    }
-                                }
-                            }
-                        }
-
-                        // 如果群落数量少于2，返回0分
-                        if (groupSizes.length < 2) return 0;
-
-                        // 排序找到第二大的群落
-                        groupSizes.sort((a, b) => b - a);
-                        return groupSizes[1] * 2; // 第二大群落中每个村庄格2分
-                    },
-                    3
-                )
-            ],
+                )           ],
             // 第4组
             [
+                new ScoringCard(
+                    "边境",
+                    "每个完整填绘的一行或一列获得6点声望。",
+                    (board) => {
+                        let score = 0;
+
+                        // 检查每一行
+                        for (let i = 0; i < board.size; i++) {
+                            let isRowComplete = true;
+                            // 检查这一行是否完全填满
+                            for (let j = 0; j < board.size; j++) {
+                                if (!board.getCellType(i, j)) {
+                                    isRowComplete = false;
+                                    break;
+                                }
+                            }
+                            if (isRowComplete) {
+                                score += 6;
+                            }
+                        }
+
+                        // 检查每一列
+                        for (let j = 0; j < board.size; j++) {
+                            let isColumnComplete = true;
+                            // 检查这一列是否完全填满
+                            for (let i = 0; i < board.size; i++) {
+                                if (!board.getCellType(i, j)) {
+                                    isColumnComplete = false;
+                                    break;
+                                }
+                            }
+                            if (isColumnComplete) {
+                                score += 6;
+                            }
+                        }
+
+                        return score;
+                    },
+                    4
+                ),
                 
             ]
         ];
