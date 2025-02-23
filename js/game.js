@@ -212,62 +212,85 @@ class CartographersGame {
     }
 
     checkAndCollectAdjacentCoins() {
-        // 检查相邻的四个方向
-        const directions = [
-            [-1, 0], // 上
-            [1, 0],  // 下
-            [0, -1], // 左
-            [0, 1]   // 右
-        ];
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
-        // 检查每个山脉格子
         for (let i = 0; i < this.board.size; i++) {
             for (let j = 0; j < this.board.size; j++) {
-                // 如果是山脉且还有金币
                 if (this.board.getCellType(i, j) === 'mountain' && this.board.hasCoin(i, j)) {
-                    // 检查四个相邻格子是否都有地形
                     let allAdjacent = true;
 
                     for (const [dx, dy] of directions) {
                         const newRow = i + dx;
                         const newCol = j + dy;
 
-                        // 如果相邻格子超出边界或没有地形，则不满足条件
                         if (newRow < 0 || newRow >= this.board.size ||
                             newCol < 0 || newCol >= this.board.size ||
-                            !this.board.grid[newRow][newCol] ||  // 检查格子是否为空
-                            this.board.grid[newRow][newCol].type === 'mountain') {  // 山脉不算作有效地形
+                            !this.board.grid[newRow][newCol] ||
+                            this.board.grid[newRow][newCol].type === 'mountain') {
                             allAdjacent = false;
                             break;
                         }
                     }
 
-                    // 只有当四个相邻格子都有地形时才收集金币
                     if (allAdjacent) {
-                        // 创建金币收集动画
-                        const cell = document.querySelector(`.grid-cell[data-row="${i}"][data-col="${j}"]`);
-                        if (cell) {
-                            const coinIcon = document.createElement('div');
-                            coinIcon.className = 'coin-icon coin-collected';
-                            cell.appendChild(coinIcon);
-
-                            setTimeout(() => {
-                                if (coinIcon.parentNode === cell) {
-                                    cell.removeChild(coinIcon);
-                                }
-                            }, 500);
-                        }
-
-                        // 更新金币数量和显示
-                        this.scores.coins += 1;
-                        this.updateScoreBoard();
-
-                        // 移除这个山脉格的金币标记
-                        this.board.collectCoin(i, j);
+                        this.animateCoinCollection(i, j);
                     }
                 }
             }
         }
+    }
+
+    animateCoinCollection(row, col) {
+        const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+        const coinScore = document.getElementById('coin-score');
+
+        if (!cell || !coinScore) return;
+
+        // 获取起点和终点位置
+        const cellRect = cell.getBoundingClientRect();
+        const scoreRect = coinScore.getBoundingClientRect();
+
+        // 创建飞行的金币元素
+        const flyingCoin = document.createElement('div');
+        flyingCoin.className = 'flying-coin';
+        document.body.appendChild(flyingCoin);
+
+        // 设置金币初始位置和样式
+        flyingCoin.style.left = `${cellRect.left + 2}px`;
+        flyingCoin.style.top = `${cellRect.top + 2}px`;
+
+        // 强制重排以确保初始位置生效
+        flyingCoin.offsetHeight;
+
+        // 延迟一帧设置目标位置，确保初始状态被渲染
+        requestAnimationFrame(() => {
+            // 添加动画类
+            flyingCoin.classList.add('flying');
+            // 设置目标位置
+            flyingCoin.style.left = `${scoreRect.left}px`;
+            flyingCoin.style.top = `${scoreRect.top}px`;
+        });
+
+        // 添加高亮效果
+        setTimeout(() => {
+            coinScore.classList.add('highlight');
+        }, 800); // 调整为动画快结束时
+
+        // 动画结束后的清理
+        setTimeout(() => {
+            if (document.body.contains(flyingCoin)) {
+                document.body.removeChild(flyingCoin);
+            }
+            setTimeout(() => {
+                coinScore.classList.remove('highlight');
+            }, 200);
+
+            // 更新游戏状态
+            this.scores.coins++;
+            this.updateScoreBoard();
+            this.board.collectCoin(row, col);
+            this.updateGridDisplay();
+        }, 1000); // 延长到1秒
     }
 
     updateSeasonDisplay() {

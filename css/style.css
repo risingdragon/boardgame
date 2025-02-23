@@ -551,3 +551,33 @@
     background: rgba(76, 175, 80, 0.2);
     font-weight: bold;
 }
+
+.flying-coin {
+    position: fixed;
+    width: 20px;
+    /* 更大的尺寸 */
+    height: 20px;
+    background: gold;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: none;
+}
+
+.flying-coin.flying {
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 延长到1秒 */
+    transform: scale(0.5);
+}
+
+#coin-score {
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+#coin-score.highlight {
+    transform: scale(1.3);
+    color: gold;
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
