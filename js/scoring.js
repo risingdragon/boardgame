@@ -35,13 +35,15 @@ class ScoringDeck {
                                 counted.add(`${i},${board.size - 1}`);
                                 score++;
                             }
-                            // 上边缘
+                            // 上边缘（检查是否已计算过左右边缘）
                             if (board.getCellType(0, i) === 'forest' && !counted.has(`0,${i}`)) {
+                                counted.add(`0,${i}`);
                                 score++;
                             }
-                            // 下边缘
+                            // 下边缘（检查是否已计算过左右边缘）
                             if (board.getCellType(board.size - 1, i) === 'forest' &&
                                 !counted.has(`${board.size - 1},${i}`)) {
+                                counted.add(`${board.size - 1},${i}`);
                                 score++;
                             }
                         }
@@ -550,8 +552,9 @@ class ScoringDeck {
                         // 检查每个格子
                         for (let i = 0; i < board.size; i++) {
                             for (let j = 0; j < board.size; j++) {
-                                // 检查是否是空格或遗迹
-                                if (!board.getCellType(i, j) || board.wasRuin(i, j)) {
+                                // 检查是否是空格或未填绘的遗迹
+                                if (!board.getCellType(i, j) && !board.wasRuin(i, j) ||
+                                    board.isCurrentlyRuin(i, j)) {
                                     let isSurrounded = true;
 
                                     // 检查四个相邻位置
