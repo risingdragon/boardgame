@@ -783,31 +783,19 @@ class CartographersGame {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
-        const activeCardTypes = {
-            0: ['A', 'B'],
-            1: ['B', 'C'],
-            2: ['C', 'D'],
-            3: ['A', 'D']
-        }[this.currentSeason];
-
         const scoringCards = scoringCardsContainer.querySelectorAll('.scoring-card');
         scoringCards.forEach((cardElement, index) => {
             const card = this.scoringCards[index];
-            const cardType = this.getCardType(card);
+            const currentScore = card.scoringFunction(this.board);
 
-            // 只更新当前季节活跃的规则卡分数
-            if (activeCardTypes.includes(cardType)) {
-                const currentScore = card.scoringFunction(this.board);
-
-                let scoreElement = cardElement.querySelector('.current-score');
-                if (!scoreElement) {
-                    scoreElement = document.createElement('div');
-                    scoreElement.className = 'current-score';
-                    cardElement.appendChild(scoreElement);
-                }
-
-                scoreElement.innerHTML = `当前可得：${currentScore}<span class="star-icon">★</span>`;
+            let scoreElement = cardElement.querySelector('.current-score');
+            if (!scoreElement) {
+                scoreElement = document.createElement('div');
+                scoreElement.className = 'current-score';
+                cardElement.appendChild(scoreElement);
             }
+
+            scoreElement.innerHTML = `当前可得：${currentScore}<span class="star-icon">★</span>`;
         });
     }
 }
