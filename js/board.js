@@ -3,6 +3,10 @@ class GameBoard {
         [1, 5], [2, 1], [2, 9], [8, 1], [8, 9], [9, 5]
     ];
 
+    static MOUNTAIN_POSITIONS = [
+        [1, 3], [2, 8], [5, 5], [8, 2], [9, 7]
+    ];
+
     constructor() {
         this.size = 11;
         this.grid = Array(this.size).fill().map(() => Array(this.size).fill(null));
@@ -11,13 +15,8 @@ class GameBoard {
     }
 
     initializeFixedTerrains() {
-        // 设置固定的山脉位置
-        const mountains = [
-            [1, 3], [2, 8], [5, 5], [8, 2], [9, 7]
-        ];
-
         // 放置山脉并初始化金币
-        mountains.forEach(([row, col]) => {
+        GameBoard.MOUNTAIN_POSITIONS.forEach(([row, col]) => {
             this.grid[row][col] = {
                 type: 'mountain',
                 fixed: true
@@ -26,7 +25,7 @@ class GameBoard {
             this.coins.add(`${row},${col}`);
         });
 
-        // 放置遗迹 (可以被村庄覆盖获得额外分数)
+        // 放置遗迹
         GameBoard.RUINS_POSITIONS.forEach(([row, col]) => {
             this.grid[row][col] = {
                 type: 'ruins',

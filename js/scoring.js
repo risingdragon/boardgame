@@ -264,32 +264,30 @@ class ScoringDeck {
                             [0, 1]   // 右
                         ];
 
-                        // 检查每个格子
-                        for (let i = 0; i < board.size; i++) {
-                            for (let j = 0; j < board.size; j++) {
-                                const cellType = board.getCellType(i, j);
-                                // 如果是湖泊或农场
-                                if (cellType === 'water' || cellType === 'farm') {
-                                    // 检查是否与对方相邻
-                                    for (const [dx, dy] of directions) {
-                                        const newRow = i + dx;
-                                        const newCol = j + dy;
-                                        if (newRow >= 0 && newRow < board.size &&
-                                            newCol >= 0 && newCol < board.size) {
-                                            const adjacentType = board.getCellType(newRow, newCol);
-                                            if ((cellType === 'water' && adjacentType === 'farm') ||
-                                                (cellType === 'farm' && adjacentType === 'water')) {
-                                                score += 1;
-                                                break; // 每个格子只计算一次
-                                            }
-                                        }
+                        // 检查每个山脉周围的格子
+                        for (const [mountainRow, mountainCol] of GameBoard.MOUNTAIN_POSITIONS) {
+                            // 检查四个相邻位置
+                            for (const [dx, dy] of directions) {
+                                const newRow = mountainRow + dx;
+                                const newCol = mountainCol + dy;
+
+                                if (newRow >= 0 && newRow < board.size &&
+                                    newCol >= 0 && newCol < board.size) {
+                                    const cellType = board.getCellType(newRow, newCol);
+                                    // 湖泊得2分
+                                    if (cellType === 'water') {
+                                        score += 2;
+                                    }
+                                    // 农场得1分
+                                    else if (cellType === 'farm') {
+                                        score += 1;
                                     }
                                 }
                             }
                         }
                         return score;
                     },
-                    2  // 注意：这里需要改成2
+                    2
                 ),
                 new ScoringCard(
                     "广阔湖岸",
