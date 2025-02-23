@@ -172,30 +172,39 @@ class CartographersGame {
     confirmPlacement() {
         if (!this.tempPlacement) return;
 
+        let animationDelay = 0;
+
         // 检查是否有金币奖励
         const currentShape = this.currentCard.getSelectedShape();
         if (currentShape.coinReward) {
             this.animateCoinCollection(this.tempPlacement.row, this.tempPlacement.col, true);
+            animationDelay = 1000; // 等待金币收集动画
         }
 
         // 检查高山格的金币收集
-        this.checkAndCollectAdjacentCoins();
-
-        this.currentTime += this.currentCard.timeValue;
-
-        if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
-            this.endSeason();
-        } else {
-            this.drawNewCard();
+        const hasPendingCoins = this.checkAndCollectAdjacentCoins();
+        if (hasPendingCoins) {
+            animationDelay = 1200; // 如果有高山金币收集，多等待一点时间
         }
 
-        this.updateSeasonDisplay();
-        this.updateScoringCardScores();
+        // 等待所有金币收集动画完成后再继续
+        setTimeout(() => {
+            this.currentTime += this.currentCard.timeValue;
 
-        // 隐藏按钮并重置状态
-        this.explorationDisplay.hideActionButtons();
-        this.tempPlacement = null;
-        this.isPlacing = false;
+            if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
+                this.endSeason();
+            } else {
+                this.drawNewCard();
+            }
+
+            this.updateSeasonDisplay();
+            this.updateScoringCardScores();
+
+            // 隐藏按钮并重置状态
+            this.explorationDisplay.hideActionButtons();
+            this.tempPlacement = null;
+            this.isPlacing = false;
+        }, animationDelay);
     }
 
     cancelPlacement() {

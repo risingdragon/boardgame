@@ -164,7 +164,7 @@ class ExplorationDeck {
                     ],
                     terrainType: 'forest',
                     name: 'Marshlands',
-                    coinReward: 1  // 添加钱币奖励标记
+                    coinReward: 0  // 添加钱币奖励标记
                 },
                 {
                     shape: [
@@ -253,6 +253,7 @@ class ExplorationDeck {
 class ExplorationDisplay {
     constructor(game) {
         this.game = game;
+        this.buttonsVisible = false; // 添加按钮显示状态标记
     }
 
     updateDisplay(card) {
@@ -429,12 +430,12 @@ class ExplorationDisplay {
         const confirmButton = document.createElement('button');
         confirmButton.className = 'action-button confirm';
         confirmButton.textContent = '确定';
-        confirmButton.style.display = 'none'; // 初始隐藏
+        confirmButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
 
         const cancelButton = document.createElement('button');
         cancelButton.className = 'action-button cancel';
         cancelButton.textContent = '取消';
-        cancelButton.style.display = 'none'; // 初始隐藏
+        cancelButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
 
         actionButtons.appendChild(confirmButton);
         actionButtons.appendChild(cancelButton);
@@ -445,14 +446,22 @@ class ExplorationDisplay {
         this.cancelButton = cancelButton;
 
         cardDisplay.appendChild(cardContainer);
+
+        // 如果按钮之前是显示的，重新绑定事件
+        if (this.buttonsVisible) {
+            this.confirmButton.onclick = () => this.game.confirmPlacement();
+            this.cancelButton.onclick = () => this.game.cancelPlacement();
+        }
     }
 
     showActionButtons() {
+        this.buttonsVisible = true;
         if (this.confirmButton) this.confirmButton.style.display = 'inline-block';
         if (this.cancelButton) this.cancelButton.style.display = 'inline-block';
     }
 
     hideActionButtons() {
+        this.buttonsVisible = false;
         if (this.confirmButton) this.confirmButton.style.display = 'none';
         if (this.cancelButton) this.cancelButton.style.display = 'none';
     }

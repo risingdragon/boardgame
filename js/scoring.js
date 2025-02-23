@@ -21,11 +21,29 @@ class ScoringDeck {
                     "每个相邻地图边缘的森林格获得1点声望。",
                     (board) => {
                         let score = 0;
+                        const counted = new Set(); // 用于记录已计算过的森林格
+
+                        // 检查每个边缘位置
                         for (let i = 0; i < board.size; i++) {
-                            if (board.getCellType(i, 0) === 'forest') score++;
-                            if (board.getCellType(i, board.size - 1) === 'forest') score++;
-                            if (board.getCellType(0, i) === 'forest') score++;
-                            if (board.getCellType(board.size - 1, i) === 'forest') score++;
+                            // 左边缘
+                            if (board.getCellType(i, 0) === 'forest') {
+                                counted.add(`${i},0`);
+                                score++;
+                            }
+                            // 右边缘
+                            if (board.getCellType(i, board.size - 1) === 'forest') {
+                                counted.add(`${i},${board.size - 1}`);
+                                score++;
+                            }
+                            // 上边缘
+                            if (board.getCellType(0, i) === 'forest' && !counted.has(`0,${i}`)) {
+                                score++;
+                            }
+                            // 下边缘
+                            if (board.getCellType(board.size - 1, i) === 'forest' &&
+                                !counted.has(`${board.size - 1},${i}`)) {
+                                score++;
+                            }
                         }
                         return score;
                     },
@@ -524,7 +542,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "围困之地",
-                    "每个被已填绘的格子或地图边缘包围的空格（包括遗迹），获得1点声望。",
+                    "每个被已填绘的格子或地图边缘包围的空格（高山算已填绘，未填绘的遗迹算空格），获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
