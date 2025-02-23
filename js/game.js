@@ -328,21 +328,142 @@ class CartographersGame {
     }
 
     endSeason() {
-        // 计算当前季节分数（包括金币带来的声望）
-        const seasonScore = this.calculateSeasonScore();
-        this.scores.seasons[this.currentSeason] = seasonScore;
-        this.updateScoreBoard();
+        // 先检查是否有未收集的金币
+        const hasPendingCoins = this.checkAndCollectRemainingCoins();
 
-        // 进入下一个季节
-        this.currentSeason = (this.currentSeason + 1) % 4;
-        this.currentTime = 0;
+        if (hasPendingCoins) {
+            // 如果有金币正在收集，等待所有金币收集完成后再结算
+            setTimeout(() => this.proceedWithSeasonEnd(), 1200); // 稍微多等一会，确保动画完成
+        } else {
+            // 如果没有待收集的金币，直接进行结算
+            this.proceedWithSeasonEnd();
+        }
+    }
 
-        if (this.currentSeason === 0) {
-            this.endGame();
+    checkAndCollectRemainingCoins() {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        let hasCollectedCoins = false;
+
+        for (let i = 0; i < this.board.size; i++) {
+            for (let j = 0; j < this.board.size; j++) {
+                if (this.board.getCellType(i, j) === 'mountain' && this.board.hasCoin(i, j)) {
+                    let allAdjacent = true;
+
+                    for (const [dx, dy] of directions) {
+                        const newRow = i + dx;
+                        const newCol = j + dy;
+
+                        if (newRow < 0 || newRow >= this.board.size ||
+                            newCol < 0 || newCol >= this.board.size ||
+                            !this.board.grid[newRow][newCol] ||
+                            this.board.grid[newRow][newCol].type === 'mountain') {
+                            allAdjacent = false;
+                            break;
+                        }
+                    }
+
+                    if (allAdjacent) {
+                        this.animateCoinCollection(i, j);
+                        hasCollectedCoins = true;
+                    }
+                }
+            }
         }
 
-        this.displayScoringCards();
-        this.updateSeasonDisplay();
+        return hasCollectedCoins;
+    }
+
+    proceedWithSeasonEnd() {
+        // 计算当前季节分数
+        const seasonScore = this.calculateSeasonScore();
+
+        // 获取当前季节的活跃规则卡
+        const activeCardTypes = {
+            0: ['A', 'B'],
+            1: ['B', 'C'],
+            2: ['C', 'D'],
+            3: ['A', 'D']
+        }[this.currentSeason];
+
+        // 为每个活跃的规则卡播放声望收集动画
+        const scoringCards = document.querySelectorAll('.scoring-card');
+        let animationDelay = 0;
+
+        scoringCards.forEach((cardElement, index) => {
+            const card = this.scoringCards[index];
+            const cardType = this.getCardType(card);
+
+            if (activeCardTypes.includes(cardType)) {
+                const score = card.scoringFunction(this.board);
+                if (score > 0) {
+                    setTimeout(() => {
+                        this.animatePrestigeCollection(cardElement, score);
+                    }, animationDelay);
+                    animationDelay += 1000;
+                }
+            }
+        });
+
+        // 在所有动画完成后更新分数和季节
+        setTimeout(() => {
+            this.scores.seasons[this.currentSeason] = seasonScore;
+            this.updateScoreBoard();
+
+            this.currentSeason = (this.currentSeason + 1) % 4;
+            this.currentTime = 0;
+
+            if (this.currentSeason === 0) {
+                this.endGame();
+            }
+
+            this.displayScoringCards();
+            this.updateSeasonDisplay();
+        }, animationDelay + 1000);
+    }
+
+    animatePrestigeCollection(cardElement, score) {
+        const prestigeScore = document.getElementById('season-scores');
+        if (!cardElement || !prestigeScore) return;
+
+        // 获取起点（规则卡上的当前得分位置）和终点位置
+        const scoreElement = cardElement.querySelector('.current-score');
+        const startRect = scoreElement.getBoundingClientRect();
+        const endRect = prestigeScore.getBoundingClientRect();
+
+        // 创建飞行的声望图标
+        const flyingPrestige = document.createElement('div');
+        flyingPrestige.className = 'flying-prestige';
+        flyingPrestige.innerHTML = '★';
+        document.body.appendChild(flyingPrestige);
+
+        // 设置初始位置
+        flyingPrestige.style.left = `${startRect.left + startRect.width / 2}px`;
+        flyingPrestige.style.top = `${startRect.top + startRect.height / 2}px`;
+
+        // 强制重排
+        flyingPrestige.offsetHeight;
+
+        // 开始动画
+        requestAnimationFrame(() => {
+            flyingPrestige.classList.add('flying');
+            flyingPrestige.style.left = `${endRect.left}px`;
+            flyingPrestige.style.top = `${endRect.top}px`;
+        });
+
+        // 添加高亮效果
+        setTimeout(() => {
+            prestigeScore.classList.add('highlight');
+        }, 800);
+
+        // 动画结束后清理
+        setTimeout(() => {
+            if (document.body.contains(flyingPrestige)) {
+                document.body.removeChild(flyingPrestige);
+            }
+            setTimeout(() => {
+                prestigeScore.classList.remove('highlight');
+            }, 200);
+        }, 1000);
     }
 
     calculateSeasonScore() {
