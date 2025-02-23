@@ -114,6 +114,28 @@ class ExplorationDeck {
                     terrainType: 'water',
                     name: 'Hinterland Stream'
                 }
+            ], 2),
+
+            // 新增的 Forgotten Forest 探索卡
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 0],
+                        [0, 1]
+                    ],
+                    terrainType: 'forest',
+                    name: 'Forgotten Forest',
+                    coinReward: 1  // 添加钱币奖励标记
+                },
+                {
+                    shape: [
+                        [1, 1, 0],
+                        [0, 1, 1]
+                    ],
+                    terrainType: 'forest',
+                    name: 'Forgotten Forest',
+                    coinReward: 0  // 无钱币奖励
+                }
             ], 2)
         ];
     }
@@ -248,6 +270,14 @@ class ExplorationDisplay {
             };
             terrainLabel.textContent = terrainNames[shapeOption.terrainType];
             optionContainer.appendChild(terrainLabel);
+
+            // 如果有钱币奖励，添加钱币图标
+            if (shapeOption.coinReward) {
+                const coinIcon = document.createElement('div');
+                coinIcon.className = 'coin-icon';
+                coinIcon.innerHTML = '🪙';  // 使用 emoji 作为临时图标
+                optionContainer.appendChild(coinIcon);
+            }
 
             // 添加点击事件来选择当前形状
             optionContainer.addEventListener('click', () => {

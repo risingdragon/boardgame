@@ -135,45 +135,32 @@
     opacity: 1;
 }
 
-/* 金币图标样式 */
-.coin-icon {
-    width: 20px;
-    height: 20px;
-    background-color: #ffd700;
+/* 高山格上的金币图标样式 */
+.has-coin .coin-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: gold;
     border-radius: 50%;
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 收集动画的金币样式保持不变 */
+.coin-collected {
+    animation: collectCoin 0.5s ease-out forwards;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 2px solid #daa520;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #b8860b;
-    z-index: 1;
-}
-
-.coin-icon::before {
-    content: "¥";
-    font-weight: bold;
-}
-
-/* 添加金币收集动画 */
-@keyframes collectCoin {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-
-    100% {
-        transform: translate(-50%, -150%) scale(0);
-        opacity: 0;
-    }
-}
-
-.coin-collected {
-    animation: collectCoin 0.5s ease-out forwards;
+    pointer-events: none;
+    width: 24px;
+    height: 24px;
 }
 
 .season-info {
