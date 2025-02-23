@@ -317,6 +317,7 @@
 }
 
 .scoring-card {
+    position: relative;
     padding: 12px;
     margin: 8px 0;
     border-radius: 8px;
@@ -533,4 +534,19 @@
 .terrain-preview-grid:not(.drag-preview) .preview-cell {
     width: 40px;
     height: 40px;
+}
+
+.current-score {
+    margin-top: 8px;
+    padding: 4px 8px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
+    font-size: 14px;
+    color: #2E7D32;
+    display: inline-block;
+}
+
+.scoring-card.active-card .current-score {
+    background: rgba(76, 175, 80, 0.2);
+    font-weight: bold;
 }
