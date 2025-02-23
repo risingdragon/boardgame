@@ -135,7 +135,24 @@ class ExplorationDeck {
                     name: 'Homestead'
                 }
             ], 2),
-
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 0, 1]
+                    ],
+                    terrainType: 'forest',
+                    name: 'Orchard'
+                },
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 0, 1]
+                    ],
+                    terrainType: 'farm',
+                    name: 'Orchard'
+                }
+            ], 2),
             new ExplorationCard([
                 {
                     shape: [

@@ -601,7 +601,7 @@ class CartographersGame {
         });
 
         mapGrid.addEventListener('dragover', (e) => {
-            e.preventDefault(); // 这行很重要，移除禁止标记
+            e.preventDefault();
             mapGrid.classList.add('drag-over');
         });
 
@@ -613,10 +613,8 @@ class CartographersGame {
         mapGrid.addEventListener('drop', (e) => {
             e.preventDefault();
             mapGrid.classList.remove('drag-over');
-            console.log('Drop event triggered'); // 调试日志
 
             if (!this.selectedTerrainType) {
-                console.log('No terrain type selected');
                 return;
             }
 
@@ -625,9 +623,6 @@ class CartographersGame {
             const row = Math.floor((e.clientY - rect.top) / cellSize);
             const col = Math.floor((e.clientX - rect.left) / cellSize);
 
-            console.log('Drop position:', { row, col });
-            console.log('Selected terrain:', this.selectedTerrainType);
-
             this.tryPlaceTerrain(row, col);
         });
     }
@@ -635,24 +630,16 @@ class CartographersGame {
     tryPlaceTerrain(row, col) {
         try {
             if (!this.currentCard) {
-                console.log('No current card');
                 return;
             }
 
             const selectedShape = this.currentCard.getSelectedShape();
             if (!selectedShape) {
-                console.log('No shape selected');
                 return;
             }
 
             const shape = selectedShape.shape;
             const terrainType = selectedShape.terrainType;
-
-            console.log('Trying to place:', {
-                shape,
-                terrainType,
-                at: { row, col }
-            });
 
             // 检查是否可以放置
             let canPlace = true;
@@ -660,7 +647,6 @@ class CartographersGame {
                 for (let j = 0; j < shape[i].length && canPlace; j++) {
                     if (shape[i][j] === 1) {
                         if (!this.board.canPlace(row + i, col + j)) {
-                            console.log('Cannot place at:', row + i, col + j);
                             canPlace = false;
                         }
                     }
@@ -669,10 +655,7 @@ class CartographersGame {
 
             // 如果可以放置，执行放置
             if (canPlace) {
-                console.log('Placing terrain');
                 this.placeTerrain(row, col);
-            } else {
-                console.log('Cannot place terrain at this location');
             }
         } catch (error) {
             console.error('Error in tryPlaceTerrain:', error);
