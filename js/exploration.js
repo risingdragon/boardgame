@@ -93,6 +93,27 @@ class ExplorationDeck {
                     terrainType: 'village',
                     name: 'Treetop Village'
                 }
+            ], 2),
+
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 1]
+                    ],
+                    terrainType: 'farm',
+                    name: 'Hinterland Stream'
+                },
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 1]
+                    ],
+                    terrainType: 'water',
+                    name: 'Hinterland Stream'
+                }
             ], 2)
         ];
     }
