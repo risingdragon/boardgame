@@ -34,6 +34,9 @@ class CartographersGame {
 
         this.initGame();
         this.initDragAndDrop();
+        this.drawNewCard();
+        this.initScoringCards();
+        this.updateScoreBoard();
     }
 
     initGame() {
@@ -285,8 +288,24 @@ class CartographersGame {
     }
 
     updateScoreBoard() {
-        // 只更新金币分数
-        document.getElementById('coin-score').textContent = this.scores.coins;
+        // 更新金币分数
+        document.getElementById('coin-score').textContent = `¥${this.scores.coins}`;
+
+        // 计算已结算季节的总分
+        const totalSeasonScore = this.scores.seasons
+            .filter(score => score !== -1)
+            .reduce((sum, score) => sum + score, 0);
+
+        // 更新声望显示
+        let seasonScoreElement = document.getElementById('season-scores');
+        if (!seasonScoreElement) {
+            seasonScoreElement = document.createElement('span');
+            seasonScoreElement.id = 'season-scores';
+            const coinDisplay = document.querySelector('.coin-display');
+            coinDisplay.appendChild(seasonScoreElement);
+        }
+        // 使用声望，去掉括号
+        seasonScoreElement.textContent = `  ${totalSeasonScore}声望`;
     }
 
     calculateTotalScore() {
@@ -310,7 +329,8 @@ class CartographersGame {
             this.endGame();
         }
 
-        this.displayScoringCards(); // 更新规则卡显示状态
+        this.displayScoringCards();
+        this.updateSeasonDisplay();
     }
 
     calculateSeasonScore() {
@@ -561,10 +581,10 @@ class CartographersGame {
                     oldScore.remove();
                 }
 
-                // 添加新的分数显示
+                // 添加新的分数显示，使用"声望"替代"分"
                 const scoreElement = document.createElement('div');
                 scoreElement.className = 'current-score';
-                scoreElement.textContent = `当前可得：${currentScore}分`;
+                scoreElement.textContent = `当前可得：${currentScore}声望`;
                 cardElement.appendChild(scoreElement);
             }
         });

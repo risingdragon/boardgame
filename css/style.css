@@ -237,17 +237,18 @@
 .coin-display {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-weight: bold;
-    color: #b8860b;
-    background-color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #daa520;
+    gap: 12px;
+    font-size: 16px;
 }
 
-.coin-symbol {
-    color: #daa520;
+#coin-score {
+    display: flex;
+    align-items: center;
+}
+
+#season-scores {
+    color: #444;
+    font-size: 16px;
 }
 
 .score-board {
