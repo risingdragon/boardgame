@@ -66,6 +66,46 @@ class ScoringDeck {
 
                         return score;
                     }
+                ),
+                new ScoringCard(
+                    "魔法山谷",
+                    "每个与一个高山格相邻的湖泊格让你获得2点声望。每个与一个高山格相邻的农场格让你获得1点声望。",
+                    (board) => {
+                        let score = 0;
+                        const directions = [
+                            [-1, 0], // 上
+                            [1, 0],  // 下
+                            [0, -1], // 左
+                            [0, 1]   // 右
+                        ];
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                const cellType = board.getCellType(i, j);
+
+                                // 如果是湖泊或农场
+                                if (cellType === 'water' || cellType === 'farm') {
+                                    // 检查是否与高山相邻
+                                    for (const [dx, dy] of directions) {
+                                        const newRow = i + dx;
+                                        const newCol = j + dy;
+
+                                        if (newRow >= 0 && newRow < board.size &&
+                                            newCol >= 0 && newCol < board.size) {
+                                            if (board.getCellType(newRow, newCol) === 'mountain') {
+                                                // 湖泊得2分，农场得1分
+                                                score += cellType === 'water' ? 2 : 1;
+                                                break; // 每个格子只计算一次
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        return score;
+                    }
                 )
             ],
             B: [
