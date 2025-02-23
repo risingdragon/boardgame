@@ -74,6 +74,6 @@ class GameBoard {
         if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
             return false;
         }
-        return this.ruins[row][col];
+        return this.grid[row][col]?.type === 'ruins';
     }
 } 
