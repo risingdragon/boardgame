@@ -175,7 +175,7 @@ class ScoringDeck {
 
                         return score;
                     },
-                    2
+                    1
                 )
             ],
             // 第2组
@@ -295,50 +295,84 @@ class ScoringDeck {
                         }
                         return score;
                     },
-                    1  // 注意：这里需要改成2
+                    2  // 注意：这里需要改成2
+                ),
+                new ScoringCard(
+                    "广阔湖岸",
+                    "每个不与湖泊格或地图边缘相邻的农场群获得3点声望。每个不与农场格或地图边缘相邻的湖泊群获得3点声望。",
+                    (board) => {
+                        let score = 0;
+                        const visited = new Set();
+                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                        // 检查每个格子
+                        for (let i = 0; i < board.size; i++) {
+                            for (let j = 0; j < board.size; j++) {
+                                const cellType = board.getCellType(i, j);
+                                if ((cellType === 'farm' || cellType === 'water') && !visited.has(`${i},${j}`)) {
+                                    // 找到一个新的群组
+                                    const group = [];
+                                    const stack = [{row: i, col: j}];
+                                    let touchesEdge = false;
+                                    let touchesOpposite = false;
+
+                                    // 使用深度优先搜索找到整个群组
+                                    while (stack.length > 0) {
+                                        const current = stack.pop();
+                                        const key = `${current.row},${current.col}`;
+                                        
+                                        if (visited.has(key)) continue;
+                                        visited.add(key);
+                                        group.push(current);
+
+                                        // 检查是否接触地图边缘
+                                        if (current.row === 0 || current.row === board.size - 1 ||
+                                            current.col === 0 || current.col === board.size - 1) {
+                                            touchesEdge = true;
+                                        }
+
+                                        // 检查相邻格子
+                                        for (const [dx, dy] of directions) {
+                                            const newRow = current.row + dx;
+                                            const newCol = current.col + dy;
+
+                                            if (newRow >= 0 && newRow < board.size &&
+                                                newCol >= 0 && newCol < board.size) {
+                                                const adjacentType = board.getCellType(newRow, newCol);
+                                                
+                                                // 检查是否接触相反类型
+                                                if ((cellType === 'farm' && adjacentType === 'water') ||
+                                                    (cellType === 'water' && adjacentType === 'farm')) {
+                                                    touchesOpposite = true;
+                                                }
+
+                                                // 如果是同类型，加入搜索栈
+                                                if (adjacentType === cellType) {
+                                                    stack.push({row: newRow, col: newCol});
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // 如果群组既不接触边缘也不接触相反类型，得3分
+                                    if (!touchesEdge && !touchesOpposite) {
+                                        score += 3;
+                                    }
+                                }
+                            }
+                        }
+                        return score;
+                    },
+                    2
                 )
             ],
             // 第3组
             [
-                new ScoringCard(
-                    "大聚落",
-                    "最大的村庄区域（正方形或长方形）的格子数量平方得分。",
-                    (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
-                    },
-                    3  // 组号
-                ),
-                new ScoringCard(
-                    "运河",
-                    "每个完整的水域格行（从地图左侧到右侧）让你获得4点声望。",
-                    (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
-                    },
-                    3  // 组号
-                )
+                
             ],
             // 第4组
             [
-                new ScoringCard(
-                    "破碎之地",
-                    "每个不同地形（包括空格）相邻的格子让你获得1点声望。",
-                    (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
-                    },
-                    4  // 组号
-                ),
-                new ScoringCard(
-                    "边境之地",
-                    "每种地形在地图边缘的格子数量的最小值×3得分。",
-                    (board) => {
-                        // TODO: 实现计分逻辑
-                        return 0;
-                    },
-                    4  // 组号
-                )
+                
             ]
         ];
     }
