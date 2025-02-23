@@ -74,6 +74,25 @@ class ExplorationDeck {
                     terrainType: 'farm',
                     name: 'Homestead'
                 }
+            ], 2),
+
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 1, 1, 0],
+                        [0, 0, 1, 1]
+                    ],
+                    terrainType: 'forest',
+                    name: 'Treetop Village'
+                },
+                {
+                    shape: [
+                        [1, 1, 1, 0],
+                        [0, 0, 1, 1]
+                    ],
+                    terrainType: 'village',
+                    name: 'Treetop Village'
+                }
             ], 2)
         ];
     }
@@ -199,7 +218,14 @@ class ExplorationDisplay {
             // 添加地形类型标签
             const terrainLabel = document.createElement('div');
             terrainLabel.className = 'terrain-type-label';
-            terrainLabel.textContent = shapeOption.terrainType === 'village' ? '村庄' : '农场';
+            // 根据不同地形类型显示对应的中文名称
+            const terrainNames = {
+                'village': '村庄',
+                'farm': '农场',
+                'forest': '森林',
+                'water': '湖泊'
+            };
+            terrainLabel.textContent = terrainNames[shapeOption.terrainType];
             optionContainer.appendChild(terrainLabel);
 
             // 添加点击事件来选择当前形状
