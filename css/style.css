@@ -671,3 +671,33 @@
 .grid-cell.water {
     z-index: 1;
 }
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.action-button {
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.action-button.confirm {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.action-button.cancel {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
+
+.action-button:hover {
+    opacity: 0.9;
+}

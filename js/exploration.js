@@ -379,6 +379,39 @@ class ExplorationDisplay {
         });
 
         cardContainer.appendChild(optionsContainer);
+
+        // 在选项容器后添加操作按钮
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'action-buttons';
+
+        const confirmButton = document.createElement('button');
+        confirmButton.className = 'action-button confirm';
+        confirmButton.textContent = '确定';
+        confirmButton.style.display = 'none'; // 初始隐藏
+
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'action-button cancel';
+        cancelButton.textContent = '取消';
+        cancelButton.style.display = 'none'; // 初始隐藏
+
+        actionButtons.appendChild(confirmButton);
+        actionButtons.appendChild(cancelButton);
+        cardContainer.appendChild(actionButtons);
+
+        // 存储按钮引用，供外部使用
+        this.confirmButton = confirmButton;
+        this.cancelButton = cancelButton;
+
         cardDisplay.appendChild(cardContainer);
+    }
+
+    showActionButtons() {
+        if (this.confirmButton) this.confirmButton.style.display = 'inline-block';
+        if (this.cancelButton) this.cancelButton.style.display = 'inline-block';
+    }
+
+    hideActionButtons() {
+        if (this.confirmButton) this.confirmButton.style.display = 'none';
+        if (this.cancelButton) this.cancelButton.style.display = 'none';
     }
 } 

@@ -30,6 +30,7 @@ class CartographersGame {
         this.selectedTerrainType = null;
         this.explorationDisplay = new ExplorationDisplay(this);
         this.seasonNames = ['春季', '夏季', '秋季', '冬季'];
+        this.tempPlacement = null; // 存储临时放置的地形
 
         this.initGame();
         this.initDragAndDrop();
@@ -134,7 +135,16 @@ class CartographersGame {
         const shape = currentShape.shape;
         const terrainType = currentShape.terrainType;
 
-        // 放置地形
+        // 存储当前状态，以便取消时恢复
+        this.tempPlacement = {
+            row,
+            col,
+            shape,
+            terrainType,
+            previousState: JSON.parse(JSON.stringify(this.board.grid))
+        };
+
+        // 临时放置地形
         for (let i = 0; i < shape.length; i++) {
             for (let j = 0; j < shape[i].length; j++) {
                 if (shape[i][j] === 1) {
@@ -143,16 +153,28 @@ class CartographersGame {
             }
         }
 
+        // 更新显示
+        this.board.updateDisplay();
+
+        // 显示确认和取消按钮
+        this.explorationDisplay.showActionButtons();
+
+        // 添加按钮事件监听器
+        this.explorationDisplay.confirmButton.onclick = () => this.confirmPlacement();
+        this.explorationDisplay.cancelButton.onclick = () => this.cancelPlacement();
+    }
+
+    confirmPlacement() {
+        if (!this.tempPlacement) return;
+
         // 检查是否有金币奖励
+        const currentShape = this.currentCard.getSelectedShape();
         if (currentShape.coinReward) {
-            this.animateCoinCollection(row, col, true);
+            this.animateCoinCollection(this.tempPlacement.row, this.tempPlacement.col, true);
         }
 
         // 检查高山格的金币收集
         this.checkAndCollectAdjacentCoins();
-
-        // 使用 board 的 updateDisplay 方法
-        this.board.updateDisplay();
 
         this.currentTime += this.currentCard.timeValue;
 
@@ -164,6 +186,22 @@ class CartographersGame {
 
         this.updateSeasonDisplay();
         this.updateScoringCardScores();
+
+        // 隐藏按钮
+        this.explorationDisplay.hideActionButtons();
+        this.tempPlacement = null;
+    }
+
+    cancelPlacement() {
+        if (!this.tempPlacement) return;
+
+        // 恢复之前的状态
+        this.board.grid = JSON.parse(JSON.stringify(this.tempPlacement.previousState));
+        this.board.updateDisplay();
+
+        // 隐藏按钮
+        this.explorationDisplay.hideActionButtons();
+        this.tempPlacement = null;
     }
 
     checkAndCollectAdjacentCoins() {
@@ -605,7 +643,6 @@ class CartographersGame {
     initDragAndDrop() {
         const mapGrid = document.getElementById('mapGrid');
 
-        // 必须阻止默认行为才能接受拖放
         mapGrid.addEventListener('dragenter', (e) => {
             e.preventDefault();
             mapGrid.classList.add('drag-over');
@@ -630,9 +667,15 @@ class CartographersGame {
             }
 
             const rect = mapGrid.getBoundingClientRect();
-            const cellSize = 40;
-            const row = Math.floor((e.clientY - rect.top) / cellSize);
-            const col = Math.floor((e.clientX - rect.left) / cellSize);
+            const cellSize = 40; // 格子大小
+
+            // 计算鼠标位置相对于格子的偏移
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            // 计算最近的格子中心点
+            const col = Math.round(offsetX / cellSize - 0.5);
+            const row = Math.round(offsetY / cellSize - 0.5);
 
             this.tryPlaceTerrain(row, col);
         });
