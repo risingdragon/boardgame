@@ -159,6 +159,28 @@ class ExplorationDeck {
                 {
                     shape: [
                         [1, 1, 1],
+                        [0, 1, 0],
+                        [0, 1, 0]
+                    ],
+                    terrainType: 'forest',
+                    name: 'Marshlands',
+                    coinReward: 1  // 添加钱币奖励标记
+                },
+                {
+                    shape: [
+                        [1, 1, 1],
+                        [0, 1, 0],
+                        [0, 1, 0]
+                    ],
+                    terrainType: 'water',
+                    name: 'Marshlands',
+                    coinReward: 0  // 无钱币奖励
+                }
+            ], 2),
+            new ExplorationCard([
+                {
+                    shape: [
+                        [1, 1, 1],
                         [0, 0, 1]
                     ],
                     terrainType: 'forest',
