@@ -425,12 +425,12 @@ class CartographersGame {
         const prestigeScore = document.getElementById('season-scores');
         if (!cardElement || !prestigeScore) return;
 
-        // 获取起点（规则卡上的当前得分位置）和终点位置
+        // 获取起点（规则卡上的当前得分位置）
         const scoreElement = cardElement.querySelector('.current-score');
         const startRect = scoreElement.getBoundingClientRect();
         const endRect = prestigeScore.getBoundingClientRect();
 
-        // 创建飞行的声望图标
+        // 创建飞行的声望图标，但不移除原始分数显示
         const flyingPrestige = document.createElement('div');
         flyingPrestige.className = 'flying-prestige';
         flyingPrestige.innerHTML = '★';
@@ -455,7 +455,7 @@ class CartographersGame {
             prestigeScore.classList.add('highlight');
         }, 800);
 
-        // 动画结束后清理
+        // 动画结束后的清理，但保持规则卡上的分数显示
         setTimeout(() => {
             if (document.body.contains(flyingPrestige)) {
                 document.body.removeChild(flyingPrestige);
@@ -506,14 +506,25 @@ class CartographersGame {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
-        scoringCardsContainer.innerHTML = '';
+        // 保存当前的分数显示
+        const currentScores = new Map();
+        scoringCardsContainer.querySelectorAll('.scoring-card').forEach(card => {
+            const scoreElement = card.querySelector('.current-score');
+            if (scoreElement) {
+                const titleElement = card.querySelector('.scoring-card-title');
+                if (titleElement) {
+                    currentScores.set(titleElement.textContent, scoreElement.innerHTML);
+                }
+            }
+        });
 
-        // 添加标题
+        // 清空容器
+        scoringCardsContainer.innerHTML = '';
         const title = document.createElement('h3');
         title.textContent = '计分规则';
         scoringCardsContainer.appendChild(title);
 
-        // 显示当前激活的计分卡
+        // 显示计分卡
         this.scoringCards.forEach(card => {
             const cardElement = document.createElement('div');
             cardElement.className = 'scoring-card';
@@ -528,8 +539,20 @@ class CartographersGame {
                 <div class="scoring-card-title">${card.name}</div>
                 <div class="scoring-card-description">${card.description}</div>
             `;
+
+            // 恢复之前的分数显示
+            if (currentScores.has(card.name)) {
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'current-score';
+                scoreElement.innerHTML = currentScores.get(card.name);
+                cardElement.appendChild(scoreElement);
+            }
+
             scoringCardsContainer.appendChild(cardElement);
         });
+
+        // 更新分数显示
+        this.updateScoringCardScores();
     }
 
     isCardActiveInCurrentSeason(card) {
@@ -707,19 +730,18 @@ class CartographersGame {
             const card = this.scoringCards[index];
             const cardType = this.getCardType(card);
 
+            // 只更新当前季节活跃的规则卡分数
             if (activeCardTypes.includes(cardType)) {
                 const currentScore = card.scoringFunction(this.board);
 
-                const oldScore = cardElement.querySelector('.current-score');
-                if (oldScore) {
-                    oldScore.remove();
+                let scoreElement = cardElement.querySelector('.current-score');
+                if (!scoreElement) {
+                    scoreElement = document.createElement('div');
+                    scoreElement.className = 'current-score';
+                    cardElement.appendChild(scoreElement);
                 }
 
-                const scoreElement = document.createElement('div');
-                scoreElement.className = 'current-score';
-                // 使用五角星图标替代"声望"文字
                 scoreElement.innerHTML = `当前可得：${currentScore}<span class="star-icon">★</span>`;
-                cardElement.appendChild(scoreElement);
             }
         });
     }
