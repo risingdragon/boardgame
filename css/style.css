@@ -433,22 +433,21 @@
 }
 
 .terrain-option {
-    border: none;
-    padding: 0;
-    background: none;
-    cursor: grab;
-    user-select: none;
-    width: fit-content;
+    position: relative;
+    cursor: pointer;
+    padding: 12px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 }
 
 .terrain-option:hover {
-    background: none;
-    border: none;
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
 .terrain-option.selected {
-    background: none;
-    border: none;
+    border-color: #4CAF50;
+    background-color: rgba(76, 175, 80, 0.1);
 }
 
 .terrain-label {
@@ -483,27 +482,48 @@
     gap: 0;
 }
 
-.terrain-option {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 8px;
-    cursor: grab;
-    user-select: none;
-    transition: all 0.3s ease;
-    width: 130px;
-    background-color: white;
+.terrain-type-label {
+    text-align: center;
+    color: #666;
+    margin: 8px 0;
+    padding: 4px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9em;
+    border: 1px solid #dee2e6;
 }
 
-.terrain-label {
-    text-align: center;
-    margin-top: 5px;
-    font-weight: bold;
-    color: #666;
-    font-size: 0.9em;
+.terrain-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    gap: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    margin: 8px;
 }
 
 /* 拖动时的样式保持不变 */
 .preview-cell {
     width: 40px;
     height: 40px;
+}
+
+.shape-buttons {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+    justify-content: center;
+}
+
+.terrain-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.terrain-option.selected {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
