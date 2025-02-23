@@ -574,32 +574,12 @@ class CartographersGame {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
-        // 保存当前的分数显示
-        const currentScores = new Map();
-        scoringCardsContainer.querySelectorAll('.scoring-card').forEach(card => {
-            const scoreElement = card.querySelector('.current-score');
-            if (scoreElement) {
-                const titleElement = card.querySelector('.scoring-card-title');
-                if (titleElement) {
-                    currentScores.set(titleElement.textContent, scoreElement.innerHTML);
-                }
-            }
-        });
-
-        // 清空容器
         scoringCardsContainer.innerHTML = '';
         const title = document.createElement('h3');
         title.textContent = '计分规则';
         scoringCardsContainer.appendChild(title);
 
-        // 按照ABCD顺序排序卡片
-        const sortedCards = [...this.scoringCards].sort((a, b) => {
-            const order = { 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
-            return order[a.type] - order[b.type];
-        });
-
-        // 显示计分卡
-        sortedCards.forEach(card => {
+        this.scoringCards.forEach(card => {
             const cardElement = document.createElement('div');
             cardElement.className = 'scoring-card';
 
@@ -614,19 +594,15 @@ class CartographersGame {
                 <div class="scoring-card-description">${card.description}</div>
             `;
 
-            // 恢复之前的分数显示
-            if (currentScores.has(card.name)) {
-                const scoreElement = document.createElement('div');
-                scoreElement.className = 'current-score';
-                scoreElement.innerHTML = `${currentScores.get(card.name)}<span class="star-icon">★</span>`;
-                cardElement.appendChild(scoreElement);
-            }
+            // 立即添加分数显示元素
+            const scoreElement = document.createElement('div');
+            scoreElement.className = 'current-score';
+            const currentScore = card.scoringFunction(this.board);
+            scoreElement.innerHTML = `${currentScore}<span class="star-icon">★</span>`;
+            cardElement.appendChild(scoreElement);
 
             scoringCardsContainer.appendChild(cardElement);
         });
-
-        // 更新分数显示
-        this.updateScoringCardScores();
     }
 
     isCardActiveInCurrentSeason(card) {

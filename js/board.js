@@ -54,6 +54,9 @@ class GameBoard {
 
     // 获取单元格的类型
     getCellType(row, col) {
+        if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
+            return null;
+        }
         return this.grid[row][col]?.type || null;
     }
 
@@ -65,5 +68,12 @@ class GameBoard {
     // 收集金币
     collectCoin(row, col) {
         return this.coins.delete(`${row},${col}`);
+    }
+
+    isRuin(row, col) {
+        if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
+            return false;
+        }
+        return this.ruins[row][col];
     }
 } 
