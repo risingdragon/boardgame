@@ -301,8 +301,8 @@ class CartographersGame {
     }
 
     updateScoreBoard() {
-        // 更新金币分数
-        document.getElementById('coin-score').textContent = `¥${this.scores.coins}`;
+        // 更新金币分数，使用钱币图标
+        document.getElementById('coin-score').innerHTML = `${this.scores.coins}<span class="coin-icon">🪙</span>`;
 
         // 计算已结算季节的总分
         const totalSeasonScore = this.scores.seasons
@@ -317,8 +317,7 @@ class CartographersGame {
             const coinDisplay = document.querySelector('.coin-display');
             coinDisplay.appendChild(seasonScoreElement);
         }
-        // 使用声望，去掉括号
-        seasonScoreElement.textContent = `  ${totalSeasonScore}声望`;
+        seasonScoreElement.innerHTML = `  ${totalSeasonScore}<span class="star-icon">★</span>`;
     }
 
     calculateTotalScore() {

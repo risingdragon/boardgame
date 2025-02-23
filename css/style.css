@@ -249,6 +249,9 @@
 #season-scores {
     color: #444;
     font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
 
 .score-board {
@@ -580,4 +583,30 @@
     transform: scale(1.3);
     color: gold;
     text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
+
+.star-icon {
+    color: #FFD700;
+    /* 金色 */
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+    margin-left: 2px;
+    font-size: 0.9em;
+    /* 稍微调小一点 */
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.current-score .star-icon {
+    font-size: 0.9em;
+    vertical-align: baseline;
+}
+
+.coin-icon {
+    color: #FFD700;
+    /* 金色 */
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+    margin-left: 2px;
+    font-size: 0.9em;
+    display: inline-block;
+    vertical-align: middle;
 }
