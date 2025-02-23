@@ -592,8 +592,14 @@ class CartographersGame {
         title.textContent = '计分规则';
         scoringCardsContainer.appendChild(title);
 
+        // 按照ABCD顺序排序卡片
+        const sortedCards = [...this.scoringCards].sort((a, b) => {
+            const order = { 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
+            return order[a.type] - order[b.type];
+        });
+
         // 显示计分卡
-        this.scoringCards.forEach(card => {
+        sortedCards.forEach(card => {
             const cardElement = document.createElement('div');
             cardElement.className = 'scoring-card';
 
