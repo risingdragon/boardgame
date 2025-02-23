@@ -160,6 +160,38 @@ class ScoringDeck {
                         return score;
                     },
                     1  // 组号
+                ),
+                new ScoringCard(
+                    "葱郁林海",
+                    "每一行或每一列如果有森林格就让你获得1点声望。同一个森林格可以累计。",
+                    (board) => {
+                        let score = 0;
+
+                        // 检查每一行
+                        for (let i = 0; i < board.size; i++) {
+                            // 检查这一行是否有森林
+                            for (let j = 0; j < board.size; j++) {
+                                if (board.getCellType(i, j) === 'forest') {
+                                    score += 1;  // 这一行有森林，得1分
+                                    break;  // 找到一个就够了，检查下一行
+                                }
+                            }
+                        }
+
+                        // 检查每一列
+                        for (let j = 0; j < board.size; j++) {
+                            // 检查这一列是否有森林
+                            for (let i = 0; i < board.size; i++) {
+                                if (board.getCellType(i, j) === 'forest') {
+                                    score += 1;  // 这一列有森林，得1分
+                                    break;  // 找到一个就够了，检查下一列
+                                }
+                            }
+                        }
+
+                        return score;
+                    },
+                    1
                 )
             ],
             // 第2组
