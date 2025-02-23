@@ -179,6 +179,15 @@ class ExplorationDeck {
             const j = Math.floor(Math.random() * (i + 1));
             [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
         }
+
+        // 打印洗牌后的卡牌顺序
+        console.log('探索卡洗牌结果：',
+            this.cards.map(card => ({
+                name: card.shapes[0].name,
+                timeValue: card.timeValue,
+                terrainTypes: card.shapes.map(shape => shape.terrainType)
+            }))
+        );
     }
 
     drawCard() {
@@ -186,7 +195,16 @@ class ExplorationDeck {
             this.cards = this.initializeCards();
             this.shuffle();
         }
-        return this.cards.pop();
+        const card = this.cards.shift();
+
+        // 打印抽取的卡牌信息
+        console.log('抽取卡牌：', {
+            name: card.shapes[0].name,
+            timeValue: card.timeValue,
+            terrainTypes: card.shapes.map(shape => shape.terrainType)
+        });
+
+        return card;
     }
 }
 

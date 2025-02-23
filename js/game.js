@@ -33,7 +33,6 @@ class CartographersGame {
 
         this.initGame();
         this.initDragAndDrop();
-        this.drawNewCard();
         this.updateScoreBoard();
     }
 
