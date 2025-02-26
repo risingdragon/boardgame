@@ -94,7 +94,22 @@
 }
 
 .monster {
-    background-color: #8b0000;
+    background-color: #800080;
+    /* 紫色 */
+}
+
+.preview-cell.monster {
+    background-color: #800080;
+}
+
+.grid-cell.monster::after {
+    content: '👾';
+    /* 使用怪物emoji */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
 }
 
 .card-controls {

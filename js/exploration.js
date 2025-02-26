@@ -1,5 +1,6 @@
 class ExplorationCard {
-    constructor(shapes, timeValue, monsterAttack = false) {
+    constructor(name, shapes, timeValue, monsterAttack = false) {
+        this.name = name;
         this.shapes = shapes;       // 可选的形状数组
         this.timeValue = timeValue;  // 添加时间值属性
         this.monsterAttack = monsterAttack;  // 是否触发怪物入侵
@@ -57,200 +58,248 @@ class ExplorationDeck {
 
     initializeCards() {
         return [
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1]
-                    ],
-                    terrainType: 'farm',
-                    name: 'Farmland',
-                    coinReward: 1  // 添加钱币奖励标记
-                },
-                {
-                    shape: [
-                        [0, 1, 0],
-                        [1, 1, 1],
-                        [0, 1, 0]
-                    ],
-                    terrainType: 'farm',
-                    name: 'Farmland',
-                    coinReward: 0  // 无钱币奖励
-                }
-            ], 1),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1, 1]
-                    ],
-                    terrainType: 'village',
-                    name: 'Fishing Village',
-                    coinReward: 0  // 添加钱币奖励标记
-                },
-                {
-                    shape: [
-                        [1, 1, 1, 1]
-                    ],
-                    terrainType: 'water',
-                    name: 'Fishing Village',
-                    coinReward: 0  // 无钱币奖励
-                }
-            ], 1),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 0],
-                        [0, 1]
-                    ],
-                    terrainType: 'forest',
-                    name: 'Forgotten Forest',
-                    coinReward: 1  // 添加钱币奖励标记
-                },
-                {
-                    shape: [
-                        [1, 1, 0],
-                        [0, 1, 1]
-                    ],
-                    terrainType: 'forest',
-                    name: 'Forgotten Forest',
-                    coinReward: 0  // 无钱币奖励
-                }
-            ], 2),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1]
-                    ],
-                    terrainType: 'water',
-                    name: 'Great River',
-                    coinReward: 1  // 中间格有金币
-                },
-                {
-                    shape: [
-                        [1, 1, 0],
-                        [0, 1, 1],
-                        [0, 0, 1]
-                    ],
-                    terrainType: 'water',
-                    name: 'Great River',
-                    coinReward: 0  // 无金币奖励
-                }
-            ], 1),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1],
-                        [0, 1]
-                    ],
-                    terrainType: 'village',
-                    name: 'Hamlet',
-                    coinReward: 1  // 中间格有金币
-                },
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 1, 1]
-                    ],
-                    terrainType: 'village',
-                    name: 'Hamlet',
-                    coinReward: 0  // 无金币奖励
-                }
-            ], 1),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 1]
-                    ],
-                    terrainType: 'farm',
-                    name: 'Hinterland Stream'
-                },
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 0, 1],
-                        [0, 0, 1]
-                    ],
-                    terrainType: 'water',
-                    name: 'Hinterland Stream'
-                }
-            ], 2),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 1, 0]
-                    ],
-                    terrainType: 'village',
-                    name: 'Homestead'
-                },
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 1, 0]
-                    ],
-                    terrainType: 'farm',
-                    name: 'Homestead'
-                }
-            ], 2),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 1, 0],
-                        [0, 1, 0]
-                    ],
-                    terrainType: 'forest',
-                    name: 'Marshlands',
-                    coinReward: 0  // 添加钱币奖励标记
-                },
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 1, 0],
-                        [0, 1, 0]
-                    ],
-                    terrainType: 'water',
-                    name: 'Marshlands',
-                    coinReward: 0  // 无钱币奖励
-                }
-            ], 2),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 0, 1]
-                    ],
-                    terrainType: 'forest',
-                    name: 'Orchard'
-                },
-                {
-                    shape: [
-                        [1, 1, 1],
-                        [0, 0, 1]
-                    ],
-                    terrainType: 'farm',
-                    name: 'Orchard'
-                }
-            ], 2),
-            new ExplorationCard([
-                {
-                    shape: [
-                        [1, 1, 1, 0],
-                        [0, 0, 1, 1]
-                    ],
-                    terrainType: 'forest',
-                    name: 'Treetop Village'
-                },
-                {
-                    shape: [
-                        [1, 1, 1, 0],
-                        [0, 0, 1, 1]
-                    ],
-                    terrainType: 'village',
-                    name: 'Treetop Village'
-                }
-            ], 2),
+            new ExplorationCard(
+                '田野',
+                [
+                    {
+                        shape: [[1, 1]],
+                        terrainType: 'farm',
+                        coinReward: 1
+                    },
+                    {
+                        shape: [
+                            [0, 1, 0],
+                            [1, 1, 1],
+                            [0, 1, 0]
+                        ],
+                        terrainType: 'farm',
+                        coinReward: 0
+                    }
+                ],
+                1
+            ),
+            new ExplorationCard(
+                '沼泽地',
+                [
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 1, 0],
+                            [0, 1, 0]
+                        ],
+                        terrainType: 'forest',
+                        coinReward: 0
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 1, 0],
+                            [0, 1, 0]
+                        ],
+                        terrainType: 'water',
+                        coinReward: 0
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '果园',
+                [
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 0, 1]
+                        ],
+                        terrainType: 'forest'
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 0, 1]
+                        ],
+                        terrainType: 'farm'
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '大江大河',
+                [
+                    {
+                        shape: [[1, 1, 1]],
+                        terrainType: 'water',
+                        coinReward: 1
+                    },
+                    {
+                        shape: [
+                            [1, 1, 0],
+                            [0, 1, 1],
+                            [0, 0, 1]
+                        ],
+                        terrainType: 'water',
+                        coinReward: 0
+                    }
+                ],
+                1
+            ),
+            new ExplorationCard(
+                '遗忘森林',
+                [
+                    {
+                        shape: [
+                            [1, 0],
+                            [0, 1]
+                        ],
+                        terrainType: 'forest',
+                        coinReward: 1
+                    },
+                    {
+                        shape: [
+                            [1, 1, 0],
+                            [0, 1, 1]
+                        ],
+                        terrainType: 'forest',
+                        coinReward: 0
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '家园',
+                [
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 1, 0]
+                        ],
+                        terrainType: 'village'
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 1, 0]
+                        ],
+                        terrainType: 'farm'
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '小村庄',
+                [
+                    {
+                        shape: [
+                            [1, 1],
+                            [0, 1]
+                        ],
+                        terrainType: 'village',
+                        coinReward: 1
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 1, 1]
+                        ],
+                        terrainType: 'village',
+                        coinReward: 0
+                    }
+                ],
+                1
+            ),
+            new ExplorationCard(
+                '小渔村',
+                [
+                    {
+                        shape: [[1, 1, 1, 1]],
+                        terrainType: 'village',
+                        coinReward: 0
+                    },
+                    {
+                        shape: [[1, 1, 1, 1]],
+                        terrainType: 'water',
+                        coinReward: 0
+                    }
+                ],
+                1
+            ),
+            new ExplorationCard(
+                '腹地溪流',
+                [
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 0, 1],
+                            [0, 0, 1]
+                        ],
+                        terrainType: 'farm'
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1],
+                            [0, 0, 1],
+                            [0, 0, 1]
+                        ],
+                        terrainType: 'water'
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '树屋村庄',
+                [
+                    {
+                        shape: [
+                            [1, 1, 1, 0],
+                            [0, 0, 1, 1]
+                        ],
+                        terrainType: 'forest'
+                    },
+                    {
+                        shape: [
+                            [1, 1, 1, 0],
+                            [0, 0, 1, 1]
+                        ],
+                        terrainType: 'village'
+                    }
+                ],
+                2
+            ),
+            new ExplorationCard(
+                '时空裂隙',
+                [
+                    {
+                        shape: [
+                            [1]
+                        ],
+                        terrainType: 'forest'
+                    },
+                    {
+                        shape: [
+                            [1]
+                        ],
+                        terrainType: 'village'
+                    },
+                    {
+                        shape: [
+                            [1]
+                        ],
+                        terrainType: 'farm'
+                    },
+                    {
+                        shape: [
+                            [1]
+                        ],
+                        terrainType: 'water'
+                    },
+                    {
+                        shape: [
+                            [1]
+                        ],
+                        terrainType: 'monster'
+                    }
+                ],
+                0
+            ),
         ];
     }
 
@@ -263,7 +312,7 @@ class ExplorationDeck {
         // 打印洗牌后的卡牌顺序
         console.log('探索卡洗牌结果：',
             this.cards.map(card => ({
-                name: card.shapes[0].name,
+                name: card.name,
                 timeValue: card.timeValue,
                 terrainTypes: card.shapes.map(shape => shape.terrainType)
             }))
@@ -279,7 +328,7 @@ class ExplorationDeck {
 
         // 打印抽取的卡牌信息
         console.log('抽取卡牌：', {
-            name: card.shapes[0].name,
+            name: card.name,
             timeValue: card.timeValue,
             terrainTypes: card.shapes.map(shape => shape.terrainType)
         });
@@ -399,7 +448,8 @@ class ExplorationDisplay {
                 'village': '村庄',
                 'farm': '农场',
                 'forest': '森林',
-                'water': '湖泊'
+                'water': '湖泊',
+                'monster': '怪物'
             };
             terrainLabel.textContent = terrainNames[shapeOption.terrainType];
             optionContainer.appendChild(terrainLabel);
