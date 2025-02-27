@@ -88,6 +88,16 @@ class CartographersGame {
 
     drawNewCard() {
         this.currentCard = this.explorationDeck.drawCard();
+
+        // 如果抽到遗迹牌，继续抽牌
+        if (this.currentCard && this.currentCard.getSelectedShape().terrainType === 'ruin') {
+            console.log('抽到遗迹牌，继续抽取下一张');
+            setTimeout(() => {
+                this.currentCard = this.explorationDeck.drawCard();
+                this.updateCardDisplay();
+            }, 1000);
+        }
+
         this.updateCardDisplay();
     }
 
@@ -112,6 +122,8 @@ class CartographersGame {
         if (!this.currentCard) return false;
 
         const shape = this.currentCard.getSelectedShape().shape;
+        // 禁止放置遗迹牌
+        if (currentShape.terrainType === 'ruin') return false;
         // 检查是否超出边界
         if (row + shape.length > 11 || col + shape[0].length > 11) return false;
 
@@ -816,4 +828,4 @@ class CartographersGame {
 // 初始化游戏
 window.onload = () => {
     const game = new CartographersGame();
-}; 
+};
