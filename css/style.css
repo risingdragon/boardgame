@@ -12,7 +12,7 @@
 .game-content {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    margin-top: 20px;
 }
 
 .game-left {
@@ -739,7 +739,8 @@
 
 /* 添加怪物扣分动画样式 */
 .flying-prestige.monster-prestige {
-    color: #ff4444;  /* 红色表示扣分 */
+    color: #ff4444;
+    /* 红色表示扣分 */
     font-size: 24px;
     text-shadow: 0 2px 4px rgba(255, 0, 0, 0.3);
     opacity: 0.9;
@@ -747,5 +748,66 @@
 
 .flying-prestige.monster-prestige.flying {
     transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: scale(0.5) rotate(180deg);  /* 添加旋转效果表示扣分 */
+    transform: scale(0.5) rotate(180deg);
+    /* 添加旋转效果表示扣分 */
+}
+
+.season-score-area {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f5e6d3;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.season-box {
+    flex: 1;
+    text-align: center;
+    padding: 5px;
+    border-right: 1px solid #d4c3b3;
+}
+
+.season-box:last-child {
+    border-right: none;
+}
+
+.season-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #594a42;
+}
+
+.rules-combo {
+    margin: 5px 0;
+}
+
+.rule-pair {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.rule-card {
+    width: 20px;
+    height: 20px;
+    background: #8b7355;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.season-score {
+    font-size: 18px;
+    font-weight: bold;
+    color: #594a42;
+}
+
+.map-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }

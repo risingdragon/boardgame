@@ -960,6 +960,14 @@ class CartographersGame {
             scoreElement.innerHTML = `${currentScore}<span class="star-icon">★</span>`;
         });
     }
+
+    // 更新得分显示
+    updateSeasonScore(season, score) {
+        const scoreElement = document.getElementById(`${season}-score`);
+        if (scoreElement) {
+            scoreElement.textContent = score >= 0 ? score : '-';
+        }
+    }
 }
 
 // 初始化游戏
