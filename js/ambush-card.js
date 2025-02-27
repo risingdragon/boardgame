@@ -256,15 +256,19 @@ class AmbushCard extends ExplorationCard {
                 break;
         }
 
+        // 计算实际的边界限制
+        const maxCol = lastCol - (shapeWidth - 1);  // 考虑形状宽度
+        const maxRow = lastRow - (shapeHeight - 1); // 考虑形状高度
+
         if (this.direction === AmbushCard.DIRECTIONS.CLOCKWISE) {
             // 顺时针移动逻辑
-            if (currentRow === 0 - baseRow && currentCol < lastCol - baseCol) {
+            if (currentRow === 0 - baseRow && currentCol < maxCol - baseCol) {
                 return [currentRow, currentCol + 1]; // 向右
             }
-            if (currentCol === lastCol - baseCol && currentRow < lastRow - baseRow) {
+            if (currentCol === maxCol - baseCol && currentRow < maxRow - baseRow) {
                 return [currentRow + 1, currentCol]; // 向下
             }
-            if (currentRow === lastRow - baseRow && currentCol > 0 - baseCol) {
+            if (currentRow === maxRow - baseRow && currentCol > 0 - baseCol) {
                 return [currentRow, currentCol - 1]; // 向左
             }
             if (currentCol === 0 - baseCol && currentRow > 0 - baseRow) {
@@ -275,16 +279,23 @@ class AmbushCard extends ExplorationCard {
             if (currentRow === 0 - baseRow && currentCol > 0 - baseCol) {
                 return [currentRow, currentCol - 1]; // 向左
             }
-            if (currentCol === 0 - baseCol && currentRow < lastRow - baseRow) {
+            if (currentCol === 0 - baseCol && currentRow < maxRow - baseRow) {
                 return [currentRow + 1, currentCol]; // 向下
             }
-            if (currentRow === lastRow - baseRow && currentCol < lastCol - baseCol) {
+            if (currentRow === maxRow - baseRow && currentCol < maxCol - baseCol) {
                 return [currentRow, currentCol + 1]; // 向右
             }
-            if (currentCol === lastCol - baseCol && currentRow > 0 - baseRow) {
+            if (currentCol === maxCol - baseCol && currentRow > 0 - baseRow) {
                 return [currentRow - 1, currentCol]; // 向上
             }
         }
+
+        console.log('移动到位置:', {
+            currentPos: [currentRow, currentCol],
+            shape: shape,
+            basePoint: [baseRow, baseCol],
+            maxBounds: [maxRow, maxCol]
+        });
 
         return null; // 无法继续移动
     }

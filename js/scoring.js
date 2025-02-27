@@ -102,7 +102,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "葱郁林海",
-                    "每一行或每一列如果有森林格就获得1点声望。同一个森林格可以累计。",
+                    "每个有森林格的行和列获得1点声望。",
                     (board) => {
                         let score = 0;
 
