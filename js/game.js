@@ -33,6 +33,7 @@ class CartographersGame {
         this.tempPlacement = null; // 存储临时放置的地形
         this.isPlacing = false;   // 添加标记表示是否正在放置地形
 
+        this.lastCardWasRuin = false;  // 添加标记
         this.initGame();
         this.initDragAndDrop();
         this.updateScoreBoard();
@@ -92,9 +93,9 @@ class CartographersGame {
         // 如果抽到遗迹牌，继续抽牌
         if (this.currentCard && this.currentCard.getSelectedShape().terrainType === 'ruin') {
             console.log('抽到遗迹牌，继续抽取下一张');
+            this.lastCardWasRuin = true;
             setTimeout(() => {
-                this.currentCard = this.explorationDeck.drawCard();
-                this.updateCardDisplay();
+                this.drawNewCard();  // 递归调用，如果还是遗迹牌会继续抽
             }, 1000);
         }
 
@@ -120,7 +121,7 @@ class CartographersGame {
 
     isValidPlacement(row, col) {
         if (!this.currentCard) return false;
-
+        const currentShape = this.currentCard.getSelectedShape();
         const shape = this.currentCard.getSelectedShape().shape;
         // 禁止放置遗迹牌
         if (currentShape.terrainType === 'ruin') return false;
@@ -202,6 +203,7 @@ class CartographersGame {
         // 等待所有金币收集动画完成后再继续
         setTimeout(() => {
             this.currentTime += this.currentCard.timeValue;
+            this.lastCardWasRuin = false;  // 放置完成后重置标记
 
             if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
                 this.endSeason();

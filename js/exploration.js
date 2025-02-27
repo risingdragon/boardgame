@@ -561,6 +561,19 @@ class ExplorationDisplay {
             this.confirmButton.onclick = () => this.game.confirmPlacement();
             this.cancelButton.onclick = () => this.game.cancelPlacement();
         }
+
+        // 在卡片标题下方添加遗迹提示
+        if (this.game.lastCardWasRuin) {
+            const ruinReminder = document.createElement('div');
+            ruinReminder.className = 'ruin-reminder';
+            ruinReminder.textContent = '必须尽可能覆盖遗迹';
+            ruinReminder.style.color = '#ff4444';
+            ruinReminder.style.fontSize = '0.9em';
+            ruinReminder.style.marginBottom = '8px';
+            ruinReminder.style.textAlign = 'center';  // 添加居中对齐
+            ruinReminder.style.width = '100%';        // 确保宽度占满
+            cardContainer.insertBefore(ruinReminder, optionsContainer);
+        }
     }
 
     showActionButtons() {
