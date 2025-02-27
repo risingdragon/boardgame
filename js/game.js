@@ -925,54 +925,6 @@ class CartographersGame {
         }
     }
 
-    handleDrop(e) {
-        e.preventDefault();
-        if (!this.isDragging) return;
-
-        const cell = e.target;
-        if (!cell.classList.contains('grid-cell')) return;
-
-        const row = parseInt(cell.dataset.row);
-        const col = parseInt(cell.dataset.col);
-
-        if (this.canPlaceShape(row, col)) {
-            this.placeShape(row, col);
-
-            // 检查并处理钱币奖励
-            if (this.currentCard &&
-                this.currentCard.shapes[this.currentCard.selectedShapeIndex].coinReward) {
-                this.collectCoin(cell);
-            }
-
-            this.drawNewCard();
-        }
-    }
-
-    collectCoin(cell) {
-        // 创建金币收集动画
-        const coinIcon = document.createElement('div');
-        coinIcon.className = 'coin-icon coin-collected';
-        cell.appendChild(coinIcon);
-
-        // 更新分数
-        this.scores.coins++;
-        this.updateScoreDisplay();
-
-        // 动画结束后移除金币图标
-        setTimeout(() => {
-            if (coinIcon.parentNode === cell) {
-                cell.removeChild(coinIcon);
-            }
-        }, 500);
-    }
-
-    updateScoreDisplay() {
-        const coinScoreElement = document.getElementById('coin-score');
-        if (coinScoreElement) {
-            coinScoreElement.textContent = this.scores.coins;
-        }
-    }
-
     updateScoringCardScores() {
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
