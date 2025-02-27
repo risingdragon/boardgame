@@ -338,6 +338,9 @@ class CartographersGame {
             this.currentTime += this.currentCard.timeValue;
             this.lastCardWasRuin = false;
 
+            // 更新进度条显示
+            this.updateSeasonDisplay();
+
             // 检查怪物分数
             this.checkMonsterScore();
 
