@@ -630,7 +630,6 @@ class CartographersGame {
                 ...this.explorationDeck.discardPile
             ];
             this.explorationDeck.discardPile = []; // 清空弃牌堆
-            console.log('季节准备：合并弃牌堆');
         }
 
         // 从伏兵牌库抽一张卡
@@ -640,7 +639,6 @@ class CartographersGame {
             this.explorationDeck.cards.push(ambushCard);
             // 洗牌
             this.shuffleArray(this.explorationDeck.cards);
-            console.log('季节准备：加入伏兵卡并洗牌', ambushCard.getName());
         }
 
         // 更新显示

@@ -399,7 +399,7 @@ class ExplorationDisplay {
 
         const timeValue = document.createElement('div');
         timeValue.className = 'time-value';
-        timeValue.textContent = `时限: ${card.timeValue}`;
+        timeValue.textContent = `季节推进: ${card.timeValue}`;
 
         cardHeader.appendChild(cardName);
         cardHeader.appendChild(timeValue);
