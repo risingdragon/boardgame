@@ -100,14 +100,34 @@ class CartographersGame {
             return;
         }
 
+        // 检查是否需要覆盖遗迹但已无可用遗迹
+        if (this.lastCardWasRuin && !this.hasUncoveredRuins()) {
+            console.log('需要覆盖遗迹但已无可用遗迹，切换为时空裂隙探索卡');
+            this.currentCard = this.explorationDeck.createVoidCard();
+            this.lastCardWasRuin = false;  // 重置遗迹标记
+            this.updateCardDisplay();
+            return;
+        }
+
         // 检查当前卡牌是否完全无法放置
         if (this.currentCard && this.board.isTerrainUnplaceable(this.currentCard.getSelectedShape().shape)) {
             console.log('当前卡牌无法放置，切换为时空裂隙探索卡');
-            // TODO: 创建时空裂隙探索卡
             this.currentCard = this.explorationDeck.createVoidCard();
         }
 
         this.updateCardDisplay();
+    }
+
+    // 添加新方法：检查是否还有未覆盖的遗迹
+    hasUncoveredRuins() {
+        for (let i = 0; i < this.board.size; i++) {
+            for (let j = 0; j < this.board.size; j++) {
+                if (this.board.getCellType(i, j) === 'ruin') {
+                    return true;  // 找到未覆盖的遗迹
+                }
+            }
+        }
+        return false;  // 没有找到未覆盖的遗迹
     }
 
     updateCardDisplay() {
