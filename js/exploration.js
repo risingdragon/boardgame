@@ -53,7 +53,7 @@ class ExplorationCard {
 class ExplorationDeck {
     constructor() {
         this.cards = this.initializeCards();
-        this.shuffle();
+        // 移除这里的洗牌，将在季节准备阶段进行
     }
 
     initializeCards() {

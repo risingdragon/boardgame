@@ -45,7 +45,7 @@ class CartographersGame {
         this.createGrid();
         this.initEventListeners();
         this.initScoringCards();
-        this.drawNewCard();
+        this.prepareNewSeason();  // 替换原来的 drawNewCard()
         this.updateSeasonDisplay();
     }
 
@@ -498,13 +498,28 @@ class CartographersGame {
             if (this.currentSeason === 0) {
                 this.endGame();
             } else {
-                // 新季节开始时抽一张新卡
-                this.drawNewCard();
+                this.prepareNewSeason();  // 添加新季节准备阶段
             }
+        }, animationDelay + 3000);
+    }
 
-            this.displayScoringCards();
-            this.updateSeasonDisplay();
-        }, animationDelay + 3000); // 延长等待时间，确保金币转声望动画完成
+    // 新增：季节准备阶段
+    prepareNewSeason() {
+        // 从伏兵牌库抽一张卡
+        if (this.ambushDeck.length > 0) {
+            const ambushCard = this.ambushDeck.pop();
+            // 将伏兵卡加入探索卡库
+            this.explorationDeck.cards.push(ambushCard);
+            // 洗牌
+            this.shuffleArray(this.explorationDeck.cards);
+            console.log('季节准备：加入伏兵卡', ambushCard.getName());
+        }
+
+        // 更新显示
+        this.displayScoringCards();
+        this.updateSeasonDisplay();
+        // 抽新卡开始新的季节
+        this.drawNewCard();
     }
 
     animatePrestigeCollection(cardElement, score) {
