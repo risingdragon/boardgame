@@ -92,6 +92,15 @@ class CartographersGame {
     drawNewCard() {
         this.currentCard = this.explorationDeck.drawCard();
 
+        // 检查是否是伏兵卡
+        if (this.currentCard instanceof AmbushCard && !(this.currentCard instanceof VoidCard)) {
+            this.updateCardDisplay();  // 先显示伏兵卡
+            setTimeout(() => {
+                this.handleAmbushCard();
+            }, 1000);
+            return;
+        }
+
         // 如果抽到遗迹牌，继续抽牌
         if (this.currentCard && this.currentCard.getSelectedShape().terrainType === 'ruin') {
             console.log('抽到遗迹牌，继续抽取下一张');
@@ -118,6 +127,32 @@ class CartographersGame {
         }
 
         this.updateCardDisplay();
+    }
+
+    // Add new method to handle ambush cards
+    handleAmbushCard() {
+        const card = this.currentCard;
+        let [row, col] = card.getStartPosition();
+        let currentPosition = [row, col];
+        let placed = false;
+
+        // Try placing the ambush card, starting from the corner and moving inward
+        while (currentPosition && !placed) {
+            if (this.isValidPlacement(currentPosition[0], currentPosition[1])) {
+                this.placeTerrain(currentPosition[0], currentPosition[1]);
+                placed = true;
+            } else {
+                currentPosition = card.getNextPosition(currentPosition[0], currentPosition[1]);
+            }
+        }
+
+        // After placement attempt, draw next card
+        setTimeout(() => {
+            if (!placed) {
+                console.log('伏兵卡无法放置，跳过');
+            }
+            this.drawNewCard();
+        }, placed ? 1000 : 0);
     }
 
     // 添加新方法：检查是否还有未覆盖的遗迹
@@ -153,10 +188,10 @@ class CartographersGame {
         if (!this.currentCard) return false;
         const currentShape = this.currentCard.getSelectedShape();
         const shape = currentShape.shape;
-        
+
         // 禁止放置遗迹牌
         if (currentShape.terrainType === 'ruin') return false;
-        
+
         // 检查是否超出边界
         if (row + shape.length > 11 || col + shape[0].length > 11) return false;
 
