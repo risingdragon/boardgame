@@ -134,9 +134,10 @@
     /* 禁止点击 */
 }
 
-.ruins {
+/* 修改 .ruins 为 .ruin */
+.ruin {
     background-color: #d3d3d3;
-    background-image: url('../assets/terrains/ruins.png');
+    background-image: url('../assets/terrains/ruin.png');
     background-size: cover;
 }
 
@@ -667,6 +668,12 @@
     transform: scale(0.5);
 }
 
+/* 移除旧的 .ruin 样式 */
+.ruin {
+    background-color: #d3d3d3;
+}
+
+/* 修改遗迹标记的显示样式 */
 .grid-cell[data-ruins="true"]::after {
     content: '🏛️';
     position: absolute;
@@ -677,13 +684,20 @@
     z-index: 2;
     pointer-events: none;
     opacity: 0.8;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);  /* 添加文字阴影提高可见度 */
 }
 
-/* 确保地形在遗迹下面 */
+/* 确保地形在底层，遗迹图标在上层 */
+.grid-cell {
+    position: relative;
+    z-index: 1;
+}
+
 .grid-cell.farm,
 .grid-cell.forest,
 .grid-cell.village,
-.grid-cell.water {
+.grid-cell.water,
+.grid-cell.monster {
     z-index: 1;
 }
 

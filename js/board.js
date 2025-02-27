@@ -45,7 +45,7 @@ class GameBoard {
         }
 
         // 如果是遗迹（检查两种可能的类型名称），可以放置
-        if (this.grid[row][col].type === 'ruin' || this.grid[row][col].type === 'ruins') {
+        if (this.grid[row][col].type === 'ruin') {
             return true;
         }
 
@@ -76,7 +76,7 @@ class GameBoard {
         if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
             return false;
         }
-        return this.grid[row][col]?.type === 'ruins';
+        return this.grid[row][col]?.type === 'ruin';
     }
 
     // 检查是否曾经是遗迹（包括当前是遗迹的情况）
@@ -85,7 +85,7 @@ class GameBoard {
             return false;
         }
         const cell = this.grid[row][col];
-        return cell?.ruins === true || cell?.type === 'ruins';
+        return cell?.ruins === true || cell?.type === 'ruin';
     }
 
     placeTerrain(row, col, type) {
@@ -99,7 +99,7 @@ class GameBoard {
         }
 
         // 保存是否是遗迹的信息
-        const wasRuin = this.grid[row][col]?.type === 'ruins';
+        const wasRuin = this.isCurrentlyRuin(row, col);  // 使用 isCurrentlyRuin 方法检查
 
         // 设置新地形，同时保留遗迹标记
         this.grid[row][col] = {
@@ -121,7 +121,7 @@ class GameBoard {
             const col = parseInt(cell.dataset.col);
 
             // 移除所有地形类型的类和金币
-            cell.classList.remove('forest', 'village', 'farm', 'water', 'monster', 'mountain', 'ruins');
+            cell.classList.remove('forest', 'village', 'farm', 'water', 'monster', 'mountain', 'ruin');
             cell.innerHTML = '';
 
             // 获取当前格子的地形信息
