@@ -22,13 +22,16 @@
 }
 
 .map-grid {
-    flex: 0 0 auto;
     display: grid;
     grid-template-columns: repeat(11, 40px);
-    gap: 1px;
-    background: #ccc;
-    padding: 1px;
+    grid-template-rows: repeat(11, 40px);
+    gap: 0;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 4px;
+    width: 440px;
+    /* 11 个格子 * 40px */
+    height: 440px;
 }
 
 .grid-cell {
@@ -551,12 +554,6 @@
     border: none;
 }
 
-/* 确保地图格子大小一致 */
-.grid-cell {
-    width: 40px;
-    height: 40px;
-}
-
 /* 探索区域的预览格子保持原样 */
 .terrain-preview-grid:not(.drag-preview) .preview-cell {
     width: 40px;
@@ -755,17 +752,19 @@
 .season-score-area {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    padding: 0;
     background: #f5e6d3;
     border-radius: 8px;
-    width: 100%;
+    width: 440px;
 }
 
 .season-box {
     flex: 1;
     text-align: center;
-    padding: 5px;
+    padding: 8px;
     border-right: 1px solid #d4c3b3;
+    width: 110px;
+    box-sizing: border-box;
 }
 
 .season-box:last-child {
@@ -774,40 +773,76 @@
 
 .season-title {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     color: #594a42;
 }
 
 .rules-combo {
-    margin: 5px 0;
+    margin: 4px 0;
 }
 
 .rule-pair {
     display: flex;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
+    margin-bottom: 8px;
 }
 
 .rule-card {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: #8b7355;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .season-score {
     font-size: 18px;
     font-weight: bold;
     color: #594a42;
+    margin-top: 4px;
 }
 
 .map-section {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.score-details {
+    font-size: 12px;
+    text-align: left;
+    padding: 5px;
+}
+
+.rule-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 3px;
+    color: #594a42;
+}
+
+.other-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 3px;
+}
+
+.other-scores span {
+    display: flex;
+    justify-content: space-between;
+}
+
+.total-score {
+    font-size: 14px;
+    font-weight: bold;
+    color: #594a42;
+    margin-top: 5px;
+    text-align: center;
 }

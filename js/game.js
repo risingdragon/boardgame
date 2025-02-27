@@ -295,7 +295,15 @@ class CartographersGame {
 
     // 修改 confirmPlacement 方法
     confirmPlacement() {
+        // 如果已经在处理确认操作，直接返回
+        if (this.isConfirming) return;
         if (!this.tempPlacement) return;
+
+        // 标记正在处理确认操作
+        this.isConfirming = true;
+
+        // 隐藏按钮，防止重复点击
+        this.explorationDisplay.hideActionButtons();
 
         let animationDelay = 0;
 
@@ -332,9 +340,7 @@ class CartographersGame {
             this.currentCard = null;
             this.tempPlacement = null;
             this.isPlacing = false;
-
-            // 隐藏按钮
-            this.explorationDisplay.hideActionButtons();
+            this.isConfirming = false; // 重置确认状态
 
             // 检查是否需要结束季节或继续游戏
             if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
@@ -499,104 +505,83 @@ class CartographersGame {
     }
 
     endSeason() {
-        // 先检查是否有未收集的金币
-        const hasPendingCoins = this.checkAndCollectRemainingCoins();
+        // 计算本季节的分数
+        const currentSeasonName = this.seasons[this.currentSeason];
+        const scoringCardTypes = this.seasonScoringCards[currentSeasonName];
+        let seasonTotal = 0;
 
-        if (hasPendingCoins) {
-            // 如果有金币正在收集，等待所有金币收集完成后再结算
-            setTimeout(() => this.proceedWithSeasonEnd(), 1200); // 稍微多等一会，确保动画完成
-        } else {
-            // 如果没有待收集的金币，直接进行结算
-            this.proceedWithSeasonEnd();
-        }
-    }
-
-    checkAndCollectRemainingCoins() {
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-        let hasCollectedCoins = false;
-
-        for (let i = 0; i < this.board.size; i++) {
-            for (let j = 0; j < this.board.size; j++) {
-                if (this.board.getCellType(i, j) === 'mountain' && this.board.hasCoin(i, j)) {
-                    let allAdjacent = true;
-
-                    for (const [dx, dy] of directions) {
-                        const newRow = i + dx;
-                        const newCol = j + dy;
-
-                        if (newRow < 0 || newRow >= this.board.size ||
-                            newCol < 0 || newCol >= this.board.size ||
-                            !this.board.grid[newRow][newCol] ||
-                            this.board.grid[newRow][newCol].type === 'mountain') {
-                            allAdjacent = false;
-                            break;
-                        }
-                    }
-
-                    if (allAdjacent) {
-                        this.animateCoinCollection(i, j);
-                        hasCollectedCoins = true;
-                    }
-                }
-            }
-        }
-
-        return hasCollectedCoins;
-    }
-
-    proceedWithSeasonEnd() {
-        const activeCardTypes = {
-            0: ['A', 'B'],
-            1: ['B', 'C'],
-            2: ['C', 'D'],
-            3: ['A', 'D']
-        }[this.currentSeason];
-
-        // 初始化当前季节的声望
-        this.scores.seasons[this.currentSeason] = 0;
-        this.updateScoreBoard();
-
-        // 先播放规则卡的声望收集动画
-        const scoringCards = document.querySelectorAll('.scoring-card');
-        let animationDelay = 0;
-
-        scoringCards.forEach((cardElement, index) => {
-            const card = this.scoringCards[index];
-            const cardType = this.getCardType(card);
-
-            if (activeCardTypes.includes(cardType)) {
-                const score = card.scoringFunction(this.board);
-                if (score > 0) {
-                    setTimeout(() => {
-                        this.animatePrestigeCollection(cardElement, score);
-                    }, animationDelay);
-                    animationDelay += 1000;
+        // 计算规则卡分数
+        let ruleCardScores = [];
+        scoringCardTypes.forEach(cardType => {
+            // 确保 scoringDeck 存在且有 cards 属性
+            if (this.scoringDeck && this.scoringDeck.cards) {
+                const card = this.scoringDeck.cards.find(c => c.type === cardType);
+                if (card) {
+                    const score = card.calculateScore(this.board);
+                    ruleCardScores.push({
+                        name: card.name,
+                        score: score
+                    });
+                    seasonTotal += score;
                 }
             }
         });
 
-        // 在规则卡声望收集完成后，播放金币转声望的动画
-        setTimeout(() => {
-            this.animateCoinToPrestige();
-        }, animationDelay + 1000);
+        // 计算金币和怪物分数
+        const coinScore = this.scores.coins || 0;
+        const monsterScore = this.scores.monsters || 0;
+        seasonTotal += coinScore + monsterScore;
 
-        setTimeout(() => {
-            if (this.scores.monsters < 0) {
-                this.animateMonsterToPrestige();
+        // 更新季节分数显示
+        const seasonBox = document.getElementById(`${currentSeasonName}-score`);
+        if (seasonBox) {
+            // 创建详细得分内容
+            const scoreDetails = document.createElement('div');
+            scoreDetails.className = 'score-details';
+
+            // 确保有规则卡分数再显示
+            let ruleScoresHtml = '';
+            if (ruleCardScores.length >= 2) {
+                ruleScoresHtml = `
+                    <div class="rule-scores">
+                        <span>${ruleCardScores[0].name}: ${ruleCardScores[0].score}</span>
+                        <span>${ruleCardScores[1].name}: ${ruleCardScores[1].score}</span>
+                    </div>`;
             }
-        }, animationDelay + 3000);
 
-        // 在所有动画完成后进入下一个季节
-        setTimeout(() => {
-            this.currentSeason = (this.currentSeason + 1) % 4;
-            this.currentTime = 0;
+            scoreDetails.innerHTML = `
+                ${ruleScoresHtml}
+                <div class="other-scores">
+                    <span>金币: ${coinScore}</span>
+                    <span>怪物: ${monsterScore}</span>
+                </div>
+                <div class="total-score">
+                    总分: ${seasonTotal}
+                </div>
+            `;
+            seasonBox.innerHTML = '';
+            seasonBox.appendChild(scoreDetails);
+        }
 
-            if (this.currentSeason === 0) {
-                this.endGame();
-            } else {
-                this.prepareNewSeason();  // 添加新季节准备阶段
-            }
-        }, animationDelay + 3000);
+        // 保存本季度总分
+        if (!this.scores.seasons) {
+            this.scores.seasons = [];
+        }
+        this.scores.seasons[this.currentSeason] = seasonTotal;
+
+        // 重置金币和怪物分数（为下一季度准备）
+        this.scores.coins = 0;
+        this.scores.monsters = 0;
+
+        // 进入下一季节
+        this.currentSeason++;
+        this.currentTime = 0;
+
+        if (this.currentSeason < 4) {
+            this.prepareNewSeason();
+        } else {
+            this.endGame();
+        }
     }
 
     // 新增：季节准备阶段
