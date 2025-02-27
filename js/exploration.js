@@ -383,11 +383,9 @@ class ExplorationDisplay {
     updateDisplay(card) {
         const cardDisplay = document.getElementById('currentCard');
         cardDisplay.innerHTML = '';
+        cardDisplay.className = 'exploration-card';  // 直接设置类名
 
         if (!card) return;
-
-        const cardContainer = document.createElement('div');
-        cardContainer.className = 'exploration-card';
 
         // 创建标题行
         const cardHeader = document.createElement('div');
@@ -403,7 +401,7 @@ class ExplorationDisplay {
 
         cardHeader.appendChild(cardName);
         cardHeader.appendChild(timeValue);
-        cardContainer.appendChild(cardHeader);
+        cardDisplay.appendChild(cardHeader);  // 直接添加到 cardDisplay
 
         // 添加操作按钮容器
         const buttonsContainer = document.createElement('div');
@@ -427,7 +425,7 @@ class ExplorationDisplay {
 
         buttonsContainer.appendChild(rotateButton);
         buttonsContainer.appendChild(flipButton);
-        cardContainer.appendChild(buttonsContainer);
+        cardDisplay.appendChild(buttonsContainer);  // 直接添加到 cardDisplay
 
         // 添加形状选项
         const optionsContainer = document.createElement('div');
@@ -547,9 +545,9 @@ class ExplorationDisplay {
             optionsContainer.appendChild(optionContainer);
         });
 
-        cardContainer.appendChild(optionsContainer);
+        cardDisplay.appendChild(optionsContainer);  // 直接添加到 cardDisplay
 
-        // 在选项容器后添加操作按钮
+        // 添加操作按钮
         const actionButtons = document.createElement('div');
         actionButtons.className = 'action-buttons';
 
@@ -565,13 +563,11 @@ class ExplorationDisplay {
 
         actionButtons.appendChild(confirmButton);
         actionButtons.appendChild(cancelButton);
-        cardContainer.appendChild(actionButtons);
+        cardDisplay.appendChild(actionButtons);  // 直接添加到 cardDisplay
 
-        // 存储按钮引用，供外部使用
+        // 存储按钮引用
         this.confirmButton = confirmButton;
         this.cancelButton = cancelButton;
-
-        cardDisplay.appendChild(cardContainer);
 
         // 如果按钮之前是显示的，重新绑定事件
         if (this.buttonsVisible) {
@@ -587,9 +583,9 @@ class ExplorationDisplay {
             ruinReminder.style.color = '#ff4444';
             ruinReminder.style.fontSize = '0.9em';
             ruinReminder.style.marginBottom = '8px';
-            ruinReminder.style.textAlign = 'center';  // 添加居中对齐
-            ruinReminder.style.width = '100%';        // 确保宽度占满
-            cardContainer.insertBefore(ruinReminder, optionsContainer);
+            ruinReminder.style.textAlign = 'center';
+            ruinReminder.style.width = '100%';
+            cardDisplay.insertBefore(ruinReminder, optionsContainer);
         }
     }
 
