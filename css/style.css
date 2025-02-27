@@ -684,7 +684,8 @@
     z-index: 2;
     pointer-events: none;
     opacity: 0.8;
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);  /* 添加文字阴影提高可见度 */
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    /* 添加文字阴影提高可见度 */
 }
 
 /* 确保地形在底层，遗迹图标在上层 */
@@ -729,4 +730,9 @@
 
 .action-button:hover {
     opacity: 0.9;
+}
+
+.monster-icon {
+    margin-left: 2px;
+    font-size: 0.9em;
 }

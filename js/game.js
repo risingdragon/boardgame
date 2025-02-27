@@ -13,6 +13,7 @@ class CartographersGame {
         this.currentTime = 0;
         this.scores = {
             coins: 0,
+            monsters: 0,  // 添加怪物分数
             seasons: [-1, -1, -1, -1], // -1 表示未计分
             total: 0
         };
@@ -437,6 +438,16 @@ class CartographersGame {
     updateScoreBoard() {
         // 更新金币分数，使用钱币图标
         document.getElementById('coin-score').innerHTML = `${this.scores.coins}<span class="coin-icon">🪙</span>`;
+
+        // 更新怪物分数，使用怪物图标
+        let monsterScoreElement = document.getElementById('monster-score');
+        if (!monsterScoreElement) {
+            monsterScoreElement = document.createElement('span');
+            monsterScoreElement.id = 'monster-score';
+            const coinDisplay = document.querySelector('.coin-display');
+            coinDisplay.appendChild(monsterScoreElement);
+        }
+        monsterScoreElement.innerHTML = `  ${this.scores.monsters || 0}<span class="monster-icon">👾</span>`;
 
         // 计算已结算季节的总分
         const totalSeasonScore = this.scores.seasons
