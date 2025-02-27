@@ -21,33 +21,36 @@ class GameBoard {
                 type: 'mountain',
                 fixed: true
             };
-            // 将每个山脉位置添加到金币集合中
             this.coins.add(`${row},${col}`);
         });
 
-        // 放置遗迹
+        // 放置遗迹（修改类型名称为 'ruin'）
         GameBoard.RUINS_POSITIONS.forEach(([row, col]) => {
             this.grid[row][col] = {
-                type: 'ruins',
+                type: 'ruin',
                 fixed: false
             };
         });
     }
 
-    // 检查某个位置是否可以放置新的地形
     canPlace(row, col) {
         // 检查边界
         if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
             return false;
         }
 
-        const cell = this.grid[row][col];
-        // 如果是山脉，不能放置
-        if (cell && cell.type === 'mountain') {
-            return false;
+        // 如果是空格子，可以放置
+        if (!this.grid[row][col]) {
+            return true;
         }
-        // 如果是空格子或遗迹，都可以放置
-        return !cell || this.isCurrentlyRuin(row, col);
+
+        // 如果是遗迹（检查两种可能的类型名称），可以放置
+        if (this.grid[row][col].type === 'ruin' || this.grid[row][col].type === 'ruins') {
+            return true;
+        }
+
+        // 其他已有地形的格子不能放置
+        return false;
     }
 
     // 获取单元格的类型
@@ -143,4 +146,4 @@ class GameBoard {
             }
         });
     }
-} 
+}

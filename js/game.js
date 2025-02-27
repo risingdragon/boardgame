@@ -122,11 +122,15 @@ class CartographersGame {
     isValidPlacement(row, col) {
         if (!this.currentCard) return false;
         const currentShape = this.currentCard.getSelectedShape();
-        const shape = this.currentCard.getSelectedShape().shape;
+        const shape = currentShape.shape;
+        
         // 禁止放置遗迹牌
         if (currentShape.terrainType === 'ruin') return false;
+        
         // 检查是否超出边界
         if (row + shape.length > 11 || col + shape[0].length > 11) return false;
+
+        let coversRuin = false;  // 添加遗迹覆盖检查标记
 
         // 检查每个需要放置的格子是否合法
         for (let i = 0; i < shape.length; i++) {
@@ -135,8 +139,17 @@ class CartographersGame {
                     if (!this.board.canPlace(row + i, col + j)) {
                         return false;
                     }
+                    // 检查是否覆盖了遗迹
+                    if (this.board.getCellType(row + i, col + j) === 'ruin') {
+                        coversRuin = true;
+                    }
                 }
             }
+        }
+
+        // 如果上一张是遗迹牌，必须覆盖至少一个遗迹
+        if (this.lastCardWasRuin && !coversRuin) {
+            return false;
         }
 
         return true;
