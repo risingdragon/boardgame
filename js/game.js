@@ -287,7 +287,6 @@ class CartographersGame {
         for (let i = 0; i < this.board.size; i++) {
             for (let j = 0; j < this.board.size; j++) {
                 if (this.board.getCellType(i, j) === 'monster') {
-                    console.log(`发现怪物格子: (${i}, ${j})`);
                     // 检查四个相邻格子
                     for (const [dx, dy] of directions) {
                         const newRow = i + dx;
@@ -301,9 +300,6 @@ class CartographersGame {
                             if (!countedEmptyCells.has(cellKey)) {
                                 monsterPenalty++;
                                 countedEmptyCells.add(cellKey);
-                                console.log(`${this.board.getCellType(newRow, newCol) === 'ruin' ? '遗迹' : '空格'}(${newRow}, ${newCol})第一次被计算，扣分+1`);
-                            } else {
-                                console.log(`${this.board.getCellType(newRow, newCol) === 'ruin' ? '遗迹' : '空格'}(${newRow}, ${newCol})已被计算过，跳过`);
                             }
                         }
                     }
@@ -788,7 +784,9 @@ class CartographersGame {
     }
 
     endGame() {
-        // TODO: 实现游戏结束逻辑
+        // 计算最终得分
+        const finalScore = this.calculateTotalScore();
+        alert(`游戏结束！\n最终得分：${finalScore}`);
     }
 
     initScoringCards() {
