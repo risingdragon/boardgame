@@ -105,8 +105,9 @@ class CartographersGame {
         if (this.currentCard && this.currentCard.getSelectedShape().terrainType === 'ruin') {
             console.log('抽到遗迹牌，继续抽取下一张');
             this.lastCardWasRuin = true;
+            this.updateCardDisplay();  // 先显示遗迹牌
             setTimeout(() => {
-                this.drawNewCard();  // 递归调用，如果还是遗迹牌会继续抽
+                this.drawNewCard();  // 延迟后再抽下一张
             }, 1000);
             return;
         }
@@ -139,8 +140,17 @@ class CartographersGame {
         // Try placing the ambush card, starting from the corner and moving inward
         while (currentPosition && !placed) {
             if (this.isValidPlacement(currentPosition[0], currentPosition[1])) {
+                // 直接调用 placeTerrain
                 this.placeTerrain(currentPosition[0], currentPosition[1]);
-                placed = true;
+                if (this.tempPlacement) {
+                    // 特殊处理伏兵卡的确认放置
+                    this.board.updateDisplay();
+                    this.currentTime += this.currentCard.timeValue;
+                    this.explorationDisplay.hideActionButtons();
+                    this.tempPlacement = null;
+                    this.isPlacing = false;
+                    placed = true;
+                }
             } else {
                 currentPosition = card.getNextPosition(currentPosition[0], currentPosition[1]);
             }
@@ -150,6 +160,8 @@ class CartographersGame {
         setTimeout(() => {
             if (!placed) {
                 console.log('伏兵卡无法放置，跳过');
+                this.isPlacing = false;
+                this.tempPlacement = null;
             }
             this.drawNewCard();
         }, placed ? 1000 : 0);
