@@ -97,6 +97,14 @@ class CartographersGame {
             setTimeout(() => {
                 this.drawNewCard();  // 递归调用，如果还是遗迹牌会继续抽
             }, 1000);
+            return;
+        }
+
+        // 检查当前卡牌是否完全无法放置
+        if (this.currentCard && this.board.isTerrainUnplaceable(this.currentCard.getSelectedShape().shape)) {
+            console.log('当前卡牌无法放置，切换为时空裂隙探索卡');
+            // TODO: 创建时空裂隙探索卡
+            this.currentCard = this.explorationDeck.createVoidCard();
         }
 
         this.updateCardDisplay();

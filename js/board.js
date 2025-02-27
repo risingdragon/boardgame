@@ -146,4 +146,67 @@ class GameBoard {
             }
         });
     }
+
+    // 检查当前地形是否完全无法放置
+    isTerrainUnplaceable(shape) {
+        // 遍历棋盘的每个位置
+        for (let row = 0; row < this.size; row++) {
+            for (let col = 0; col < this.size; col++) {
+                // 检查四种旋转状态
+                let currentShape = [...shape];
+                for (let rotation = 0; rotation < 4; rotation++) {
+                    // 检查原始和翻转两种状态
+                    for (let flip = 0; flip < 2; flip++) {
+                        // 检查当前形状是否可以放置
+                        if (this.canPlaceShapeAt(row, col, currentShape)) {
+                            return false; // 找到可以放置的位置
+                        }
+                        // 水平翻转形状
+                        currentShape = currentShape.map(row => [...row].reverse());
+                    }
+                    // 旋转形状90度
+                    currentShape = this.rotateShape(currentShape);
+                }
+            }
+        }
+        return true; // 所有位置和变换都尝试过了，无法放置
+    }
+
+    // 辅助函数：旋转形状90度
+    rotateShape(shape) {
+        const rows = shape.length;
+        const cols = shape[0].length;
+        let rotated = Array(cols).fill().map(() => Array(rows).fill(0));
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                rotated[j][rows - 1 - i] = shape[i][j];
+            }
+        }
+        return rotated;
+    }
+
+    // 辅助函数：检查特定形状在特定位置是否可以放置
+    canPlaceShapeAt(startRow, startCol, shape) {
+        const rows = shape.length;
+        const cols = shape[0].length;
+
+        // 检查是否超出边界
+        if (startRow + rows > this.size || startCol + cols > this.size) {
+            return false;
+        }
+
+        // 检查每个需要放置的格子
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                if (shape[i][j] === 1) {
+                    if (!this.canPlace(startRow + i, startCol + j)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }
