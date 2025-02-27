@@ -53,7 +53,7 @@ class ExplorationCard {
 class ExplorationDeck {
     constructor() {
         this.cards = this.initializeCards();
-        // 移除这里的洗牌，将在季节准备阶段进行
+        this.discardPile = [];  // 添加弃牌堆
     }
 
     initializeCards() {
@@ -341,8 +341,8 @@ class ExplorationDeck {
 
     drawCard() {
         if (this.cards.length === 0) {
-            this.cards = this.initializeCards();
-            this.shuffle();
+            // 如果牌库空了，不要自动重置，让游戏逻辑处理
+            return null;
         }
         const card = this.cards.shift();
 
@@ -354,6 +354,23 @@ class ExplorationDeck {
         });
 
         return card;
+    }
+
+    // 添加将卡牌加入弃牌堆的方法
+    discardCard(card) {
+        if (card) {
+            this.discardPile.push(card);
+            console.log('卡牌加入弃牌堆：', card.name);
+        }
+    }
+
+    // 添加重置牌库的方法（在季节准备阶段使用）
+    resetDeck() {
+        // 将弃牌堆中的卡牌加入牌库
+        this.cards = [...this.cards, ...this.discardPile];
+        this.discardPile = [];
+        this.shuffle();
+        console.log('重置探索卡牌库，当前卡牌数量：', this.cards.length);
     }
 }
 

@@ -137,16 +137,15 @@ class CartographersGame {
         let currentPosition = [row, col];
         let placed = false;
 
-        // Try placing the ambush card, starting from the corner and moving inward
         while (currentPosition && !placed) {
             if (this.isValidPlacement(currentPosition[0], currentPosition[1])) {
-                // 直接调用 placeTerrain
                 this.placeTerrain(currentPosition[0], currentPosition[1]);
                 if (this.tempPlacement) {
-                    // 特殊处理伏兵卡的确认放置
+                    // 直接确认放置，不需要用户点击确认
                     this.board.updateDisplay();
                     this.currentTime += this.currentCard.timeValue;
                     this.explorationDisplay.hideActionButtons();
+                    this.currentCard = null;
                     this.tempPlacement = null;
                     this.isPlacing = false;
                     placed = true;
@@ -156,13 +155,16 @@ class CartographersGame {
             }
         }
 
-        // After placement attempt, draw next card
+        // 无论是否放置成功，都延迟一段时间后抽下一张卡
         setTimeout(() => {
             if (!placed) {
                 console.log('伏兵卡无法放置，跳过');
-                this.isPlacing = false;
-                this.tempPlacement = null;
             }
+            // 重置状态
+            this.isPlacing = false;
+            this.tempPlacement = null;
+            this.currentCard = null;
+            // 抽下一张卡
             this.drawNewCard();
         }, placed ? 1000 : 0);
     }
@@ -281,33 +283,36 @@ class CartographersGame {
         const currentShape = this.currentCard.getSelectedShape();
         if (currentShape.coinReward) {
             this.animateCoinCollection(this.tempPlacement.row, this.tempPlacement.col, true);
-            animationDelay = 1000; // 等待金币收集动画
+            animationDelay = 1000;
         }
 
         // 检查高山格的金币收集
         const hasPendingCoins = this.checkAndCollectAdjacentCoins();
         if (hasPendingCoins) {
-            animationDelay = 1200; // 如果有高山金币收集，多等待一点时间
+            animationDelay = 1200;
         }
 
-        // 等待所有金币收集动画完成后再继续
         setTimeout(() => {
             this.currentTime += this.currentCard.timeValue;
-            this.lastCardWasRuin = false;  // 放置完成后重置标记
+            this.lastCardWasRuin = false;
 
+            // 只有非伏兵卡才加入弃牌堆
+            if (!(this.currentCard instanceof AmbushCard)) {
+                this.explorationDeck.discardCard(this.currentCard);
+            }
+            this.currentCard = null;
+            this.tempPlacement = null;
+            this.isPlacing = false;
+
+            // 隐藏按钮
+            this.explorationDisplay.hideActionButtons();
+
+            // 检查是否需要结束季节或继续游戏
             if (this.currentTime >= this.seasonTimeLimits[this.currentSeason]) {
                 this.endSeason();
             } else {
                 this.drawNewCard();
             }
-
-            this.updateSeasonDisplay();
-            this.updateScoringCardScores();
-
-            // 隐藏按钮并重置状态
-            this.explorationDisplay.hideActionButtons();
-            this.tempPlacement = null;
-            this.isPlacing = false;
         }, animationDelay);
     }
 
@@ -552,6 +557,18 @@ class CartographersGame {
 
     // 新增：季节准备阶段
     prepareNewSeason() {
+        // 将弃牌堆与剩余的探索卡合并
+        if (this.explorationDeck.discardPile && this.explorationDeck.discardPile.length > 0) {
+            this.explorationDeck.cards = [
+                ...this.explorationDeck.cards,
+                ...this.explorationDeck.discardPile
+            ];
+            this.explorationDeck.discardPile = []; // 清空弃牌堆
+            // 洗牌
+            this.shuffleArray(this.explorationDeck.cards);
+            console.log('季节准备：合并弃牌堆并洗牌');
+        }
+
         // 从伏兵牌库抽一张卡
         if (this.ambushDeck.length > 0) {
             const ambushCard = this.ambushDeck.pop();
