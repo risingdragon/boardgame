@@ -147,6 +147,8 @@ class CartographersGame {
                     // 直接确认放置，不需要用户点击确认
                     this.board.updateDisplay();
                     this.currentTime += this.currentCard.timeValue;
+                    // 检查怪物分数
+                    this.checkMonsterScore();
                     this.explorationDisplay.hideActionButtons();
                     this.currentCard = null;
                     this.tempPlacement = null;
@@ -277,6 +279,47 @@ class CartographersGame {
         this.explorationDisplay.cancelButton.onclick = () => this.cancelPlacement();
     }
 
+    checkMonsterScore() {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        let monsterPenalty = 0;
+        const countedEmptyCells = new Set();
+
+        for (let i = 0; i < this.board.size; i++) {
+            for (let j = 0; j < this.board.size; j++) {
+                if (this.board.getCellType(i, j) === 'monster') {
+                    console.log(`发现怪物格子: (${i}, ${j})`);
+                    // 检查四个相邻格子
+                    for (const [dx, dy] of directions) {
+                        const newRow = i + dx;
+                        const newCol = j + dy;
+
+                        if (newRow >= 0 && newRow < this.board.size &&
+                            newCol >= 0 && newCol < this.board.size &&
+                            (!this.board.grid[newRow][newCol] ||
+                                this.board.getCellType(newRow, newCol) === 'ruin')) {  // 修改这里，增加对遗迹的判断
+                            const cellKey = `${newRow},${newCol}`;
+                            if (!countedEmptyCells.has(cellKey)) {
+                                monsterPenalty++;
+                                countedEmptyCells.add(cellKey);
+                                console.log(`${this.board.getCellType(newRow, newCol) === 'ruin' ? '遗迹' : '空格'}(${newRow}, ${newCol})第一次被计算，扣分+1`);
+                            } else {
+                                console.log(`${this.board.getCellType(newRow, newCol) === 'ruin' ? '遗迹' : '空格'}(${newRow}, ${newCol})已被计算过，跳过`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        const oldScore = this.scores.monsters;
+        this.scores.monsters = -monsterPenalty;
+        console.log(`怪物分数更新：${oldScore} -> ${this.scores.monsters} (总扣分：${monsterPenalty})`);
+        this.updateScoreBoard();
+
+        return monsterPenalty > 0;
+    }
+
+    // 修改 confirmPlacement 方法
     confirmPlacement() {
         if (!this.tempPlacement) return;
 
@@ -298,6 +341,9 @@ class CartographersGame {
         setTimeout(() => {
             this.currentTime += this.currentCard.timeValue;
             this.lastCardWasRuin = false;
+
+            // 检查怪物分数
+            this.checkMonsterScore();
 
             // 只有非伏兵卡才加入弃牌堆
             if (!(this.currentCard instanceof AmbushCard)) {
