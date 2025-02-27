@@ -106,6 +106,8 @@ class CartographersGame {
             console.log('抽到遗迹牌，继续抽取下一张');
             this.lastCardWasRuin = true;
             this.updateCardDisplay();  // 先显示遗迹牌
+            // 将遗迹牌加入弃牌堆
+            this.explorationDeck.discardCard(this.currentCard);
             setTimeout(() => {
                 this.drawNewCard();  // 延迟后再抽下一张
             }, 1000);
