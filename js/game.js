@@ -565,7 +565,6 @@ class CartographersGame {
     }
 
     proceedWithSeasonEnd() {
-        const seasonScore = this.calculateSeasonScore();
         const activeCardTypes = {
             0: ['A', 'B'],
             1: ['B', 'C'],
@@ -600,6 +599,12 @@ class CartographersGame {
         setTimeout(() => {
             this.animateCoinToPrestige();
         }, animationDelay + 1000);
+
+        setTimeout(() => {
+            if (this.scores.monsters < 0) {
+                this.animateMonsterToPrestige();
+            }
+        }, animationDelay + 3000);
 
         // 在所有动画完成后进入下一个季节
         setTimeout(() => {
@@ -685,6 +690,55 @@ class CartographersGame {
         }, 1000);
     }
 
+    // 新增：怪物扣分动画函数
+    animateMonsterToPrestige() {
+        const monsterScore = document.getElementById('monster-score');
+        const prestigeScore = document.getElementById('season-scores');
+
+        if (!monsterScore || !prestigeScore || this.scores.monsters === 0) return;
+
+        const startRect = monsterScore.getBoundingClientRect();
+        const endRect = prestigeScore.getBoundingClientRect();
+
+        // 为每个怪物分创建一个扣分动画
+        for (let i = 0; i < Math.abs(this.scores.monsters); i++) {
+            setTimeout(() => {
+                const flyingPrestige = document.createElement('div');
+                flyingPrestige.className = 'flying-prestige monster-prestige';
+                flyingPrestige.innerHTML = '★';
+                document.body.appendChild(flyingPrestige);
+
+                flyingPrestige.style.left = `${startRect.left + startRect.width / 2}px`;
+                flyingPrestige.style.top = `${startRect.top + startRect.height / 2}px`;
+
+                flyingPrestige.offsetHeight;
+
+                requestAnimationFrame(() => {
+                    flyingPrestige.classList.add('flying');
+                    flyingPrestige.style.left = `${endRect.left}px`;
+                    flyingPrestige.style.top = `${endRect.top}px`;
+                });
+
+                // 在动画快结束时更新分数
+                setTimeout(() => {
+                    prestigeScore.classList.add('highlight');
+                    // 每个怪物扣1点声望
+                    this.scores.seasons[this.currentSeason] -= 1;
+                    this.updateScoreBoard();
+                }, 800);
+
+                setTimeout(() => {
+                    if (document.body.contains(flyingPrestige)) {
+                        document.body.removeChild(flyingPrestige);
+                    }
+                    setTimeout(() => {
+                        prestigeScore.classList.remove('highlight');
+                    }, 200);
+                }, 1000);
+            }, i * 200); // 每个怪物分的动画间隔0.2秒
+        }
+    }
+
     animateCoinToPrestige() {
         const coinScore = document.getElementById('coin-score');
         const prestigeScore = document.getElementById('season-scores');
@@ -731,28 +785,6 @@ class CartographersGame {
                 }, 1000);
             }, i * 200); // 每个金币的动画间隔0.2秒
         }
-    }
-
-    calculateSeasonScore() {
-        const activeCardTypes = {
-            0: ['A', 'B'],  // spring
-            1: ['B', 'C'],  // summer
-            2: ['C', 'D'],  // autumn
-            3: ['A', 'D']   // winter
-        }[this.currentSeason];
-
-        // 计算规则卡得分
-        const rulesScore = activeCardTypes.reduce((total, type) => {
-            const card = this.scoringCards.find(card => this.getCardType(card) === type);
-            if (card) {
-                const score = card.scoringFunction(this.board);
-                return total + score;
-            }
-            return total;
-        }, 0);
-
-        // 加上金币带来的声望
-        return rulesScore + this.scores.coins;
     }
 
     endGame() {

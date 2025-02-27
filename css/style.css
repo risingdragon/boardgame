@@ -736,3 +736,16 @@
     margin-left: 2px;
     font-size: 0.9em;
 }
+
+/* 添加怪物扣分动画样式 */
+.flying-prestige.monster-prestige {
+    color: #ff4444;  /* 红色表示扣分 */
+    font-size: 24px;
+    text-shadow: 0 2px 4px rgba(255, 0, 0, 0.3);
+    opacity: 0.9;
+}
+
+.flying-prestige.monster-prestige.flying {
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scale(0.5) rotate(180deg);  /* 添加旋转效果表示扣分 */
+}
