@@ -344,6 +344,9 @@ class CartographersGame {
             // 检查怪物分数
             this.checkMonsterScore();
 
+            // 更新规则卡分数
+            this.updateScoringCardScores();
+
             // 只有非伏兵卡才加入弃牌堆
             if (!(this.currentCard instanceof AmbushCard)) {
                 this.explorationDeck.discardCard(this.currentCard);
@@ -808,14 +811,6 @@ class CartographersGame {
 
         // 按ABCD顺序排序
         this.scoringCards.sort((a, b) => a.type.localeCompare(b.type));
-
-        // 打印每张卡片的名称和对应的类型
-        console.log('规则卡分配结果：',
-            this.scoringCards.map(card => ({
-                name: card.name,
-                type: card.type
-            }))
-        );
 
         this.displayScoringCards();
     }
