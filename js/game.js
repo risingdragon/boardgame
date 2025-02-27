@@ -135,41 +135,19 @@ class CartographersGame {
 
     // Add new method to handle ambush cards
     handleAmbushCard() {
-        const card = this.currentCard;
-        let [row, col] = card.getStartPosition();
-        let currentPosition = [row, col];
-        let placed = false;
+        const placed = this.currentCard.autoPlace(this.board, this);
 
-        while (currentPosition && !placed) {
-            if (this.isValidPlacement(currentPosition[0], currentPosition[1])) {
-                this.placeTerrain(currentPosition[0], currentPosition[1]);
-                if (this.tempPlacement) {
-                    // 直接确认放置，不需要用户点击确认
-                    this.board.updateDisplay();
-                    this.currentTime += this.currentCard.timeValue;
-                    // 检查怪物分数
-                    this.checkMonsterScore();
-                    this.explorationDisplay.hideActionButtons();
-                    this.currentCard = null;
-                    this.tempPlacement = null;
-                    this.isPlacing = false;
-                    placed = true;
-                }
-            } else {
-                currentPosition = card.getNextPosition(currentPosition[0], currentPosition[1]);
-            }
+        if (placed) {
+            // 更新游戏状态
+            this.currentTime += this.currentCard.timeValue;
+            this.updateSeasonDisplay();
+            this.checkMonsterScore();
+            this.updateScoringCardScores();
         }
 
-        // 无论是否放置成功，都延迟一段时间后抽下一张卡
+        // 延迟后抽下一张卡
         setTimeout(() => {
-            if (!placed) {
-                console.log('伏兵卡无法放置，跳过');
-            }
-            // 重置状态
-            this.isPlacing = false;
-            this.tempPlacement = null;
             this.currentCard = null;
-            // 抽下一张卡
             this.drawNewCard();
         }, placed ? 1000 : 0);
     }

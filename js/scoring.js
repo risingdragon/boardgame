@@ -53,7 +53,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "树塔",
-                    "每个四边被已填绘的格子或地图边缘所包围的森林格获得1点声望。",
+                    "每个四边没有空格的森林格获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [
@@ -544,7 +544,7 @@ class ScoringDeck {
                 ),
                 new ScoringCard(
                     "围困之地",
-                    "每个被已填绘的格子或地图边缘包围的空格（高山算已填绘，未填绘的遗迹算空格），获得1点声望。",
+                    "每个相邻没有空格的空格获得1点声望。",
                     (board) => {
                         let score = 0;
                         const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];

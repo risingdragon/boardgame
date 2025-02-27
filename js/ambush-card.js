@@ -324,6 +324,115 @@ class AmbushCard extends ExplorationCard {
     getTimeValue() {
         return this.timeValue;
     }
+
+    isValidPlacement(board, row, col) {
+        const shape = this.getSelectedShape().shape;
+        const rows = shape.length;
+        const cols = shape[0].length;
+
+        // 检查是否超出边界
+        if (row < 0 || row + rows > 11 || col < 0 || col + cols > 11) {
+            return false;
+        }
+
+        // 检查每个需要放置的格子
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                if (shape[i][j] === 1) {
+                    const currentRow = row + i;
+                    const currentCol = col + j;
+
+                    if (!board.canPlace(currentRow, currentCol)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // 检查是否至少有一个相邻的已填充格子
+        let hasAdjacentTerrain = false;
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+        for (let i = 0; i < rows && !hasAdjacentTerrain; i++) {
+            for (let j = 0; j < cols && !hasAdjacentTerrain; j++) {
+                if (shape[i][j] === 1) {
+                    for (const [dx, dy] of directions) {
+                        const newRow = row + i + dx;
+                        const newCol = col + j + dy;
+
+                        if (newRow >= 0 && newRow < 11 &&
+                            newCol >= 0 && newCol < 11 &&
+                            board.getCellType(newRow, newCol)) {
+                            hasAdjacentTerrain = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return hasAdjacentTerrain;
+    }
+
+    findValidPlacement(board) {
+        const startPos = this.getStartPosition();
+        let currentPos = startPos;
+        let attempts = 0;
+        const maxAttempts = 44; // 11 * 4，最多尝试一圈
+
+        console.log('开始寻找有效位置:', {
+            startPosition: startPos,
+            corner: this.corner,
+            direction: this.direction
+        });
+
+        while (currentPos && attempts < maxAttempts) {
+            attempts++;
+            console.log('尝试位置:', {
+                position: currentPos,
+                attempt: attempts
+            });
+
+            if (this.isValidPlacement(board, currentPos[0], currentPos[1])) {
+                console.log('找到有效位置');
+                return currentPos;
+            }
+
+            currentPos = this.getNextPosition(currentPos[0], currentPos[1]);
+        }
+
+        console.log('未找到有效位置，尝试次数:', attempts);
+        return null;
+    }
+
+    // 新增：处理伏兵卡的自动放置
+    autoPlace(board, game) {
+        const validPosition = this.findValidPlacement(board);
+
+        if (!validPosition) {
+            console.log('伏兵卡无法放置，跳过');
+            return false;
+        }
+
+        // 执行放置
+        const [row, col] = validPosition;
+        const shape = this.getSelectedShape().shape;
+        const terrainType = this.getSelectedShape().terrainType;
+
+        // 放置地形
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                if (shape[i][j] === 1) {
+                    board.placeTerrain(row + i, col + j, terrainType);
+                }
+            }
+        }
+
+        // 更新显示
+        board.updateDisplay();
+
+        return true;
+    }
 }
 
 // VoidCard 类不需要修改，因为它已经继承自 AmbushCard
