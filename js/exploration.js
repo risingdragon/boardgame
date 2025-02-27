@@ -300,6 +300,26 @@ class ExplorationDeck {
                 ],
                 0
             ),
+            new ExplorationCard(
+                '神庙遗址',
+                [
+                    {
+                        shape: [[1]],
+                        terrainType: 'ruin'
+                    }
+                ],
+                0
+            ),
+            new ExplorationCard(
+                '哨塔遗址',
+                [
+                    {
+                        shape: [[1]],
+                        terrainType: 'ruin'
+                    }
+                ],
+                0
+            ),
         ];
     }
 
@@ -449,7 +469,8 @@ class ExplorationDisplay {
                 'farm': '农场',
                 'forest': '森林',
                 'water': '湖泊',
-                'monster': '怪物'
+                'monster': '怪物',
+                'ruin': '遗迹'  // 添加遗迹的翻译
             };
             terrainLabel.textContent = terrainNames[shapeOption.terrainType];
             optionContainer.appendChild(terrainLabel);
@@ -553,4 +574,4 @@ class ExplorationDisplay {
         if (this.confirmButton) this.confirmButton.style.display = 'none';
         if (this.cancelButton) this.cancelButton.style.display = 'none';
     }
-} 
+}
