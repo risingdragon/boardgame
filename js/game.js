@@ -25,6 +25,8 @@ class CartographersGame {
         };
         this.selectedScoringCards = null;
         this.explorationDeck = new ExplorationDeck();
+        this.ambushDeck = AmbushCard.initializeCards(); // 初始化伏兵牌库
+        this.shuffleArray(this.ambushDeck);  // 洗牌
         this.currentCard = null;
         this.isDragging = false;
         this.selectedTerrainType = null;

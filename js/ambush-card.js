@@ -100,16 +100,6 @@ class AmbushCard {
         );
     }
 
-    constructor(corner, direction, shape) {
-        this.corner = corner || AmbushCard.CORNERS.TOP_LEFT;
-        this.direction = direction || AmbushCard.DIRECTIONS.CLOCKWISE;
-        this.shape = shape || [[1]];
-        this.terrainType = 'monster';
-        this.timeValue = 0;
-        this.coinReward = false;
-        this.cardType = '';  // 添加卡牌类型标识
-    }
-
     // 获取放置位置
     getStartPosition() {
         const lastRow = 10;  // 11x11 棋盘的最后一行索引
