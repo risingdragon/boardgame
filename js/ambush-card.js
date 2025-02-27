@@ -1,4 +1,4 @@
-class AmbushCard {
+class AmbushCard extends ExplorationCard {
     static CORNERS = {
         TOP_LEFT: 'topLeft',
         TOP_RIGHT: 'topRight',
@@ -53,16 +53,7 @@ class AmbushCard {
         }
     };
 
-    constructor(name, corner, direction, shape) {
-        this.name = name;
-        this.corner = corner;
-        this.direction = direction;
-        this.shape = shape;
-        this.terrainType = 'monster';
-        this.timeValue = 0;
-        this.coinReward = false;
-    }
-
+    // 将静态方法移到其他静态属性之后
     static initializeCards() {
         return [
             new AmbushCard(
@@ -92,39 +83,52 @@ class AmbushCard {
         ];
     }
 
-    static createGnollRaid() {
-        return new AmbushCard(
-            AmbushCard.GNOLL_RAID.corner,
-            AmbushCard.GNOLL_RAID.direction,
-            AmbushCard.GNOLL_RAID.shape
-        );
+    constructor(name, corner, direction, shape) {
+        // 创建符合 ExplorationCard 结构的 shapes 数组
+        const shapes = [{
+            shape: shape,
+            terrainType: 'monster',
+            coinReward: false
+        }];
+        
+        // 调用父类构造函数
+        super(name, shapes, 0, true);  // timeValue 为 0，monsterAttack 为 true
+        
+        this.corner = corner;
+        this.direction = direction;
     }
 
-    // 获取放置位置
+    // 删除自定义的 getSelectedShape 方法，使用父类的方法
+    // 因为父类的实现已经能正确处理 shapes 数组
+
+    // 修改 getStartPosition 和 getNextPosition 方法中的 shape 引用
     getStartPosition() {
-        const lastRow = 10;  // 11x11 棋盘的最后一行索引
-        const lastCol = 10;  // 11x11 棋盘的最后一列索引
+        const lastRow = 10;
+        const lastCol = 10;
+        const selectedShape = super.getSelectedShape();  // Use parent's method
+        const shape = selectedShape.shape;
 
         switch (this.corner) {
             case AmbushCard.CORNERS.TOP_LEFT:
                 return [0, 0];
             case AmbushCard.CORNERS.TOP_RIGHT:
-                return [0, lastCol - this.shape[0].length + 1];
+                return [0, lastCol - shape[0].length + 1];
             case AmbushCard.CORNERS.BOTTOM_LEFT:
-                return [lastRow - this.shape.length + 1, 0];
+                return [lastRow - shape.length + 1, 0];
             case AmbushCard.CORNERS.BOTTOM_RIGHT:
-                return [lastRow - this.shape.length + 1, lastCol - this.shape[0].length + 1];
+                return [lastRow - shape.length + 1, lastCol - shape[0].length + 1];
             default:
                 return [0, 0];
         }
     }
 
-    // 获取下一个位置（根据移动方向）
     getNextPosition(currentRow, currentCol) {
         const lastRow = 10;
         const lastCol = 10;
-        const shapeHeight = this.shape.length;
-        const shapeWidth = this.shape[0].length;
+        const selectedShape = super.getSelectedShape();  // Use parent's method
+        const shape = selectedShape.shape;
+        const shapeHeight = shape.length;
+        const shapeWidth = shape[0].length;
 
         if (this.direction === AmbushCard.DIRECTIONS.CLOCKWISE) {
             // 顺时针移动逻辑
@@ -159,13 +163,14 @@ class AmbushCard {
         return null; // 无法继续移动
     }
 
-    getSelectedShape() {
-        return {
-            shape: this.shape,
-            terrainType: this.terrainType,
-            coinReward: this.coinReward
-        };
-    }
+    // Remove this method to use parent's implementation
+    // getSelectedShape() {
+    //     return {
+    //         shape: this.shape,
+    //         terrainType: this.terrainType,
+    //         coinReward: this.coinReward
+    //     };
+    // }
 
     getName() {
         if (this.cardType === 'gnoll') {
@@ -195,7 +200,7 @@ class AmbushCard {
     }
 }
 
-// VoidCard 类保持不变
+// VoidCard 类不需要修改，因为它已经继承自 AmbushCard
 class VoidCard extends AmbushCard {
     constructor() {
         super('时空裂隙', AmbushCard.CORNERS.TOP_LEFT, AmbushCard.DIRECTIONS.CLOCKWISE, [[1]]);
