@@ -423,9 +423,28 @@ class ExplorationDisplay {
             this.updateDisplay(card);
         };
 
+        // 添加确认和取消按钮到按钮容器
+        const confirmButton = document.createElement('button');
+        confirmButton.className = 'shape-button confirm';
+        confirmButton.innerHTML = '✓';
+        confirmButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
+        confirmButton.onclick = () => this.game.confirmPlacement();
+
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'shape-button cancel';
+        cancelButton.innerHTML = '✕';
+        cancelButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
+        cancelButton.onclick = () => this.game.cancelPlacement();
+
         buttonsContainer.appendChild(rotateButton);
         buttonsContainer.appendChild(flipButton);
-        cardDisplay.appendChild(buttonsContainer);  // 直接添加到 cardDisplay
+        buttonsContainer.appendChild(confirmButton);
+        buttonsContainer.appendChild(cancelButton);
+        cardDisplay.appendChild(buttonsContainer);
+
+        // 存储按钮引用
+        this.confirmButton = confirmButton;
+        this.cancelButton = cancelButton;
 
         // 添加形状选项
         const optionsContainer = document.createElement('div');
@@ -547,33 +566,14 @@ class ExplorationDisplay {
 
         cardDisplay.appendChild(optionsContainer);  // 直接添加到 cardDisplay
 
-        // 添加操作按钮
-        const actionButtons = document.createElement('div');
-        actionButtons.className = 'action-buttons';
-
-        const confirmButton = document.createElement('button');
-        confirmButton.className = 'action-button confirm';
-        confirmButton.textContent = '确定';
-        confirmButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
-
-        const cancelButton = document.createElement('button');
-        cancelButton.className = 'action-button cancel';
-        cancelButton.textContent = '取消';
-        cancelButton.style.display = this.buttonsVisible ? 'inline-block' : 'none';
-
-        actionButtons.appendChild(confirmButton);
-        actionButtons.appendChild(cancelButton);
-        cardDisplay.appendChild(actionButtons);  // 直接添加到 cardDisplay
-
-        // 存储按钮引用
-        this.confirmButton = confirmButton;
-        this.cancelButton = cancelButton;
-
-        // 如果按钮之前是显示的，重新绑定事件
-        if (this.buttonsVisible) {
-            this.confirmButton.onclick = () => this.game.confirmPlacement();
-            this.cancelButton.onclick = () => this.game.cancelPlacement();
-        }
+        // 删除重复的按钮创建代码，因为已经在上面创建过了
+        // 删除从这里开始
+        // const actionButtons = document.createElement('div');
+        // actionButtons.className = 'action-buttons';
+        // 
+        // const confirmButton = document.createElement('button');
+        // const cancelButton = document.createElement('button');
+        // ... 直到这里的重复代码都删除
 
         // 在卡片标题下方添加遗迹提示
         if (this.game.lastCardWasRuin) {

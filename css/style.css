@@ -846,3 +846,11 @@
     margin-top: 5px;
     text-align: center;
 }
+
+.shape-button.confirm {
+    color: #4CAF50;
+}
+
+.shape-button.cancel {
+    color: #f44336;
+}
