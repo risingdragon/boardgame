@@ -528,13 +528,17 @@ class ExplorationDisplay {
                 this.game.selectedTerrainType = shapeOption.terrainType;
                 card.selectedShapeIndex = index;
 
-                // 获取鼠标在元素内的相对位置
+                // 获取鼠标在预览网格中的相对位置（以格子为单位）
                 const rect = previewGrid.getBoundingClientRect();
-                const cellSize = rect.width / (maxCol - minCol + 1); // 计算单个格子的大小
-
-                // 计算鼠标在预览网格中的相对位置（以格子为单位）
+                const cellSize = rect.width / (maxCol - minCol + 1);
                 const gridX = Math.floor((e.clientX - rect.left) / cellSize);
                 const gridY = Math.floor((e.clientY - rect.top) / cellSize);
+
+                // 记录拖动开始时鼠标在形状内的偏移格子数
+                card.dragOffset = {
+                    x: gridX,
+                    y: gridY
+                };
 
                 // 创建拖动时的预览元素
                 const dragPreview = document.createElement('div');

@@ -867,13 +867,17 @@ class CartographersGame {
             const rect = mapGrid.getBoundingClientRect();
             const cellSize = 40; // 格子大小
 
-            // 计算鼠标位置相对于格子的偏移
-            const offsetX = e.clientX - rect.left;
-            const offsetY = e.clientY - rect.top;
+            // 获取鼠标位置对应的格子坐标
+            const mouseGridX = Math.floor((e.clientX - rect.left) / cellSize);
+            const mouseGridY = Math.floor((e.clientY - rect.top) / cellSize);
 
-            // 计算最近的格子中心点
-            const col = Math.round(offsetX / cellSize - 0.5);
-            const row = Math.round(offsetY / cellSize - 0.5);
+            // 获取拖动时记录的偏移格子数
+            const dragOffsetX = this.currentCard.dragOffset.x;
+            const dragOffsetY = this.currentCard.dragOffset.y;
+
+            // 计算形状左上角的格子坐标
+            const col = mouseGridX - dragOffsetX;
+            const row = mouseGridY - dragOffsetY;
 
             this.tryPlaceTerrain(row, col);
         });
@@ -893,7 +897,8 @@ class CartographersGame {
             const shape = selectedShape.shape;
             const terrainType = selectedShape.terrainType;
 
-            // 检查是否可以放置
+            // 不再需要根据鼠标位置调整放置位置
+            // 直接使用传入的行列作为形状左上角的位置
             let canPlace = true;
             for (let i = 0; i < shape.length && canPlace; i++) {
                 for (let j = 0; j < shape[i].length && canPlace; j++) {
