@@ -505,35 +505,48 @@ class CartographersGame {
     }
 
     endSeason() {
+        console.log('开始结算季节...');
         // 计算本季节的分数
         const currentSeasonName = this.seasons[this.currentSeason];
         const scoringCardTypes = this.seasonScoringCards[currentSeasonName];
+        console.log('当前季节:', currentSeasonName);
+        console.log('本季度生效的规则卡类型:', scoringCardTypes);
         let seasonTotal = 0;
 
         // 计算规则卡分数
         let ruleCardScores = [];
         scoringCardTypes.forEach(cardType => {
-            // 确保 scoringDeck 存在且有 cards 属性
-            if (this.scoringDeck && this.scoringDeck.cards) {
-                const card = this.scoringDeck.cards.find(c => c.type === cardType);
-                if (card) {
-                    const score = card.calculateScore(this.board);
-                    ruleCardScores.push({
-                        name: card.name,
-                        score: score
-                    });
-                    seasonTotal += score;
-                }
+            // 从已选择的规则卡中找到对应类型的卡
+            const card = this.scoringCards.find(c => c.type === cardType);
+            console.log(`查找类型 ${cardType} 的规则卡:`, card);
+            if (card) {
+                // 直接使用已计算的分数
+                const score = card.currentScore || 0;
+                console.log(`规则卡 ${cardType} 得分:`, score);
+
+                ruleCardScores.push({
+                    type: cardType,
+                    name: card.name,
+                    score: score
+                });
+                seasonTotal += score;
             }
         });
+
+        console.log('规则卡得分数组:', ruleCardScores);
 
         // 计算金币和怪物分数
         const coinScore = this.scores.coins || 0;
         const monsterScore = this.scores.monsters || 0;
         seasonTotal += coinScore + monsterScore;
+        console.log('金币得分:', coinScore);
+        console.log('怪物得分:', monsterScore);
+        console.log('季节总分:', seasonTotal);
 
         // 更新季节分数显示
         const seasonBox = document.getElementById(`${currentSeasonName}-score`);
+        console.log('季节盒子元素:', seasonBox);
+
         if (seasonBox) {
             // 创建详细得分内容
             const scoreDetails = document.createElement('div');
@@ -542,6 +555,7 @@ class CartographersGame {
             // 确保有规则卡分数再显示
             let ruleScoresHtml = '';
             if (ruleCardScores.length >= 2) {
+                console.log('生成规则卡得分HTML');
                 ruleScoresHtml = `
                     <div class="rule-scores">
                         <span>${ruleCardScores[0].name}: ${ruleCardScores[0].score}</span>
@@ -559,6 +573,7 @@ class CartographersGame {
                     总分: ${seasonTotal}
                 </div>
             `;
+            console.log('更新季节盒子内容');
             seasonBox.innerHTML = '';
             seasonBox.appendChild(scoreDetails);
         }
@@ -920,6 +935,7 @@ class CartographersGame {
     }
 
     updateScoringCardScores() {
+        console.log('开始更新规则卡分数...');
         const scoringCardsContainer = document.querySelector('.scoring-cards');
         if (!scoringCardsContainer) return;
 
@@ -928,27 +944,32 @@ class CartographersGame {
 
         // 为每个显示的规则卡找到对应的计分卡
         displayedCards.forEach(cardElement => {
-            // 获取显示的卡片名称
             const titleElement = cardElement.querySelector('.scoring-card-title');
             if (!titleElement) return;
             const displayedName = titleElement.textContent;
 
             // 在已选择的规则卡中找到对应的卡片
             const matchingCard = this.scoringCards.find(card => card.name === displayedName);
+            console.log('找到规则卡:', matchingCard);
             if (!matchingCard) return;
 
-            // 计算并显示分数
-            const currentScore = matchingCard.scoringFunction(this.board);
+            // 计算并保存分数
+            const score = matchingCard.scoringFunction(this.board);
+            console.log(`规则卡 ${matchingCard.name} 计算得分:`, score);
+            matchingCard.currentScore = score;  // 保存当前分数
+            console.log(`规则卡 ${matchingCard.name} 保存的分数:`, matchingCard.currentScore);
 
+            // 更新显示
             let scoreElement = cardElement.querySelector('.current-score');
             if (!scoreElement) {
                 scoreElement = document.createElement('div');
                 scoreElement.className = 'current-score';
                 cardElement.appendChild(scoreElement);
             }
-
-            scoreElement.innerHTML = `${currentScore}<span class="star-icon">★</span>`;
+            scoreElement.innerHTML = `${score}<span class="star-icon">★</span>`;
         });
+
+        console.log('所有规则卡当前状态:', this.scoringCards);
     }
 
     // 更新得分显示
