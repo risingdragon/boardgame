@@ -528,6 +528,14 @@ class ExplorationDisplay {
                 this.game.selectedTerrainType = shapeOption.terrainType;
                 card.selectedShapeIndex = index;
 
+                // 获取鼠标在元素内的相对位置
+                const rect = previewGrid.getBoundingClientRect();
+                const cellSize = rect.width / (maxCol - minCol + 1); // 计算单个格子的大小
+
+                // 计算鼠标在预览网格中的相对位置（以格子为单位）
+                const gridX = Math.floor((e.clientX - rect.left) / cellSize);
+                const gridY = Math.floor((e.clientY - rect.top) / cellSize);
+
                 // 创建拖动时的预览元素
                 const dragPreview = document.createElement('div');
                 dragPreview.className = 'terrain-preview-grid drag-preview';
@@ -547,9 +555,13 @@ class ExplorationDisplay {
                     }
                 }
 
-                // 设置拖动预览
+                // 设置拖动预览，偏移量为鼠标点击位置对应的格子中心
                 document.body.appendChild(dragPreview);
-                e.dataTransfer.setDragImage(dragPreview, 0, 0);
+                e.dataTransfer.setDragImage(
+                    dragPreview,
+                    (gridX + 0.5) * cellSize,  // 使用格子中心作为偏移点
+                    (gridY + 0.5) * cellSize
+                );
 
                 // 在拖动结束后移除预览元素
                 setTimeout(() => {
@@ -565,15 +577,6 @@ class ExplorationDisplay {
         });
 
         cardDisplay.appendChild(optionsContainer);  // 直接添加到 cardDisplay
-
-        // 删除重复的按钮创建代码，因为已经在上面创建过了
-        // 删除从这里开始
-        // const actionButtons = document.createElement('div');
-        // actionButtons.className = 'action-buttons';
-        // 
-        // const confirmButton = document.createElement('button');
-        // const cancelButton = document.createElement('button');
-        // ... 直到这里的重复代码都删除
 
         // 在卡片标题下方添加遗迹提示
         if (this.game.lastCardWasRuin) {
