@@ -781,25 +781,6 @@
     margin: 4px 0;
 }
 
-.rule-pair {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.rule-card {
-    width: 24px;
-    height: 24px;
-    background: #8b7355;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    font-size: 14px;
-}
-
 .season-score {
     font-size: 18px;
     font-weight: bold;
