@@ -14,6 +14,10 @@
 * The game ends when no player can place any more pieces
 * The player with the fewest remaining squares in their unused pieces wins
 
+界面布局：
+左侧是piece-tray，中间是棋盘。右边预留广告区域。
+不需要滑动就能显示整个游戏区域。
+
 ## 项目结构 / Project Structure
 
 ```
