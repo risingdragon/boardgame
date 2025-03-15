@@ -13,20 +13,22 @@ export class Game {
     private gameContainer: HTMLElement | null;
     private boardElement: HTMLElement | null;
     private pieceTrayElement: HTMLElement | null;
+    private gameInfoElement: HTMLElement | null;
     private selectedPieceId: number | null = null;
     private selectedPieceElement: HTMLElement | null = null;
     private hoveredPieceElement: HTMLElement | null = null;
 
     constructor() {
-        this.board = new Board(20, 20);
+        this.board = new Board(14, 14); // 14x14棋盘
         this.pieceFactory = new PieceFactory();
-        this.humanPlayer = new Player('Human', 'blue', this.pieceFactory.createAllPieces());
+        this.humanPlayer = new Player('玩家', 'blue', this.pieceFactory.createAllPieces());
         this.aiPlayer = new AIPlayer('AI', 'red', this.pieceFactory.createAllPieces());
-        this.currentPlayer = this.humanPlayer; // Human goes first
+        this.currentPlayer = this.humanPlayer; // 人类玩家先行
 
         this.gameContainer = document.getElementById('game-container');
         this.boardElement = document.getElementById('game-board');
         this.pieceTrayElement = document.getElementById('piece-tray');
+        this.gameInfoElement = document.getElementById('game-info');
     }
 
     public initialize(): void {
@@ -43,6 +45,9 @@ export class Game {
         // Set up event listeners
         this.setupEventListeners();
 
+        // 显示当前玩家信息
+        this.updateGameInfo();
+
         console.log('Game initialized successfully!');
     }
 
@@ -52,47 +57,58 @@ export class Game {
         // Clear previous pieces
         this.pieceTrayElement.innerHTML = '';
 
-        // Render human player's available pieces
-        this.humanPlayer.getAvailablePieces().forEach(piece => {
-            const pieceElement = document.createElement('div');
-            pieceElement.classList.add('piece');
-            pieceElement.dataset.pieceId = piece.id.toString();
+        // 只在人类玩家回合显示棋子托盘内容
+        if (this.currentPlayer === this.humanPlayer) {
+            // Render human player's available pieces
+            this.humanPlayer.getAvailablePieces().forEach(piece => {
+                const pieceElement = document.createElement('div');
+                pieceElement.classList.add('piece');
+                pieceElement.dataset.pieceId = piece.id.toString();
 
-            // Create a mini canvas to display the piece
-            const canvas = document.createElement('canvas');
-            canvas.width = piece.shape[0].length * 20;
-            canvas.height = piece.shape.length * 20;
-            pieceElement.appendChild(canvas);
+                // Create a mini canvas to display the piece
+                const canvas = document.createElement('canvas');
+                canvas.width = piece.shape[0].length * 20;
+                canvas.height = piece.shape.length * 20;
+                pieceElement.appendChild(canvas);
 
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                // Draw the piece
-                piece.shape.forEach((row, rowIndex) => {
-                    row.forEach((cell, colIndex) => {
-                        if (cell) {
-                            ctx.fillStyle = this.humanPlayer.color;
-                            ctx.fillRect(colIndex * 20, rowIndex * 20, 20, 20);
-                            ctx.strokeStyle = '#000';
-                            ctx.strokeRect(colIndex * 20, rowIndex * 20, 20, 20);
-                        }
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    // Draw the piece
+                    piece.shape.forEach((row, rowIndex) => {
+                        row.forEach((cell, colIndex) => {
+                            if (cell) {
+                                ctx.fillStyle = this.humanPlayer.color;
+                                ctx.fillRect(colIndex * 20, rowIndex * 20, 20, 20);
+                                ctx.strokeStyle = '#000';
+                                ctx.strokeRect(colIndex * 20, rowIndex * 20, 20, 20);
+                            }
+                        });
                     });
+                }
+
+                // 添加点击事件用于选择棋子
+                pieceElement.addEventListener('click', () => {
+                    this.selectPiece(piece.id, pieceElement);
                 });
-            }
 
-            // 添加点击事件用于选择棋子
-            pieceElement.addEventListener('click', () => {
-                this.selectPiece(piece.id, pieceElement);
+                this.pieceTrayElement?.appendChild(pieceElement);
             });
-
-            this.pieceTrayElement?.appendChild(pieceElement);
-        });
+        } else {
+            // AI回合时显示提示信息
+            const aiTurnMessage = document.createElement('div');
+            aiTurnMessage.style.padding = '20px';
+            aiTurnMessage.style.textAlign = 'center';
+            aiTurnMessage.style.fontSize = '18px';
+            aiTurnMessage.innerHTML = 'AI正在思考中...';
+            this.pieceTrayElement.appendChild(aiTurnMessage);
+        }
     }
 
     private setupEventListeners(): void {
         // 添加键盘事件监听器
         document.addEventListener('keydown', (event) => {
-            // 检查是否有选中的棋子
-            if (this.selectedPieceId !== null) {
+            // 检查是否有选中的棋子，并且是人类玩家回合
+            if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
                 if (event.key === 'r' || event.key === 'R') {
                     // 旋转选中的棋子
                     const rotatedPiece = this.humanPlayer.rotatePiece(this.selectedPieceId);
@@ -131,7 +147,7 @@ export class Game {
 
             // 鼠标进入棋盘时创建悬浮棋子
             this.boardElement.addEventListener('mouseenter', (event) => {
-                if (this.selectedPieceId !== null) {
+                if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
                     this.createHoveredPiece();
                 }
             });
@@ -143,7 +159,7 @@ export class Game {
 
             // 鼠标在棋盘上移动时更新悬浮棋子位置
             this.boardElement.addEventListener('mousemove', (event) => {
-                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement) {
+                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
                     const rect = this.boardElement.getBoundingClientRect();
                     // 计算鼠标相对于棋盘的位置
                     const x = event.clientX - rect.left;
@@ -202,8 +218,6 @@ export class Game {
 
                             // 添加网格辅助线以更清晰地显示棋子将放置的位置
                             this.updateGridHighlight(adjustedGridX, adjustedGridY, pieceWidth, pieceHeight, isValid);
-
-                            console.log(`Mouse at grid: ${gridX}, ${gridY}, Piece at: ${adjustedGridX}, ${adjustedGridY}, Valid: ${isValid}`);
                         }
                     }
                 }
@@ -211,7 +225,7 @@ export class Game {
 
             // 添加棋盘点击事件用于放置棋子
             this.boardElement.addEventListener('click', (event) => {
-                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement) {
+                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
                     // 使用存储在悬浮元素上的坐标，而不是再次计算
                     const gridX = parseInt(this.hoveredPieceElement.dataset.gridX || '0', 10);
                     const gridY = parseInt(this.hoveredPieceElement.dataset.gridY || '0', 10);
@@ -227,7 +241,7 @@ export class Game {
 
     // 创建悬浮棋子显示
     private createHoveredPiece(): void {
-        if (this.selectedPieceId === null || !this.boardElement) return;
+        if (this.selectedPieceId === null || !this.boardElement || this.currentPlayer !== this.humanPlayer) return;
 
         // 移除已有的悬浮棋子
         this.removeHoveredPiece();
@@ -333,7 +347,7 @@ export class Game {
 
     // 更新悬浮棋子显示
     private updateHoveredPieceDisplay(piece: Piece): void {
-        if (!this.hoveredPieceElement) return;
+        if (!this.hoveredPieceElement || this.currentPlayer !== this.humanPlayer) return;
 
         // 移除旧画布
         const oldCanvas = this.hoveredPieceElement.querySelector('canvas');
@@ -397,6 +411,9 @@ export class Game {
 
     // 选择棋子
     private selectPiece(pieceId: number, element: HTMLElement): void {
+        // 只在人类玩家回合可以选择棋子
+        if (this.currentPlayer !== this.humanPlayer) return;
+
         // 如果已经选中了一个棋子，先取消选择
         this.deselectPiece();
 
@@ -454,7 +471,7 @@ export class Game {
 
     // 尝试在指定位置放置选中的棋子
     private tryPlacePiece(gridX: number, gridY: number): void {
-        if (this.selectedPieceId === null) return;
+        if (this.selectedPieceId === null || this.currentPlayer !== this.humanPlayer) return;
 
         // 获取选中的棋子
         const piece = this.humanPlayer.getPiece(this.selectedPieceId);
@@ -478,9 +495,6 @@ export class Game {
             if (this.boardElement) {
                 this.board.render(this.boardElement);
             }
-
-            // 更新玩家棋盘UI
-            this.renderPieceTray();
 
             // 取消选择棋子
             this.deselectPiece();
@@ -512,24 +526,16 @@ export class Game {
         return player.getAvailablePieces().length === this.pieceFactory.createAllPieces().length;
     }
 
-    // 判断是否放在角落位置 - 不再需要，由Board类处理
-    private isCornerPlacement(piece: Piece, gridX: number, gridY: number): boolean {
-        // 这个方法在Board类中已经实现为isPlacementInCorner
-        // 为了不破坏现有代码，我们保留这个方法，但它将不再被使用
-        return true;
-    }
-
-    // 判断是否通过角接触 - 不再需要，由Board类处理
-    private hasDiagonalContact(piece: Piece, gridX: number, gridY: number, playerColor: string): boolean {
-        // 这个方法在Board类的isValidPlacement中已经实现
-        // 为了不破坏现有代码，我们保留这个方法，但它将不再被使用
-        return true;
-    }
-
     // 切换到AI玩家并执行AI回合
     private switchToAIPlayer(): void {
         this.currentPlayer = this.aiPlayer;
-        console.log("AI's turn");
+        console.log("AI的回合");
+
+        // 更新玩家棋盘UI
+        this.renderPieceTray();
+
+        // 更新游戏信息显示
+        this.updateGameInfo();
 
         // 给AI一些思考时间
         setTimeout(() => {
@@ -557,12 +563,41 @@ export class Game {
                 this.board.render(this.boardElement);
             }
         } else {
-            console.log("AI cannot make a valid move");
+            console.log("AI无法进行有效的移动");
         }
 
         // 切换回人类玩家
+        this.switchToHumanPlayer();
+    }
+
+    // 切换回人类玩家
+    private switchToHumanPlayer(): void {
         this.currentPlayer = this.humanPlayer;
-        console.log("Your turn");
+        console.log("玩家回合");
+
+        // 更新玩家棋盘UI
+        this.renderPieceTray();
+
+        // 更新游戏信息显示
+        this.updateGameInfo();
+    }
+
+    // 更新游戏信息显示
+    private updateGameInfo(): void {
+        if (this.gameInfoElement) {
+            if (this.currentPlayer === this.humanPlayer) {
+                this.gameInfoElement.innerHTML = `
+                    <h2>当前回合: 玩家 (蓝色)</h2>
+                    <p>可用棋子: ${this.humanPlayer.getAvailablePieces().length}</p>
+                    <p>操作提示: 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
+                `;
+            } else {
+                this.gameInfoElement.innerHTML = `
+                    <h2>当前回合: AI (红色)</h2>
+                    <p>AI正在思考...</p>
+                `;
+            }
+        }
     }
 
     // 更新网格高亮显示
