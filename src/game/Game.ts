@@ -14,6 +14,7 @@ export class Game {
     private boardElement: HTMLElement | null;
     private pieceTrayElement: HTMLElement | null;
     private gameInfoElement: HTMLElement | null;
+    private controlTipsElement: HTMLElement | null;
     private selectedPieceId: number | null = null;
     private selectedPieceElement: HTMLElement | null = null;
     private hoveredPieceElement: HTMLElement | null = null;
@@ -29,6 +30,7 @@ export class Game {
         this.boardElement = document.getElementById('game-board');
         this.pieceTrayElement = document.getElementById('piece-tray');
         this.gameInfoElement = document.getElementById('game-info');
+        this.controlTipsElement = null;
     }
 
     public initialize(): void {
@@ -37,6 +39,9 @@ export class Game {
         // Initialize the board UI
         if (this.boardElement) {
             this.board.render(this.boardElement);
+
+            // 创建控制提示区域并添加到棋盘下方
+            this.createControlTips();
         }
 
         // Initialize player piece tray
@@ -49,6 +54,31 @@ export class Game {
         this.updateGameInfo();
 
         console.log('Game initialized successfully!');
+    }
+
+    // 创建控制提示区域
+    private createControlTips(): void {
+        if (!this.boardElement) return;
+
+        // 创建控制提示元素
+        this.controlTipsElement = document.createElement('div');
+        this.controlTipsElement.id = 'control-tips';
+        this.controlTipsElement.style.width = '100%';
+        this.controlTipsElement.style.padding = '10px';
+        this.controlTipsElement.style.marginTop = '10px';
+        this.controlTipsElement.style.backgroundColor = '#f5f5f5';
+        this.controlTipsElement.style.borderRadius = '5px';
+        this.controlTipsElement.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        this.controlTipsElement.style.textAlign = 'center';
+        this.controlTipsElement.style.fontSize = '14px';
+
+        // 设置控制提示内容
+        this.controlTipsElement.innerHTML = `
+            <p><strong>操作提示:</strong> 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
+        `;
+
+        // 添加到棋盘元素后面
+        this.boardElement.insertAdjacentElement('afterend', this.controlTipsElement);
     }
 
     private renderPieceTray(): void {
@@ -589,7 +619,6 @@ export class Game {
                 this.gameInfoElement.innerHTML = `
                     <h2>当前回合: 玩家 (蓝色)</h2>
                     <p>可用棋子: ${this.humanPlayer.getAvailablePieces().length}</p>
-                    <p>操作提示: 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
                 `;
             } else {
                 this.gameInfoElement.innerHTML = `
