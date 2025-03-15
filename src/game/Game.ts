@@ -149,37 +149,77 @@ export class Game {
                     const x = event.clientX - rect.left;
                     const y = event.clientY - rect.top;
 
-                    // 使用transform来定位悬浮棋子，这样可以精确控制中心点
-                    this.hoveredPieceElement.style.left = '0';
-                    this.hoveredPieceElement.style.top = '0';
-                    this.hoveredPieceElement.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+                    // 棋盘有15px的内边距，需要考虑这个偏移
+                    const boardPadding = 15;
 
-                    // 计算棋盘格子坐标（用于之后的放置逻辑）
-                    const cellSize = 30; // 假设每个格子是30px
-                    const gridX = Math.floor(x / cellSize);
-                    const gridY = Math.floor(y / cellSize);
+                    // 调整鼠标位置，考虑内边距
+                    const adjustedX = x - boardPadding;
+                    const adjustedY = y - boardPadding;
 
-                    // 可以在这里添加代码来高亮显示有效/无效放置位置
-                    console.log(`Grid position: ${gridX}, ${gridY}`);
+                    // 计算棋盘格子坐标
+                    const cellSize = 30; // 与Board类中定义的一致
+                    const gridX = Math.floor(adjustedX / cellSize);
+                    const gridY = Math.floor(adjustedY / cellSize);
+
+                    // 只有当鼠标在有效的棋盘区域内才更新棋子位置
+                    if (gridX >= 0 && gridY >= 0) {
+                        // 获取选中的棋子
+                        const piece = this.humanPlayer.getPiece(this.selectedPieceId);
+                        if (piece) {
+                            // 获取棋子尺寸
+                            const pieceWidth = piece.shape[0].length;
+                            const pieceHeight = piece.shape.length;
+
+                            // 计算棋子左上角对应的格子坐标（考虑居中调整）
+                            const adjustedGridX = Math.max(0, gridX - Math.floor(pieceWidth / 2));
+                            const adjustedGridY = Math.max(0, gridY - Math.floor(pieceHeight / 2));
+
+                            // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
+                            const snapX = adjustedGridX * cellSize + boardPadding;
+                            const snapY = adjustedGridY * cellSize + boardPadding;
+
+                            // 使用直接定位方式
+                            this.hoveredPieceElement.style.left = `${snapX}px`;
+                            this.hoveredPieceElement.style.top = `${snapY}px`;
+                            this.hoveredPieceElement.style.transform = ''; // 移除transform，直接使用left/top定位
+
+                            // 检查放置是否有效
+                            const humanPlayerId = 1;
+                            const isValid = this.board.isValidPlacement(piece, adjustedGridX, adjustedGridY, humanPlayerId);
+
+                            // 根据有效性更新悬浮棋子的外观
+                            if (isValid) {
+                                this.hoveredPieceElement.style.opacity = '0.7';
+                                this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px green)';
+                            } else {
+                                this.hoveredPieceElement.style.opacity = '0.5';
+                                this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px red)';
+                            }
+
+                            // 将调整后的坐标存储在悬浮元素上，以便点击时使用
+                            this.hoveredPieceElement.dataset.gridX = adjustedGridX.toString();
+                            this.hoveredPieceElement.dataset.gridY = adjustedGridY.toString();
+
+                            // 添加网格辅助线以更清晰地显示棋子将放置的位置
+                            this.updateGridHighlight(adjustedGridX, adjustedGridY, pieceWidth, pieceHeight, isValid);
+
+                            console.log(`Mouse at grid: ${gridX}, ${gridY}, Piece at: ${adjustedGridX}, ${adjustedGridY}, Valid: ${isValid}`);
+                        }
+                    }
                 }
             });
 
             // 添加棋盘点击事件用于放置棋子
             this.boardElement.addEventListener('click', (event) => {
-                if (this.selectedPieceId !== null && this.boardElement) {
-                    const rect = this.boardElement.getBoundingClientRect();
-                    const x = event.clientX - rect.left;
-                    const y = event.clientY - rect.top;
+                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement) {
+                    // 使用存储在悬浮元素上的坐标，而不是再次计算
+                    const gridX = parseInt(this.hoveredPieceElement.dataset.gridX || '0', 10);
+                    const gridY = parseInt(this.hoveredPieceElement.dataset.gridY || '0', 10);
 
-                    // 计算棋盘格子坐标
-                    const cellSize = 30; // 假设每个格子是30px
-                    const gridX = Math.floor(x / cellSize);
-                    const gridY = Math.floor(y / cellSize);
-
-                    // 尝试放置棋子 (这部分逻辑需要实现)
                     console.log(`Attempting to place piece at grid position: ${gridX}, ${gridY}`);
 
-                    // 放置棋子后应该调用this.deselectPiece()并移除悬浮棋子
+                    // 尝试放置棋子
+                    this.tryPlacePiece(gridX, gridY);
                 }
             });
         }
@@ -203,14 +243,13 @@ export class Game {
         hoveredPiece.style.pointerEvents = 'none'; // 防止干扰鼠标事件
         hoveredPiece.style.opacity = '0.7'; // 半透明效果
         hoveredPiece.style.zIndex = '100';
+        hoveredPiece.style.transition = 'filter 0.2s'; // 添加过渡效果使颜色变化更平滑
+        hoveredPiece.style.transformOrigin = 'top left'; // 修改变换原点为左上角
 
         // 确保棋盘元素为相对定位，这样悬浮棋子才能正确定位
         if (this.boardElement.style.position !== 'relative') {
             this.boardElement.style.position = 'relative';
         }
-
-        // 为悬浮棋子添加CSS变换原点设置，以确保旋转和翻转时以中心为轴
-        hoveredPiece.style.transformOrigin = 'center center';
 
         // 创建画布显示棋子
         const canvas = document.createElement('canvas');
@@ -234,6 +273,17 @@ export class Game {
         }
 
         hoveredPiece.appendChild(canvas);
+
+        // 创建网格高亮显示
+        const gridHighlight = document.createElement('div');
+        gridHighlight.classList.add('grid-highlight');
+        gridHighlight.style.position = 'absolute';
+        gridHighlight.style.pointerEvents = 'none';
+        gridHighlight.style.zIndex = '99';
+        gridHighlight.style.border = '2px dashed rgba(255, 255, 255, 0.5)';
+        gridHighlight.style.display = 'none'; // 初始时隐藏
+        this.boardElement.appendChild(gridHighlight);
+
         this.boardElement.appendChild(hoveredPiece);
         this.hoveredPieceElement = hoveredPiece;
 
@@ -245,10 +295,39 @@ export class Game {
             const x = mouseEvent.clientX - rect.left;
             const y = mouseEvent.clientY - rect.top;
 
-            // 更新悬浮棋子的CSS样式，设置为绝对定位
-            hoveredPiece.style.left = '0';
-            hoveredPiece.style.top = '0';
-            hoveredPiece.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+            // 棋盘有15px的内边距，需要考虑这个偏移
+            const boardPadding = 15;
+
+            // 调整鼠标位置，考虑内边距
+            const adjustedX = x - boardPadding;
+            const adjustedY = y - boardPadding;
+
+            // 计算初始格子坐标
+            const cellSize = 30;
+            const gridX = Math.floor(adjustedX / cellSize);
+            const gridY = Math.floor(adjustedY / cellSize);
+
+            // 计算棋子左上角对应的格子坐标（考虑居中调整）
+            const pieceWidth = piece.shape[0].length;
+            const pieceHeight = piece.shape.length;
+            const adjustedGridX = Math.max(0, gridX - Math.floor(pieceWidth / 2));
+            const adjustedGridY = Math.max(0, gridY - Math.floor(pieceHeight / 2));
+
+            // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
+            const snapX = adjustedGridX * cellSize + boardPadding;
+            const snapY = adjustedGridY * cellSize + boardPadding;
+
+            // 更新悬浮棋子的CSS样式，直接使用left/top定位
+            hoveredPiece.style.left = `${snapX}px`;
+            hoveredPiece.style.top = `${snapY}px`;
+
+            hoveredPiece.dataset.gridX = adjustedGridX.toString();
+            hoveredPiece.dataset.gridY = adjustedGridY.toString();
+
+            // 更新网格高亮
+            const humanPlayerId = 1;
+            const isValid = this.board.isValidPlacement(piece, adjustedGridX, adjustedGridY, humanPlayerId);
+            this.updateGridHighlight(adjustedGridX, adjustedGridY, pieceWidth, pieceHeight, isValid);
         }
     }
 
@@ -283,6 +362,23 @@ export class Game {
 
         // 替换旧画布
         this.hoveredPieceElement.replaceChild(canvas, oldCanvas);
+
+        // 更新当前位置，防止画布大小变化导致位置错误
+        if (this.hoveredPieceElement.dataset.gridX && this.hoveredPieceElement.dataset.gridY) {
+            const gridX = parseInt(this.hoveredPieceElement.dataset.gridX, 10);
+            const gridY = parseInt(this.hoveredPieceElement.dataset.gridY, 10);
+
+            // 棋盘有15px的内边距
+            const boardPadding = 15;
+            const cellSize = 30;
+
+            this.hoveredPieceElement.style.left = `${gridX * cellSize + boardPadding}px`;
+            this.hoveredPieceElement.style.top = `${gridY * cellSize + boardPadding}px`;
+
+            // 更新网格高亮
+            this.updateGridHighlight(gridX, gridY, piece.shape[0].length, piece.shape.length,
+                this.hoveredPieceElement.style.filter.includes('green'));
+        }
     }
 
     // 移除悬浮棋子
@@ -290,6 +386,12 @@ export class Game {
         if (this.hoveredPieceElement && this.hoveredPieceElement.parentNode) {
             this.hoveredPieceElement.parentNode.removeChild(this.hoveredPieceElement);
             this.hoveredPieceElement = null;
+        }
+
+        // 移除网格高亮
+        const gridHighlight = document.querySelector('.grid-highlight');
+        if (gridHighlight && gridHighlight.parentNode) {
+            gridHighlight.parentNode.removeChild(gridHighlight);
         }
     }
 
@@ -348,6 +450,135 @@ export class Game {
         this.selectedPieceElement.replaceChild(canvas, oldCanvas);
 
         console.log(`Piece ${piece.id} display updated`);
+    }
+
+    // 尝试在指定位置放置选中的棋子
+    private tryPlacePiece(gridX: number, gridY: number): void {
+        if (this.selectedPieceId === null) return;
+
+        // 获取选中的棋子
+        const piece = this.humanPlayer.getPiece(this.selectedPieceId);
+        if (!piece) return;
+
+        console.log(`Trying to place piece ${this.selectedPieceId} at position (${gridX}, ${gridY})`);
+        console.log(`Piece shape:`, piece.shape);
+
+        // 验证放置位置是否合法
+        const humanPlayerId = 1;
+        if (this.board.isValidPlacement(piece, gridX, gridY, humanPlayerId)) {
+            console.log(`Placement is valid! Placing piece ${piece.id} at position (${gridX}, ${gridY})`);
+
+            // 在棋盘上放置棋子
+            this.board.placePiece(piece, gridX, gridY, humanPlayerId);
+
+            // 使用Player的placePiece方法来移除棋子
+            this.humanPlayer.placePiece(piece.id);
+
+            // 更新棋盘UI
+            if (this.boardElement) {
+                this.board.render(this.boardElement);
+            }
+
+            // 更新玩家棋盘UI
+            this.renderPieceTray();
+
+            // 取消选择棋子
+            this.deselectPiece();
+
+            // 切换到AI玩家
+            this.switchToAIPlayer();
+        } else {
+            console.log(`Invalid placement at position (${gridX}, ${gridY}). Piece shape:`, piece.shape);
+
+            // 显示放置无效的提示
+            if (this.hoveredPieceElement) {
+                // 添加一个短暂的视觉提示
+                this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 10px red)';
+                this.hoveredPieceElement.style.opacity = '0.3';
+
+                // 0.5秒后恢复
+                setTimeout(() => {
+                    if (this.hoveredPieceElement) {
+                        this.hoveredPieceElement.style.filter = '';
+                        this.hoveredPieceElement.style.opacity = '0.7';
+                    }
+                }, 500);
+            }
+        }
+    }
+
+    // 判断是否是玩家的第一步棋
+    private isFirstMove(player: Player): boolean {
+        return player.getAvailablePieces().length === this.pieceFactory.createAllPieces().length;
+    }
+
+    // 判断是否放在角落位置 - 不再需要，由Board类处理
+    private isCornerPlacement(piece: Piece, gridX: number, gridY: number): boolean {
+        // 这个方法在Board类中已经实现为isPlacementInCorner
+        // 为了不破坏现有代码，我们保留这个方法，但它将不再被使用
+        return true;
+    }
+
+    // 判断是否通过角接触 - 不再需要，由Board类处理
+    private hasDiagonalContact(piece: Piece, gridX: number, gridY: number, playerColor: string): boolean {
+        // 这个方法在Board类的isValidPlacement中已经实现
+        // 为了不破坏现有代码，我们保留这个方法，但它将不再被使用
+        return true;
+    }
+
+    // 切换到AI玩家并执行AI回合
+    private switchToAIPlayer(): void {
+        this.currentPlayer = this.aiPlayer;
+        console.log("AI's turn");
+
+        // 给AI一些思考时间
+        setTimeout(() => {
+            this.performAIMove();
+        }, 1000);
+    }
+
+    // 执行AI玩家的移动
+    private performAIMove(): void {
+        // AI尝试放置一个棋子
+        const moveResult = this.aiPlayer.makeMove(this.board);
+
+        if (moveResult) {
+            console.log(`AI placed piece at (${moveResult.x}, ${moveResult.y})`);
+
+            // 从AI的可用棋子中移除该棋子
+            this.aiPlayer.placePiece(moveResult.piece.id);
+
+            // 在棋盘上放置棋子
+            const aiPlayerId = 2;
+            this.board.placePiece(moveResult.piece, moveResult.x, moveResult.y, aiPlayerId);
+
+            // 更新棋盘UI
+            if (this.boardElement) {
+                this.board.render(this.boardElement);
+            }
+        } else {
+            console.log("AI cannot make a valid move");
+        }
+
+        // 切换回人类玩家
+        this.currentPlayer = this.humanPlayer;
+        console.log("Your turn");
+    }
+
+    // 更新网格高亮显示
+    private updateGridHighlight(gridX: number, gridY: number, width: number, height: number, isValid: boolean): void {
+        const gridHighlight = document.querySelector('.grid-highlight') as HTMLElement;
+        if (!gridHighlight || !this.boardElement) return;
+
+        const cellSize = 30;
+        const boardPadding = 15; // 棋盘内边距
+
+        gridHighlight.style.display = 'block';
+        gridHighlight.style.left = `${gridX * cellSize + boardPadding}px`;
+        gridHighlight.style.top = `${gridY * cellSize + boardPadding}px`;
+        gridHighlight.style.width = `${width * cellSize}px`;
+        gridHighlight.style.height = `${height * cellSize}px`;
+        gridHighlight.style.borderColor = isValid ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
     }
 
     // Additional game methods will be added here

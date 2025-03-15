@@ -36,6 +36,39 @@ canvas {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* 悬浮棋子样式 */
+.hovered-piece {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 100;
+    /* 确保没有额外的边距和内边距影响定位 */
+    transform-origin: top left;
+    border: none;
+    /* 确保没有边框干扰定位 */
+}
+
+.hovered-piece canvas {
+    display: block;
+    /* 确保canvas是块级元素，不影响定位 */
+    margin: 0;
+    /* 移除可能的外边距 */
+    box-sizing: border-box;
+}
+
+/* 网格高亮样式 */
+.grid-highlight {
+    position: absolute;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 99;
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    margin: 0;
+    padding: 0;
+}
+
 #game-info {
     margin-bottom: 15px;
     width: 100%;
@@ -90,6 +123,8 @@ canvas {
     padding: 15px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    /* 确保game-board是相对定位，其中的绝对定位元素才能正确定位 */
 }
 
 /* 右侧广告区域 */
