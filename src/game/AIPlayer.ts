@@ -160,6 +160,9 @@ export class AIPlayer extends Player {
         // 创建一个映射来跟踪棋子占据的位置
         const occupiedCells: Record<string, boolean> = {};
 
+        // 创建一个数组来存储所有连接点的位置
+        const connectionPoints: { x: number, y: number }[] = [];
+
         // 记录棋子占据的所有格子
         for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
             for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
@@ -194,6 +197,7 @@ export class AIPlayer extends Player {
 
                     if (isValidCorner) {
                         cornerPoints++;
+                        connectionPoints.push({ x: nx, y: ny });
 
                         // 额外奖励：如果连接点靠近棋盘中心，得分更高
                         const distanceToCenter = Math.sqrt(
@@ -222,7 +226,114 @@ export class AIPlayer extends Player {
         const edgeProximity = this.calculateEdgeProximity(piece, x, y, boardSize);
         score -= edgeProximity * 5; // 每单位边缘接近度减5分
 
+        // 5. 评估连接点的脆弱性 - 检查连接点是否容易被对手堵住
+        const vulnerabilityScore = this.evaluateVulnerability(connectionPoints, occupiedCells, boardSize);
+        score -= vulnerabilityScore; // 减去脆弱性得分（越高越容易被堵）
+
+        // 6. 连接点的集中度 - 避免连接点过于集中
+        const clusteringPenalty = this.evaluateConnectionClustering(connectionPoints);
+        score -= clusteringPenalty; // 惩罚连接点的过度集中
+
         return score;
+    }
+
+    // 评估连接点的脆弱性
+    private evaluateVulnerability(
+        connectionPoints: { x: number, y: number }[],
+        occupiedCells: Record<string, boolean>,
+        boardSize: number
+    ): number {
+        let vulnerabilityScore = 0;
+
+        // 对每个连接点，检查它是否易于被阻断
+        for (const point of connectionPoints) {
+            // 检查这个连接点周围8个方向
+            const surroundingDirections = [
+                { dx: -1, dy: -1 }, { dx: -1, dy: 0 }, { dx: -1, dy: 1 },
+                { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+                { dx: 1, dy: -1 }, { dx: 1, dy: 0 }, { dx: 1, dy: 1 }
+            ];
+
+            // 计算周围的空格数量
+            let emptySpacesAround = 0;
+            for (const dir of surroundingDirections) {
+                const nx = point.x + dir.dx;
+                const ny = point.y + dir.dy;
+
+                // 如果在边界内且不是棋子的一部分
+                if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize
+                    && !occupiedCells[`${nx},${ny}`]) {
+                    emptySpacesAround++;
+                }
+            }
+
+            // 周围空格越少，越容易被对手堵住
+            // 如果空格少于4个，认为是脆弱的
+            if (emptySpacesAround <= 3) {
+                vulnerabilityScore += (4 - emptySpacesAround) * 10;
+            }
+
+            // 检查该连接点是否只有一个扩展方向
+            // 创建一个计数，记录该连接点在不同象限中有多少个其他连接点
+            const quadrants = [false, false, false, false]; // [左上, 右上, 左下, 右下]
+
+            for (const otherPoint of connectionPoints) {
+                if (otherPoint.x === point.x && otherPoint.y === point.y) continue;
+
+                // 判断其他连接点在该点的哪个象限
+                if (otherPoint.x < point.x && otherPoint.y < point.y) quadrants[0] = true;
+                if (otherPoint.x > point.x && otherPoint.y < point.y) quadrants[1] = true;
+                if (otherPoint.x < point.x && otherPoint.y > point.y) quadrants[2] = true;
+                if (otherPoint.x > point.x && otherPoint.y > point.y) quadrants[3] = true;
+            }
+
+            // 计算该点可以连接到的象限数量
+            const quadrantCount = quadrants.filter(q => q).length;
+
+            // 如果只能向一个或零个方向扩展，增加脆弱性分数
+            if (quadrantCount <= 1) {
+                vulnerabilityScore += (2 - quadrantCount) * 15;
+            }
+        }
+
+        return vulnerabilityScore;
+    }
+
+    // 评估连接点的集中程度
+    private evaluateConnectionClustering(connectionPoints: { x: number, y: number }[]): number {
+        let clusteringPenalty = 0;
+
+        // 如果连接点太少，不评估集中度
+        if (connectionPoints.length <= 2) {
+            return 0;
+        }
+
+        // 计算连接点之间的平均距离
+        let totalDistance = 0;
+        let pairCount = 0;
+
+        for (let i = 0; i < connectionPoints.length; i++) {
+            for (let j = i + 1; j < connectionPoints.length; j++) {
+                const dist = Math.sqrt(
+                    Math.pow(connectionPoints[i].x - connectionPoints[j].x, 2) +
+                    Math.pow(connectionPoints[i].y - connectionPoints[j].y, 2)
+                );
+                totalDistance += dist;
+                pairCount++;
+            }
+        }
+
+        if (pairCount === 0) return 0;
+
+        const avgDistance = totalDistance / pairCount;
+
+        // 如果平均距离小于阈值，增加集中度惩罚
+        // 对于首次放置，我们希望连接点分散在不同区域
+        if (avgDistance < 3) {
+            clusteringPenalty = (3 - avgDistance) * 10;
+        }
+
+        return clusteringPenalty;
     }
 
     // 检查指定位置是否与棋子的某个部分相邻
@@ -458,7 +569,23 @@ export class AIPlayer extends Player {
         score += (boardSize / 2 - distanceToCenter) * 5 * centerImportance;
 
         // 3. 扩展因素 - 评估是否向外扩展
-        // 检查棋子周围8个方向是否有自己的棋子可以连接
+        // 创建一个映射来跟踪棋子占据的位置
+        const occupiedCells: Record<string, boolean> = {};
+        const newConnectionPoints: { x: number, y: number }[] = [];
+
+        // 记录棋子占据的所有格子
+        for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+            for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
+                if (piece.shape[rowIndex][colIndex]) {
+                    const gridX = x + colIndex;
+                    const gridY = y + rowIndex;
+                    occupiedCells[`${gridX},${gridY}`] = true;
+                }
+            }
+        }
+
+        // 检查棋子是否与现有的AI棋子有对角连接
+        let diagonalConnections = 0;
         for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
             for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
                 if (piece.shape[rowIndex][colIndex]) {
@@ -477,7 +604,7 @@ export class AIPlayer extends Player {
 
                         if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
                             if (gridState[ny][nx] === 2) { // 2 是AI的ID
-                                score += 3; // 每个对角线连接加3分
+                                diagonalConnections++;
                             }
                         }
                     }
@@ -485,11 +612,99 @@ export class AIPlayer extends Player {
             }
         }
 
+        score += diagonalConnections * 8; // 每个对角线连接加8分（增加权重）
+
+        // 计算新创建的连接点
+        for (const cellKey of Object.keys(occupiedCells)) {
+            const [cellX, cellY] = cellKey.split(',').map(Number);
+
+            // 检查对角线方向
+            const diagonalDirections = [
+                { dx: -1, dy: -1 }, { dx: -1, dy: 1 },
+                { dx: 1, dy: -1 }, { dx: 1, dy: 1 }
+            ];
+
+            for (const dir of diagonalDirections) {
+                const nx = cellX + dir.dx;
+                const ny = cellY + dir.dy;
+
+                // 检查这个点是否在边界内、不是棋子的一部分、且没有其他棋子
+                if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize
+                    && !occupiedCells[`${nx},${ny}`] && gridState[ny][nx] === 0) {
+
+                    // 检查这个点是否是有效的扩展点（即不相邻）
+                    let hasAdjacent = false;
+
+                    // 检查上下左右是否有本方棋子（不包括新放置的棋子）
+                    const adjacentDirections = [
+                        { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+                        { dx: 0, dy: -1 }, { dx: 0, dy: 1 }
+                    ];
+
+                    for (const adjDir of adjacentDirections) {
+                        const adjX = nx + adjDir.dx;
+                        const adjY = ny + adjDir.dy;
+
+                        if (adjX >= 0 && adjX < boardSize && adjY >= 0 && adjY < boardSize) {
+                            // 检查是否是棋子的一部分
+                            if (occupiedCells[`${adjX},${adjY}`]) {
+                                hasAdjacent = true;
+                                break;
+                            }
+
+                            // 检查是否是已有的AI棋子
+                            if (gridState[adjY][adjX] === 2) {
+                                hasAdjacent = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasAdjacent) {
+                        newConnectionPoints.push({ x: nx, y: ny });
+                    }
+                }
+            }
+        }
+
+        // 每个新连接点加分
+        score += newConnectionPoints.length * 10;
+
+        // 检查新连接点的脆弱性
+        if (newConnectionPoints.length > 0) {
+            // 创建一个新的网格状态，包含新放置的棋子
+            const newGridState = gridState.map(row => [...row]);
+            for (const cellKey of Object.keys(occupiedCells)) {
+                const [cellX, cellY] = cellKey.split(',').map(Number);
+                newGridState[cellY][cellX] = 2; // 标记为AI所有
+            }
+
+            // 评估新连接点的脆弱性
+            const aiCells: Record<string, boolean> = {};
+
+            // 记录所有AI棋子的位置
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (newGridState[y][x] === 2) {
+                        aiCells[`${x},${y}`] = true;
+                    }
+                }
+            }
+
+            const vulnerabilityScore = this.evaluateVulnerability(newConnectionPoints, aiCells, boardSize);
+            score -= vulnerabilityScore * 0.7; // 减去一定比例的脆弱性得分
+        }
+
         // 4. 防御因素 - 评估是否阻碍对手
-        // 这个因素在游戏中期更重要
-        const defensiveImportance = gameProgress * (1 - gameProgress) * 4; // 在游戏中期达到峰值
+        // 针对游戏进展调整防御权重
+        const baseDefensiveImportance = gameProgress * (1 - gameProgress) * 4; // 在游戏中期达到峰值
+
+        // 根据对手的扩展潜力增加防御重要性
+        const opponentThreatLevel = this.evaluateOpponentThreat(gridState, boardSize);
+        const defensiveImportance = baseDefensiveImportance * (1 + opponentThreatLevel * 0.5);
 
         // 检查周围是否有对手的棋子
+        let opponentProximity = 0;
         for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
             for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
                 if (piece.shape[rowIndex][colIndex]) {
@@ -509,7 +724,7 @@ export class AIPlayer extends Player {
 
                         if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
                             if (gridState[ny][nx] === 1) { // 1 是玩家的ID
-                                score += 2 * defensiveImportance; // 靠近对手棋子加分
+                                opponentProximity++;
                             }
                         }
                     }
@@ -517,7 +732,480 @@ export class AIPlayer extends Player {
             }
         }
 
+        score += opponentProximity * 2 * defensiveImportance; // 靠近对手棋子加分
+
+        // 5. 阻断对手的潜在连接点
+        let blockScore = 0;
+        const opponentConnectionPoints = this.findOpponentConnectionPoints(gridState, boardSize);
+
+        // 检查放置这个棋子是否会阻断对手的潜在连接点
+        for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+            for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
+                if (piece.shape[rowIndex][colIndex]) {
+                    const gridX = x + colIndex;
+                    const gridY = y + rowIndex;
+
+                    // 检查是否阻断了对手的连接点
+                    for (const point of opponentConnectionPoints) {
+                        if (point.x === gridX && point.y === gridY) {
+                            // 计算这个连接点的战略价值
+                            const pointValue = this.evaluateOpponentConnectionPointValue(point, gridState, boardSize);
+                            blockScore += pointValue;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. 战略性阻断 - 阻断对手可能的扩展路径
+        const strategicBlockingScore = this.evaluateStrategicBlocking(piece, x, y, gridState, boardSize);
+        score += strategicBlockingScore * 15; // 战略阻断得高分
+
+        // 7. 关键位置攻防 - 占据关键战略位置
+        const keyPositionScore = this.evaluateKeyPositions(piece, x, y, gridState, boardSize, gameProgress);
+        score += keyPositionScore * 12;
+
+        // 根据游戏进程调整进攻性和防御性的平衡
+        // 在游戏早期，更侧重于自身扩展；到了中后期，更注重阻断对手
+        const offensiveWeight = Math.max(0.4, 1 - gameProgress * 1.2); // 最低为0.4
+        const defensiveWeight = Math.min(1.5, 0.6 + gameProgress * 1.2); // 最高为1.5
+
+        // 将blockScore乘以defensiveWeight加入总分
+        score += blockScore * defensiveWeight;
+
         return score;
+    }
+
+    // 评估对手的威胁程度
+    private evaluateOpponentThreat(gridState: number[][], boardSize: number): number {
+        let threatLevel = 0;
+
+        // 1. 计算对手控制的区域大小
+        let opponentCellCount = 0;
+        for (let y = 0; y < boardSize; y++) {
+            for (let x = 0; x < boardSize; x++) {
+                if (gridState[y][x] === 1) { // 1是人类玩家ID
+                    opponentCellCount++;
+                }
+            }
+        }
+
+        // 2. 计算对手的潜在扩展点数量
+        const opponentConnectionPoints = this.findOpponentConnectionPoints(gridState, boardSize);
+
+        // 根据对手占据的格子数量和连接点数量计算威胁等级
+        threatLevel = opponentCellCount * 0.5 + opponentConnectionPoints.length * 1.5;
+
+        // 3. 检查对手是否有机会形成大面积连通区域
+        const connectedRegions = this.analyzeOpponentConnectedRegions(gridState, boardSize);
+        if (connectedRegions.large > 0) {
+            threatLevel += connectedRegions.large * 10; // 大连通区域威胁更高
+        }
+        if (connectedRegions.medium > 0) {
+            threatLevel += connectedRegions.medium * 5; // 中等连通区域
+        }
+
+        return Math.min(10, threatLevel / 10); // 归一化到0-10的范围
+    }
+
+    // 分析对手的连通区域
+    private analyzeOpponentConnectedRegions(gridState: number[][], boardSize: number): { large: number, medium: number, small: number } {
+        // 创建访问标记数组
+        const visited: boolean[][] = Array(boardSize).fill(0).map(() => Array(boardSize).fill(false));
+        const regions = { large: 0, medium: 0, small: 0 };
+
+        // 深度优先搜索查找连通区域
+        const dfs = (x: number, y: number): number => {
+            if (x < 0 || x >= boardSize || y < 0 || y >= boardSize ||
+                visited[y][x] || gridState[y][x] !== 1) {
+                return 0;
+            }
+
+            visited[y][x] = true;
+            let size = 1;
+
+            // 检查对角线方向的连通性
+            const diagonalDirections = [
+                { dx: -1, dy: -1 }, { dx: -1, dy: 1 },
+                { dx: 1, dy: -1 }, { dx: 1, dy: 1 }
+            ];
+
+            for (const dir of diagonalDirections) {
+                const nx = x + dir.dx;
+                const ny = y + dir.dy;
+                size += dfs(nx, ny);
+            }
+
+            return size;
+        };
+
+        // 搜索所有连通区域
+        for (let y = 0; y < boardSize; y++) {
+            for (let x = 0; x < boardSize; x++) {
+                if (!visited[y][x] && gridState[y][x] === 1) {
+                    const regionSize = dfs(x, y);
+
+                    // 根据连通区域大小分类
+                    if (regionSize >= 10) {
+                        regions.large++;
+                    } else if (regionSize >= 5) {
+                        regions.medium++;
+                    } else {
+                        regions.small++;
+                    }
+                }
+            }
+        }
+
+        return regions;
+    }
+
+    // 寻找对手所有可能的连接点
+    private findOpponentConnectionPoints(gridState: number[][], boardSize: number): { x: number, y: number, value: number }[] {
+        const connectionPoints: { x: number, y: number, value: number }[] = [];
+
+        // 临时映射记录对手的格子位置
+        const opponentCells: Record<string, boolean> = {};
+
+        // 先记录所有对手格子
+        for (let y = 0; y < boardSize; y++) {
+            for (let x = 0; x < boardSize; x++) {
+                if (gridState[y][x] === 1) {
+                    opponentCells[`${x},${y}`] = true;
+                }
+            }
+        }
+
+        // 检查每个对手格子的对角线方向，寻找可能的连接点
+        for (const cellKey of Object.keys(opponentCells)) {
+            const [cellX, cellY] = cellKey.split(',').map(Number);
+
+            // 检查对角线方向
+            const diagonalDirections = [
+                { dx: -1, dy: -1 }, { dx: -1, dy: 1 },
+                { dx: 1, dy: -1 }, { dx: 1, dy: 1 }
+            ];
+
+            for (const dir of diagonalDirections) {
+                const nx = cellX + dir.dx;
+                const ny = cellY + dir.dy;
+
+                // 检查这个点是否在边界内、是空的
+                if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && gridState[ny][nx] === 0) {
+                    // 检查这个点是否没有相邻的对手格子（根据规则，需要是对角连接）
+                    let hasAdjacent = false;
+
+                    // 检查上下左右
+                    const adjacentDirections = [
+                        { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+                        { dx: 0, dy: -1 }, { dx: 0, dy: 1 }
+                    ];
+
+                    for (const adjDir of adjacentDirections) {
+                        const adjX = nx + adjDir.dx;
+                        const adjY = ny + adjDir.dy;
+
+                        if (adjX >= 0 && adjX < boardSize && adjY >= 0 && adjY < boardSize) {
+                            if (gridState[adjY][adjX] === 1) { // 相邻有对手格子
+                                hasAdjacent = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasAdjacent) {
+                        // 计算连接点的价值
+                        const value = this.evaluateOpponentConnectionPointValue({ x: nx, y: ny }, gridState, boardSize);
+
+                        // 检查是否已有相同位置的连接点
+                        const existingIndex = connectionPoints.findIndex(p => p.x === nx && p.y === ny);
+                        if (existingIndex >= 0) {
+                            // 更新价值为最高值
+                            connectionPoints[existingIndex].value = Math.max(connectionPoints[existingIndex].value, value);
+                        } else {
+                            // 添加新的连接点
+                            connectionPoints.push({ x: nx, y: ny, value });
+                        }
+                    }
+                }
+            }
+        }
+
+        // 按价值排序
+        connectionPoints.sort((a, b) => b.value - a.value);
+
+        return connectionPoints;
+    }
+
+    // 评估一个对手连接点的战略价值
+    private evaluateOpponentConnectionPointValue(
+        point: { x: number, y: number },
+        gridState: number[][],
+        boardSize: number
+    ): number {
+        let value = 15; // 基础价值
+
+        // 1. 计算通过该点可连接的对手棋子数量
+        let connectableOpponentCells = 0;
+
+        // 检查对角线方向
+        const diagonalDirections = [
+            { dx: -1, dy: -1 }, { dx: -1, dy: 1 },
+            { dx: 1, dy: -1 }, { dx: 1, dy: 1 }
+        ];
+
+        for (const dir of diagonalDirections) {
+            const nx = point.x + dir.dx;
+            const ny = point.y + dir.dy;
+
+            if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+                if (gridState[ny][nx] === 1) { // 1是人类玩家ID
+                    connectableOpponentCells++;
+                }
+            }
+        }
+
+        // 连接点能连接的对手棋子越多，价值越高
+        value += connectableOpponentCells * 5;
+
+        // 2. 评估连接点的位置（靠近中心价值更高）
+        const distanceToCenter = Math.sqrt(
+            Math.pow(point.x - boardSize / 2, 2) +
+            Math.pow(point.y - boardSize / 2, 2)
+        );
+
+        // 距离中心越近，价值越高
+        value += Math.max(0, (boardSize / 2 - distanceToCenter)) * 2;
+
+        // 3. 评估连接点是否能连接对手的多个区域
+        // 模拟添加该连接点后，对手区域的变化
+        const tempGrid = gridState.map(row => [...row]);
+        tempGrid[point.y][point.x] = 1; // 模拟对手占据该点
+
+        const regionsBeforeAdd = this.analyzeOpponentConnectedRegions(gridState, boardSize);
+        const regionsAfterAdd = this.analyzeOpponentConnectedRegions(tempGrid, boardSize);
+
+        // 如果连接点能减少区域数量（意味着连接了多个区域），价值大幅提升
+        const regionDifference =
+            (regionsBeforeAdd.large + regionsBeforeAdd.medium + regionsBeforeAdd.small) -
+            (regionsAfterAdd.large + regionsAfterAdd.medium + regionsAfterAdd.small);
+
+        if (regionDifference > 0) {
+            value += regionDifference * 25; // 连接区域的价值很高
+        }
+
+        // 如果连接点能增加大型区域的数量，价值更高
+        if (regionsAfterAdd.large > regionsBeforeAdd.large) {
+            value += (regionsAfterAdd.large - regionsBeforeAdd.large) * 30;
+        }
+
+        return value;
+    }
+
+    // 评估战略性阻断得分
+    private evaluateStrategicBlocking(
+        piece: Piece,
+        x: number,
+        y: number,
+        gridState: number[][],
+        boardSize: number
+    ): number {
+        let blockingScore = 0;
+
+        // 创建一个新的网格状态，包含新放置的棋子
+        const newGridState = gridState.map(row => [...row]);
+        for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+            for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
+                if (piece.shape[rowIndex][colIndex]) {
+                    const gridX = x + colIndex;
+                    const gridY = y + rowIndex;
+                    newGridState[gridY][gridX] = 2; // 标记为AI所有
+                }
+            }
+        }
+
+        // 计算放置前后对手可用的连接点数量变化
+        const beforeConnectionPoints = this.findOpponentConnectionPoints(gridState, boardSize);
+        const afterConnectionPoints = this.findOpponentConnectionPoints(newGridState, boardSize);
+
+        // 计算被阻断的高价值连接点数量
+        let blockedHighValuePoints = 0;
+        let blockedMediumValuePoints = 0;
+
+        for (const beforePoint of beforeConnectionPoints) {
+            // 查看该点是否还在放置后的连接点列表中
+            const stillExists = afterConnectionPoints.some(
+                p => p.x === beforePoint.x && p.y === beforePoint.y
+            );
+
+            if (!stillExists) {
+                // 根据被阻断连接点的价值加分
+                if (beforePoint.value >= 30) {
+                    blockedHighValuePoints++;
+                } else if (beforePoint.value >= 15) {
+                    blockedMediumValuePoints++;
+                }
+            }
+        }
+
+        // 阻断的高价值点得分更多
+        blockingScore += blockedHighValuePoints * 3 + blockedMediumValuePoints * 1;
+
+        // 评估放置后对手的扩展受限程度
+        // 比较放置前后对手的总连接点价值
+        const beforeTotalValue = beforeConnectionPoints.reduce((sum, p) => sum + p.value, 0);
+        const afterTotalValue = afterConnectionPoints.reduce((sum, p) => sum + p.value, 0);
+
+        // 如果总价值下降，加分
+        if (beforeTotalValue > afterTotalValue) {
+            blockingScore += (beforeTotalValue - afterTotalValue) / 20;
+        }
+
+        return blockingScore;
+    }
+
+    // 评估关键位置的战略价值
+    private evaluateKeyPositions(
+        piece: Piece,
+        x: number,
+        y: number,
+        gridState: number[][],
+        boardSize: number,
+        gameProgress: number
+    ): number {
+        let keyPositionScore = 0;
+
+        // 创建棋盘热点图，标记战略价值
+        const heatMap = this.generateBoardHeatMap(gridState, boardSize, gameProgress);
+
+        // 计算棋子覆盖的热点总价值
+        for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+            for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
+                if (piece.shape[rowIndex][colIndex]) {
+                    const gridX = x + colIndex;
+                    const gridY = y + rowIndex;
+
+                    // 如果位置有效，加上热点值
+                    if (gridX >= 0 && gridX < boardSize && gridY >= 0 && gridY < boardSize) {
+                        keyPositionScore += heatMap[gridY][gridX];
+                    }
+                }
+            }
+        }
+
+        return keyPositionScore;
+    }
+
+    // 生成棋盘热点图（标记战略价值高的位置）
+    private generateBoardHeatMap(gridState: number[][], boardSize: number, gameProgress: number): number[][] {
+        // 创建热点图
+        const heatMap: number[][] = Array(boardSize).fill(0).map(() => Array(boardSize).fill(0));
+
+        // 找出对手所有可用的连接点
+        const opponentConnectionPoints = this.findOpponentConnectionPoints(gridState, boardSize);
+
+        // 将对手连接点周围区域标记为高价值区域
+        for (const point of opponentConnectionPoints) {
+            // 标记连接点本身
+            heatMap[point.y][point.x] = point.value / 5;
+
+            // 标记周围区域（值随距离衰减）
+            const radius = 2; // 影响半径
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const nx = point.x + dx;
+                    const ny = point.y + dy;
+
+                    if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && gridState[ny][nx] === 0) {
+                        // 计算到中心的距离
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        // 根据距离计算权重（越近权重越高）
+                        const weight = Math.max(0, (radius - distance) / radius);
+
+                        // 更新热点值（取最大值）
+                        heatMap[ny][nx] = Math.max(
+                            heatMap[ny][nx],
+                            point.value / 10 * weight
+                        );
+                    }
+                }
+            }
+        }
+
+        // 在游戏早期，中心区域更有价值
+        if (gameProgress < 0.3) {
+            const centerX = boardSize / 2 - 0.5;
+            const centerY = boardSize / 2 - 0.5;
+            const centerRadius = boardSize / 4;
+
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (gridState[y][x] === 0) { // 只处理空格子
+                        // 计算到中心的距离
+                        const distanceToCenter = Math.sqrt(
+                            Math.pow(x - centerX, 2) +
+                            Math.pow(y - centerY, 2)
+                        );
+
+                        // 如果在中心区域内，增加价值
+                        if (distanceToCenter < centerRadius) {
+                            const centralImportance = (1 - distanceToCenter / centerRadius) * 3 * (1 - gameProgress);
+                            heatMap[y][x] += centralImportance;
+                        }
+                    }
+                }
+            }
+        }
+
+        return heatMap;
+    }
+
+    // 检查一个位置是否可能是对手的连接点
+    private isOpponentConnectionPoint(x: number, y: number, gridState: number[][], boardSize: number): boolean {
+        // 检查这个位置周围的对角线方向
+        const diagonalDirections = [
+            { dx: -1, dy: -1 }, { dx: -1, dy: 1 },
+            { dx: 1, dy: -1 }, { dx: 1, dy: 1 }
+        ];
+
+        let opponentDiagonalCount = 0;
+
+        for (const dir of diagonalDirections) {
+            const nx = x + dir.dx;
+            const ny = y + dir.dy;
+
+            if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+                if (gridState[ny][nx] === 1) { // 1是人类玩家ID
+                    opponentDiagonalCount++;
+                }
+            }
+        }
+
+        // 如果周围有对手的棋子，且没有相邻的对手棋子，可能是连接点
+        if (opponentDiagonalCount > 0) {
+            // 检查上下左右是否有对手棋子（如果有，则不是有效连接点）
+            const adjacentDirections = [
+                { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+                { dx: 0, dy: -1 }, { dx: 0, dy: 1 }
+            ];
+
+            for (const dir of adjacentDirections) {
+                const nx = x + dir.dx;
+                const ny = y + dir.dy;
+
+                if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+                    if (gridState[ny][nx] === 1) { // 有相邻对手棋子
+                        return false;
+                    }
+                }
+            }
+
+            return true; // 有对角线对手棋子，且没有相邻对手棋子
+        }
+
+        return false;
     }
 
     // 计数棋盘上已经放置的棋子数量
