@@ -16,9 +16,12 @@ export class Game {
     private gameInfoElement: HTMLElement | null;
     private controlTipsElement: HTMLElement | null;
     private passButtonElement: HTMLElement | null;
+    private gameOverLayerElement: HTMLElement | null;
     private selectedPieceId: number | null = null;
     private selectedPieceElement: HTMLElement | null = null;
     private hoveredPieceElement: HTMLElement | null = null;
+    private consecutivePasses: number = 0;
+    private isGameOver: boolean = false;
 
     constructor() {
         this.board = new Board(14, 14); // 14x14棋盘
@@ -33,6 +36,7 @@ export class Game {
         this.gameInfoElement = document.getElementById('game-info');
         this.controlTipsElement = null;
         this.passButtonElement = null;
+        this.gameOverLayerElement = null;
     }
 
     public initialize(): void {
@@ -509,7 +513,7 @@ export class Game {
 
     // 尝试在指定位置放置选中的棋子
     private tryPlacePiece(gridX: number, gridY: number): void {
-        if (this.selectedPieceId === null || this.currentPlayer !== this.humanPlayer) return;
+        if (this.selectedPieceId === null || this.currentPlayer !== this.humanPlayer || this.isGameOver) return;
 
         // 获取选中的棋子
         const piece = this.humanPlayer.getPiece(this.selectedPieceId);
@@ -528,6 +532,9 @@ export class Game {
 
             // 使用Player的placePiece方法来移除棋子
             this.humanPlayer.placePiece(piece.id);
+
+            // 重置连续跳过回合的计数（因为成功放置了棋子）
+            this.consecutivePasses = 0;
 
             // 更新棋盘UI
             if (this.boardElement) {
@@ -566,6 +573,9 @@ export class Game {
 
     // 切换到AI玩家并执行AI回合
     private switchToAIPlayer(): void {
+        // 如果游戏已结束，不执行后续操作
+        if (this.isGameOver) return;
+
         this.currentPlayer = this.aiPlayer;
         console.log("AI的回合");
 
@@ -601,12 +611,24 @@ export class Game {
             const aiPlayerId = 2;
             this.board.placePiece(moveResult.piece, moveResult.x, moveResult.y, aiPlayerId);
 
+            // 重置连续跳过回合的计数（因为AI成功放置了棋子）
+            this.consecutivePasses = 0;
+
             // 更新棋盘UI
             if (this.boardElement) {
                 this.board.render(this.boardElement);
             }
         } else {
             console.log("AI无法进行有效的移动");
+
+            // AI无法移动，增加连续跳过回合的计数
+            this.consecutivePasses++;
+        }
+
+        // 检查是否游戏结束
+        if (this.checkGameOver()) {
+            this.showGameOverScreen();
+            return;
         }
 
         // 切换回人类玩家
@@ -615,8 +637,24 @@ export class Game {
 
     // 切换回人类玩家
     private switchToHumanPlayer(): void {
+        // 如果游戏已结束，不执行后续操作
+        if (this.isGameOver) return;
+
         this.currentPlayer = this.humanPlayer;
         console.log("玩家回合");
+
+        // 检查玩家是否还有有效移动
+        const hasValidMoves = this.hasValidMoves(this.humanPlayer, 1);
+
+        // 如果玩家没有有效移动且游戏还在进行，检查是否游戏结束
+        if (!hasValidMoves && !this.isGameOver) {
+            this.consecutivePasses++;
+
+            if (this.checkGameOver()) {
+                this.showGameOverScreen();
+                return;
+            }
+        }
 
         // 更新玩家棋盘UI
         this.renderPieceTray();
@@ -762,6 +800,9 @@ export class Game {
     private handlePassTurn(): void {
         console.log("玩家跳过回合");
 
+        // 增加连续跳过回合的计数
+        this.consecutivePasses++;
+
         // 取消选中的棋子
         this.deselectPiece();
 
@@ -779,6 +820,167 @@ export class Game {
         } else {
             this.passButtonElement.style.display = 'none';
         }
+    }
+
+    // 检查游戏是否结束
+    private checkGameOver(): boolean {
+        // 条件1：连续两次pass（双方都无法放置）
+        if (this.consecutivePasses >= 2) {
+            this.isGameOver = true;
+            return true;
+        }
+
+        // 条件2：双方都没有棋子或无法放置任何棋子
+        const humanHasValidMoves = this.hasValidMoves(this.humanPlayer, 1);
+        const aiHasValidMoves = this.hasValidMoves(this.aiPlayer, 2);
+
+        if (!humanHasValidMoves && !aiHasValidMoves) {
+            this.isGameOver = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    // 显示游戏结束界面
+    private showGameOverScreen(): void {
+        if (!this.gameContainer) return;
+
+        // 计算最终得分
+        const humanScore = this.calculateFinalScore(this.humanPlayer);
+        const aiScore = this.calculateFinalScore(this.aiPlayer);
+
+        // 创建游戏结束遮罩层
+        this.gameOverLayerElement = document.createElement('div');
+        this.gameOverLayerElement.style.position = 'absolute';
+        this.gameOverLayerElement.style.top = '0';
+        this.gameOverLayerElement.style.left = '0';
+        this.gameOverLayerElement.style.width = '100%';
+        this.gameOverLayerElement.style.height = '100%';
+        this.gameOverLayerElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        this.gameOverLayerElement.style.display = 'flex';
+        this.gameOverLayerElement.style.flexDirection = 'column';
+        this.gameOverLayerElement.style.justifyContent = 'center';
+        this.gameOverLayerElement.style.alignItems = 'center';
+        this.gameOverLayerElement.style.zIndex = '1000';
+        this.gameOverLayerElement.style.color = 'white';
+        this.gameOverLayerElement.style.padding = '20px';
+        this.gameOverLayerElement.style.boxSizing = 'border-box';
+
+        // 创建游戏结束内容面板
+        const gameOverPanel = document.createElement('div');
+        gameOverPanel.style.backgroundColor = 'rgba(30, 30, 30, 0.9)';
+        gameOverPanel.style.borderRadius = '10px';
+        gameOverPanel.style.padding = '30px';
+        gameOverPanel.style.maxWidth = '500px';
+        gameOverPanel.style.width = '90%';
+        gameOverPanel.style.textAlign = 'center';
+        gameOverPanel.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+
+        // 标题
+        const titleElement = document.createElement('h1');
+        titleElement.textContent = '游戏结束';
+        titleElement.style.marginBottom = '20px';
+        titleElement.style.color = '#fff';
+        titleElement.style.fontSize = '32px';
+
+        // 结果
+        const resultElement = document.createElement('div');
+        resultElement.style.fontSize = '20px';
+        resultElement.style.marginBottom = '30px';
+
+        let resultText = '';
+        if (humanScore > aiScore) {
+            resultText = `🎉 恭喜，你获胜了！`;
+            resultElement.style.color = '#4CAF50';
+        } else if (aiScore > humanScore) {
+            resultText = `😔 AI获胜了！`;
+            resultElement.style.color = '#F44336';
+        } else {
+            resultText = `🤝 平局！`;
+            resultElement.style.color = '#FFC107';
+        }
+        resultElement.textContent = resultText;
+
+        // 得分
+        const scoreElement = document.createElement('div');
+        scoreElement.innerHTML = `
+            <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 18px; margin-bottom: 5px;">玩家得分</div>
+                    <div style="font-size: 28px; color: #3F51B5;">${humanScore}</div>
+                </div>
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 18px; margin-bottom: 5px;">AI得分</div>
+                    <div style="font-size: 28px; color: #E91E63;">${aiScore}</div>
+                </div>
+            </div>
+        `;
+
+        // 剩余棋子信息
+        const piecesInfoElement = document.createElement('div');
+        piecesInfoElement.style.marginBottom = '20px';
+        piecesInfoElement.style.lineHeight = '1.6';
+        piecesInfoElement.innerHTML = `
+            <div style="margin-bottom: 10px; color: #ccc;">玩家剩余棋子: ${this.humanPlayer.getAvailablePieces().length} 个</div>
+            <div style="color: #ccc;">AI剩余棋子: ${this.aiPlayer.getAvailablePieces().length} 个</div>
+        `;
+
+        // 添加重新开始按钮
+        const restartButton = document.createElement('button');
+        restartButton.textContent = '重新开始游戏';
+        restartButton.style.padding = '12px 24px';
+        restartButton.style.backgroundColor = '#4CAF50';
+        restartButton.style.color = 'white';
+        restartButton.style.border = 'none';
+        restartButton.style.borderRadius = '4px';
+        restartButton.style.fontSize = '16px';
+        restartButton.style.cursor = 'pointer';
+        restartButton.style.marginTop = '20px';
+        restartButton.style.transition = 'background-color 0.3s';
+
+        restartButton.addEventListener('mouseover', () => {
+            restartButton.style.backgroundColor = '#45a049';
+        });
+
+        restartButton.addEventListener('mouseout', () => {
+            restartButton.style.backgroundColor = '#4CAF50';
+        });
+
+        restartButton.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        // 组装面板
+        gameOverPanel.appendChild(titleElement);
+        gameOverPanel.appendChild(resultElement);
+        gameOverPanel.appendChild(scoreElement);
+        gameOverPanel.appendChild(piecesInfoElement);
+        gameOverPanel.appendChild(restartButton);
+
+        // 将面板添加到遮罩层
+        this.gameOverLayerElement.appendChild(gameOverPanel);
+
+        // 将遮罩层添加到游戏容器
+        this.gameContainer.appendChild(this.gameOverLayerElement);
+
+        console.log(`游戏结束！玩家得分：${humanScore}，AI得分：${aiScore}`);
+    }
+
+    // 计算最终得分
+    private calculateFinalScore(player: Player): number {
+        // 在俄罗斯方块中，最终得分是指未使用的棋子方块数的负数
+        // 所以已使用的棋子方块数越多，分数越高
+
+        // 获取所有棋子的总方块数
+        const totalPieces = this.pieceFactory.createAllPieces();
+        const totalSquares = totalPieces.reduce((sum, piece) => sum + piece.getSize(), 0);
+
+        // 获取未使用棋子的方块数
+        const unusedSquares = player.getScore();
+
+        // 计算已使用的方块数
+        return totalSquares - unusedSquares;
     }
 
     // Additional game methods will be added here
