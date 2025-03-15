@@ -5,6 +5,11 @@ export class Board {
     private cellSize: number = 30; // Size of each cell in pixels
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
+    // 定义特定的起始位置，而不是角落
+    private startingPositions = [
+        { x: 4, y: 4 },   // 人类玩家起始位置
+        { x: 9, y: 9 }    // AI玩家起始位置
+    ];
 
     constructor(width: number, height: number) {
         this.width = width;
@@ -70,23 +75,25 @@ export class Board {
             }
         }
 
-        // Highlight starting corners
-        this.highlightCorner(0, 0); // Top-left
-        this.highlightCorner(0, this.height - 1); // Bottom-left
-        this.highlightCorner(this.width - 1, 0); // Top-right
-        this.highlightCorner(this.width - 1, this.height - 1); // Bottom-right
+        // 高亮显示起始位置，而不是角落
+        this.highlightStartingPosition(this.startingPositions[0].x, this.startingPositions[0].y, 'rgba(0, 0, 255, 0.3)'); // 人类玩家起始位置
+        this.highlightStartingPosition(this.startingPositions[1].x, this.startingPositions[1].y, 'rgba(255, 0, 0, 0.3)'); // AI玩家起始位置
     }
 
-    private highlightCorner(x: number, y: number): void {
+    private highlightStartingPosition(x: number, y: number, color: string): void {
         if (!this.ctx) return;
 
-        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-        this.ctx.fillRect(
-            x * this.cellSize + 1,
-            y * this.cellSize + 1,
-            this.cellSize - 2,
-            this.cellSize - 2
+        this.ctx.fillStyle = color;
+        // 绘制圆圈标记起始位置
+        this.ctx.beginPath();
+        this.ctx.arc(
+            x * this.cellSize + this.cellSize / 2,
+            y * this.cellSize + this.cellSize / 2,
+            this.cellSize / 3,
+            0,
+            Math.PI * 2
         );
+        this.ctx.fill();
     }
 
     public placePiece(piece: any, x: number, y: number, playerId: number): boolean {
@@ -149,9 +156,9 @@ export class Board {
             }
         }
 
-        // First move must be in a corner
+        // First move must be on the designated starting position
         if (this.isFirstMove(playerId)) {
-            return this.isPlacementInCorner(piece, x, y);
+            return this.isPlacementOnStartingPosition(piece, x, y, playerId);
         }
 
         return touchesCorner;
@@ -169,29 +176,24 @@ export class Board {
         return true;
     }
 
-    private isPlacementInCorner(piece: any, x: number, y: number): boolean {
-        const corners = [
-            { x: 0, y: 0 },
-            { x: 0, y: this.height - 1 },
-            { x: this.width - 1, y: 0 },
-            { x: this.width - 1, y: this.height - 1 }
-        ];
+    // 修改为检查是否在起始位置上放置
+    private isPlacementOnStartingPosition(piece: any, x: number, y: number, playerId: number): boolean {
+        // 获取对应玩家的起始位置
+        const startingPos = this.startingPositions[playerId - 1]; // playerId从1开始，索引从0开始
 
-        for (const corner of corners) {
-            for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
-                for (let colIndex = 0; colIndex < piece.shape[rowIndex].length; colIndex++) {
-                    if (
-                        piece.shape[rowIndex][colIndex] &&
-                        x + colIndex === corner.x &&
-                        y + rowIndex === corner.y
-                    ) {
-                        return true;
-                    }
+        for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+            for (let colIndex = 0; colIndex < piece.shape[rowIndex].length; colIndex++) {
+                if (
+                    piece.shape[rowIndex][colIndex] &&
+                    x + colIndex === startingPos.x &&
+                    y + rowIndex === startingPos.y
+                ) {
+                    return true; // 棋子覆盖了起始位置
                 }
             }
         }
 
-        return false;
+        return false; // 棋子没有覆盖起始位置
     }
 
     private isAdjacent(x: number, y: number, playerId: number): boolean {
