@@ -15,6 +15,7 @@ export class Game {
     private pieceTrayElement: HTMLElement | null;
     private gameInfoElement: HTMLElement | null;
     private controlTipsElement: HTMLElement | null;
+    private passButtonElement: HTMLElement | null;
     private selectedPieceId: number | null = null;
     private selectedPieceElement: HTMLElement | null = null;
     private hoveredPieceElement: HTMLElement | null = null;
@@ -31,6 +32,7 @@ export class Game {
         this.pieceTrayElement = document.getElementById('piece-tray');
         this.gameInfoElement = document.getElementById('game-info');
         this.controlTipsElement = null;
+        this.passButtonElement = null;
     }
 
     public initialize(): void {
@@ -44,6 +46,9 @@ export class Game {
             this.createControlTips();
         }
 
+        // 创建Pass按钮
+        this.createPassButton();
+
         // Initialize player piece tray
         this.renderPieceTray();
 
@@ -52,6 +57,9 @@ export class Game {
 
         // 显示当前玩家信息
         this.updateGameInfo();
+
+        // 检查是否需要显示pass按钮
+        this.updatePassButtonVisibility();
 
         console.log('Game initialized successfully!');
     }
@@ -567,6 +575,11 @@ export class Game {
         // 更新游戏信息显示
         this.updateGameInfo();
 
+        // 隐藏Pass按钮（AI回合不需要）
+        if (this.passButtonElement) {
+            this.passButtonElement.style.display = 'none';
+        }
+
         // 给AI一些思考时间
         setTimeout(() => {
             this.performAIMove();
@@ -610,16 +623,28 @@ export class Game {
 
         // 更新游戏信息显示
         this.updateGameInfo();
+
+        // 检查是否需要显示pass按钮
+        this.updatePassButtonVisibility();
     }
 
     // 更新游戏信息显示
     private updateGameInfo(): void {
         if (this.gameInfoElement) {
             if (this.currentPlayer === this.humanPlayer) {
+                // 检查玩家是否还有有效移动
+                const hasValidMoves = this.hasValidMoves(this.humanPlayer, 1);
+
                 this.gameInfoElement.innerHTML = `
                     <h2>当前回合: 玩家 (蓝色)</h2>
                     <p>可用棋子: ${this.humanPlayer.getAvailablePieces().length}</p>
+                    ${!hasValidMoves && this.humanPlayer.canPlacePieces() ? '<p style="color: #f44336; font-weight: bold;">没有可放置的位置！请使用Pass按钮跳过回合。</p>' : ''}
                 `;
+
+                // 重新添加Pass按钮，因为innerHTML会清除所有子元素
+                if (this.passButtonElement) {
+                    this.gameInfoElement.appendChild(this.passButtonElement);
+                }
             } else {
                 this.gameInfoElement.innerHTML = `
                     <h2>当前回合: AI (红色)</h2>
@@ -643,6 +668,117 @@ export class Game {
         gridHighlight.style.width = `${width * cellSize}px`;
         gridHighlight.style.height = `${height * cellSize}px`;
         gridHighlight.style.borderColor = isValid ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+    }
+
+    // 检查玩家是否有有效的移动
+    private hasValidMoves(player: Player, playerId: number): boolean {
+        // 如果没有可用棋子，则没有有效移动
+        if (!player.canPlacePieces()) {
+            return false;
+        }
+
+        const availablePieces = player.getAvailablePieces();
+        const boardSize = 14;
+
+        // 尝试每一个可用棋子
+        for (const originalPiece of availablePieces) {
+            // 创建一个副本进行测试
+            const basePiece = originalPiece.clone();
+
+            // 尝试不同的旋转和翻转
+            for (let rotation = 0; rotation < 4; rotation++) {
+                for (let flip = 0; flip < 2; flip++) {
+                    // 复制棋子以进行旋转和翻转
+                    const pieceCopy = basePiece.clone();
+
+                    // 应用旋转
+                    for (let r = 0; r < rotation; r++) {
+                        pieceCopy.rotate();
+                    }
+
+                    // 应用翻转
+                    if (flip === 1) {
+                        pieceCopy.flip();
+                    }
+
+                    // 在棋盘上每个位置尝试放置
+                    for (let y = 0; y < boardSize; y++) {
+                        for (let x = 0; x < boardSize; x++) {
+                            if (this.board.isValidPlacement(pieceCopy, x, y, playerId)) {
+                                return true; // 找到一个有效的放置位置
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false; // 没有找到有效的放置位置
+    }
+
+    // 创建pass按钮
+    private createPassButton(): void {
+        if (this.passButtonElement) return;
+
+        this.passButtonElement = document.createElement('button');
+        this.passButtonElement.id = 'pass-button';
+        this.passButtonElement.textContent = '跳过回合 (Pass)';
+        this.passButtonElement.style.display = 'none'; // 初始隐藏
+        this.passButtonElement.style.padding = '10px 20px';
+        this.passButtonElement.style.margin = '10px 0';
+        this.passButtonElement.style.backgroundColor = '#f44336';
+        this.passButtonElement.style.color = 'white';
+        this.passButtonElement.style.border = 'none';
+        this.passButtonElement.style.borderRadius = '4px';
+        this.passButtonElement.style.fontSize = '16px';
+        this.passButtonElement.style.cursor = 'pointer';
+        this.passButtonElement.style.fontWeight = 'bold';
+
+        // 鼠标悬停效果
+        this.passButtonElement.style.transition = 'background-color 0.3s';
+        this.passButtonElement.addEventListener('mouseover', () => {
+            if (this.passButtonElement) {
+                this.passButtonElement.style.backgroundColor = '#d32f2f';
+            }
+        });
+        this.passButtonElement.addEventListener('mouseout', () => {
+            if (this.passButtonElement) {
+                this.passButtonElement.style.backgroundColor = '#f44336';
+            }
+        });
+
+        // 点击事件
+        this.passButtonElement.addEventListener('click', () => {
+            this.handlePassTurn();
+        });
+
+        // 添加到游戏信息元素下方
+        if (this.gameInfoElement) {
+            this.gameInfoElement.appendChild(this.passButtonElement);
+        }
+    }
+
+    // 处理玩家跳过回合
+    private handlePassTurn(): void {
+        console.log("玩家跳过回合");
+
+        // 取消选中的棋子
+        this.deselectPiece();
+
+        // 切换到AI玩家
+        this.switchToAIPlayer();
+    }
+
+    // 检查并更新pass按钮的显示状态
+    private updatePassButtonVisibility(): void {
+        if (!this.passButtonElement) return;
+
+        // 只在人类玩家回合并且没有有效移动时显示
+        if (this.currentPlayer === this.humanPlayer && !this.hasValidMoves(this.humanPlayer, 1)) {
+            this.passButtonElement.style.display = 'block';
+        } else {
+            this.passButtonElement.style.display = 'none';
+        }
     }
 
     // Additional game methods will be added here
