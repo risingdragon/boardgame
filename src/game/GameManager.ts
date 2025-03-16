@@ -76,6 +76,9 @@ export class GameManager {
         // 创建Pass按钮
         const passButton = this.renderer.createPassButton(() => this.handlePassTurn());
 
+        // 创建新游戏按钮
+        const newGameButton = this.renderer.createNewGameButton();
+
         // 确保棋盘UI反映当前玩家的回合
         const isHumanTurn = this.currentPlayer === this.humanPlayer;
 

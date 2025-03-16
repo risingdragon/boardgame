@@ -12,6 +12,7 @@ export class GameRenderer {
     private gameOverLayerElement: HTMLElement | null;
     private lastAIMovePosition: { x: number; y: number; width: number; height: number } | null = null;
     private board: Board;
+    private newGameButtonElement: HTMLElement | null = null;
 
     constructor(
         boardElement: HTMLElement | null,
@@ -350,20 +351,40 @@ export class GameRenderer {
         if (!this.gameInfoElement) return;
 
         if (isHumanTurn) {
+            // 修改布局，使用flex布局让标题和新游戏按钮在同一行
             this.gameInfoElement.innerHTML = `
-                <h2>当前回合: 玩家 (蓝色)</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h2 style="margin: 0;">当前回合: 玩家 (蓝色)</h2>
+                </div>
                 ${!hasValidMoves && canPlacePieces ? '<p style="color: #f44336; font-weight: bold;">没有可放置的位置！请使用Pass按钮跳过回合。</p>' : ''}
             `;
+
+            // 获取我们创建的flex容器
+            const headerContainer = this.gameInfoElement.querySelector('div');
+            if (headerContainer && this.newGameButtonElement) {
+                // 新游戏按钮添加到标题行
+                headerContainer.appendChild(this.newGameButtonElement);
+            }
 
             // 重新添加Pass按钮，因为innerHTML会清除所有子元素
             if (this.passButtonElement) {
                 this.gameInfoElement.appendChild(this.passButtonElement);
             }
         } else {
+            // AI回合使用相同的布局方式
             this.gameInfoElement.innerHTML = `
-                <h2>当前回合: AI (红色)</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h2 style="margin: 0;">当前回合: AI (红色)</h2>
+                </div>
                 <p>AI正在思考...</p>
             `;
+
+            // 获取我们创建的flex容器
+            const headerContainer = this.gameInfoElement.querySelector('div');
+            if (headerContainer && this.newGameButtonElement) {
+                // 在AI回合也显示新游戏按钮
+                headerContainer.appendChild(this.newGameButtonElement);
+            }
         }
     }
 
@@ -395,44 +416,44 @@ export class GameRenderer {
         touchControlsContainer.style.display = 'flex';
         touchControlsContainer.style.justifyContent = 'center';
         touchControlsContainer.style.gap = '10px';
-        touchControlsContainer.style.marginTop = '15px';
+        touchControlsContainer.style.marginTop = '10px'; // 减小上边距
         touchControlsContainer.style.marginBottom = '10px';
         touchControlsContainer.style.width = '100%';
 
         // 移动设备上显示更突出的按钮
         if (isTouchDevice) {
-            touchControlsContainer.style.padding = '10px';
+            touchControlsContainer.style.padding = '5px'; // 减小内边距
             touchControlsContainer.style.backgroundColor = 'rgba(0,0,0,0.05)';
             touchControlsContainer.style.borderRadius = '8px';
         }
 
-        // 创建旋转按钮
+        // 创建旋转按钮，尺寸更小
         const rotateButton = document.createElement('button');
         rotateButton.textContent = isTouchDevice ? '旋转' : '旋转 (R)';
         rotateButton.style.flex = '1';
-        rotateButton.style.maxWidth = '45%';
+        rotateButton.style.maxWidth = '40%'; // 减小宽度
         rotateButton.style.backgroundColor = '#2196F3';
-        rotateButton.style.padding = isTouchDevice ? '15px 0' : '12px 0';
-        rotateButton.style.fontSize = isTouchDevice ? '18px' : '16px';
+        rotateButton.style.padding = isTouchDevice ? '8px 0' : '6px 0'; // 减小内边距
+        rotateButton.style.fontSize = isTouchDevice ? '16px' : '14px'; // 减小字体大小
         rotateButton.style.fontWeight = 'bold';
-        rotateButton.style.borderRadius = '8px';
+        rotateButton.style.borderRadius = '6px'; // 减小圆角
         rotateButton.style.border = '2px solid #1976D2';
-        rotateButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        rotateButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; // 减小阴影
 
         rotateButton.addEventListener('click', onRotate);
 
-        // 创建翻转按钮
+        // 创建翻转按钮，尺寸更小
         const flipButton = document.createElement('button');
         flipButton.textContent = isTouchDevice ? '翻转' : '翻转 (F)';
         flipButton.style.flex = '1';
-        flipButton.style.maxWidth = '45%';
+        flipButton.style.maxWidth = '40%'; // 减小宽度
         flipButton.style.backgroundColor = '#FF9800';
-        flipButton.style.padding = isTouchDevice ? '15px 0' : '12px 0';
-        flipButton.style.fontSize = isTouchDevice ? '18px' : '16px';
+        flipButton.style.padding = isTouchDevice ? '8px 0' : '6px 0'; // 减小内边距
+        flipButton.style.fontSize = isTouchDevice ? '16px' : '14px'; // 减小字体大小
         flipButton.style.fontWeight = 'bold';
-        flipButton.style.borderRadius = '8px';
+        flipButton.style.borderRadius = '6px'; // 减小圆角
         flipButton.style.border = '2px solid #F57C00';
-        flipButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        flipButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; // 减小阴影
 
         flipButton.addEventListener('click', onFlip);
 
@@ -914,5 +935,45 @@ export class GameRenderer {
                 <p>请查看下方的游戏结果</p>
             `;
         }
+    }
+
+    // 创建新游戏按钮
+    public createNewGameButton(): HTMLElement {
+        const newGameButtonElement = document.createElement('button');
+        newGameButtonElement.id = 'new-game-button';
+        newGameButtonElement.textContent = '新游戏';
+        // 调整样式使按钮更紧凑
+        newGameButtonElement.style.padding = '5px 12px';
+        newGameButtonElement.style.margin = '0';
+        newGameButtonElement.style.backgroundColor = '#4CAF50';
+        newGameButtonElement.style.color = 'white';
+        newGameButtonElement.style.border = 'none';
+        newGameButtonElement.style.borderRadius = '4px';
+        newGameButtonElement.style.fontSize = '14px';
+        newGameButtonElement.style.cursor = 'pointer';
+        newGameButtonElement.style.fontWeight = 'bold';
+        newGameButtonElement.style.display = 'inline-block';
+
+        // 鼠标悬停效果
+        newGameButtonElement.style.transition = 'background-color 0.3s';
+        newGameButtonElement.addEventListener('mouseover', () => {
+            newGameButtonElement.style.backgroundColor = '#45a049';
+        });
+        newGameButtonElement.addEventListener('mouseout', () => {
+            newGameButtonElement.style.backgroundColor = '#4CAF50';
+        });
+
+        // 点击事件 - 重新加载页面，开始新游戏
+        newGameButtonElement.addEventListener('click', () => {
+            // 清除本地存储中的游戏数据
+            localStorage.removeItem('blokus_game_save');
+            // 重新加载页面
+            window.location.reload();
+        });
+
+        // 保存按钮引用
+        this.newGameButtonElement = newGameButtonElement;
+
+        return newGameButtonElement;
     }
 } 
