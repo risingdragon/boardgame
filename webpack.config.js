@@ -7,7 +7,7 @@ module.exports = {
     devtool: 'inline-source-map',
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'public'),
     },
     module: {
         rules: [
@@ -37,7 +37,7 @@ module.exports = {
     ],
     devServer: {
         static: {
-            directory: path.join(__dirname, 'dist'),
+            directory: path.join(__dirname, 'public'),
         },
         compress: true,
         port: 9000,
