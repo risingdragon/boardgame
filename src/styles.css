@@ -53,7 +53,7 @@ canvas {
     position: absolute;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: content-box;
     pointer-events: none;
     z-index: 100;
     /* 确保没有额外的边距和内边距影响定位 */
@@ -67,9 +67,10 @@ canvas {
     /* 确保canvas是块级元素，不影响定位 */
     margin: 0;
     /* 移除可能的外边距 */
-    box-sizing: border-box;
+    box-sizing: content-box;
     border: none;
     box-shadow: none;
+    padding: 0;
 }
 
 /* 托盘中的棋子canvas也不要边框 */

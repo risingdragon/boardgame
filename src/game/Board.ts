@@ -75,9 +75,26 @@ export class Board {
     }
 
     public render(container: HTMLElement): void {
+        console.log('======= 渲染棋盘 =======');
+        console.log(`容器: id=${container.id}, class=${container.className}`);
+
+        // 检查容器的样式
+        const containerStyle = window.getComputedStyle(container);
+        console.log(`容器边框: left=${containerStyle.borderLeftWidth}, top=${containerStyle.borderTopWidth}`);
+        console.log(`容器边距: margin=${containerStyle.margin}, padding=${containerStyle.padding}`);
+        console.log(`容器尺寸: width=${containerStyle.width}, height=${containerStyle.height}`);
+
         // Create canvas element if it doesn't exist
         if (!this.canvas) {
             this.canvas = document.createElement('canvas');
+
+            // 明确设置Canvas的样式，防止边框和边距的影响
+            this.canvas.style.display = 'block';
+            this.canvas.style.border = 'none';
+            this.canvas.style.margin = '0';
+            this.canvas.style.padding = '0';
+            this.canvas.style.boxSizing = 'content-box';
+            this.canvas.style.imageRendering = 'pixelated';
 
             // 创建时先设置单元格大小
             this.cellSize = this.calculateCellSize();
@@ -85,6 +102,9 @@ export class Board {
             this.canvas.width = this.width * this.cellSize;
             this.canvas.height = this.height * this.cellSize;
             this.ctx = this.canvas.getContext('2d');
+
+            console.log(`创建Canvas: width=${this.canvas.width}px, height=${this.canvas.height}px`);
+
             container.appendChild(this.canvas);
 
             // 添加窗口大小改变事件监听
@@ -99,13 +119,25 @@ export class Board {
         }
 
         this.drawGrid();
+        console.log('======= 渲染棋盘结束 =======');
     }
 
     private drawGrid(): void {
-        if (!this.ctx) return;
+        if (!this.ctx || !this.canvas) return;
+
+        console.log('======= 棋盘绘制 =======');
+        console.log(`Canvas尺寸: width=${this.canvas.width}px, height=${this.canvas.height}px`);
+        console.log(`单元格尺寸: cellSize=${this.cellSize}px`);
 
         // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 记录Canvas元素的计算样式
+        const canvasStyle = window.getComputedStyle(this.canvas);
+        console.log(`Canvas边框: left=${canvasStyle.borderLeftWidth}, top=${canvasStyle.borderTopWidth}`);
+        console.log(`Canvas边距: margin=${canvasStyle.margin}, padding=${canvasStyle.padding}`);
+        console.log(`Canvas位置: left=${canvasStyle.left}, top=${canvasStyle.top}`);
+        console.log(`Canvas盒模型: boxSizing=${canvasStyle.boxSizing}`);
 
         // Draw grid lines - 使用更淡的颜色
         this.ctx.strokeStyle = '#ddd';
@@ -113,17 +145,19 @@ export class Board {
 
         // Draw vertical lines
         for (let x = 0; x <= this.width; x++) {
+            const pixelX = x * this.cellSize;
             this.ctx.beginPath();
-            this.ctx.moveTo(x * this.cellSize, 0);
-            this.ctx.lineTo(x * this.cellSize, this.height * this.cellSize);
+            this.ctx.moveTo(pixelX, 0);
+            this.ctx.lineTo(pixelX, this.height * this.cellSize);
             this.ctx.stroke();
         }
 
         // Draw horizontal lines
         for (let y = 0; y <= this.height; y++) {
+            const pixelY = y * this.cellSize;
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y * this.cellSize);
-            this.ctx.lineTo(this.width * this.cellSize, y * this.cellSize);
+            this.ctx.moveTo(0, pixelY);
+            this.ctx.lineTo(this.width * this.cellSize, pixelY);
             this.ctx.stroke();
         }
 
@@ -134,10 +168,19 @@ export class Board {
                 if (cellValue !== 0) {
                     // Different colors for different players
                     this.ctx.fillStyle = cellValue === 1 ? 'blue' : 'red';
+
+                    // 计算像素坐标
+                    const pixelX = x * this.cellSize;
+                    const pixelY = y * this.cellSize;
+
+                    if (x === 0 && y === 0) {
+                        console.log(`绘制首个棋子: x=${x}, y=${y}, pixelX=${pixelX}, pixelY=${pixelY}`);
+                    }
+
                     // 移除+1和-2的偏移，让棋子完全填充单元格
                     this.ctx.fillRect(
-                        x * this.cellSize,
-                        y * this.cellSize,
+                        pixelX,
+                        pixelY,
                         this.cellSize,
                         this.cellSize
                     );
@@ -148,6 +191,8 @@ export class Board {
         // 高亮显示起始位置，而不是角落
         this.highlightStartingPosition(this.startingPositions[0].x, this.startingPositions[0].y, 'rgba(0, 0, 255, 0.3)'); // 人类玩家起始位置
         this.highlightStartingPosition(this.startingPositions[1].x, this.startingPositions[1].y, 'rgba(255, 0, 0, 0.3)'); // AI玩家起始位置
+
+        console.log('======= 棋盘绘制结束 =======');
     }
 
     private highlightStartingPosition(x: number, y: number, color: string): void {
@@ -167,19 +212,46 @@ export class Board {
     }
 
     public placePiece(piece: any, x: number, y: number, playerId: number): boolean {
+        // 添加日志记录
+        console.log('======= 放置棋子坐标计算 =======');
+        console.log(`棋子ID: ${piece.id}, 玩家ID: ${playerId}`);
+        console.log(`放置网格坐标: x=${x}, y=${y}`);
+        console.log(`单元格尺寸: cellSize=${this.cellSize}`);
+
         // Check if placement is valid
         if (!this.isValidPlacement(piece, x, y, playerId)) {
+            console.log('放置无效，校验未通过');
+            console.log('======= 放置棋子计算结束 =======');
             return false;
         }
+
+        // 记录棋子形状
+        console.log('棋子形状:');
+        piece.shape.forEach((row: boolean[]) => {
+            console.log(row.map((cell: boolean) => cell ? '■' : '□').join(''));
+        });
 
         // Place the piece on the grid
         piece.shape.forEach((row: boolean[], rowIndex: number) => {
             row.forEach((cell: boolean, colIndex: number) => {
                 if (cell) {
-                    this.grid[y + rowIndex][x + colIndex] = playerId;
+                    // 计算最终网格坐标
+                    const gridX = x + colIndex;
+                    const gridY = y + rowIndex;
+                    console.log(`单元格坐标: gridX=${gridX}, gridY=${gridY}`);
+
+                    // 计算渲染像素坐标 (在drawGrid中使用)
+                    const pixelX = gridX * this.cellSize;
+                    const pixelY = gridY * this.cellSize;
+                    console.log(`像素坐标: pixelX=${pixelX}, pixelY=${pixelY}`);
+
+                    this.grid[gridY][gridX] = playerId;
                 }
             });
         });
+
+        console.log('棋子放置成功!');
+        console.log('======= 放置棋子计算结束 =======');
 
         // Redraw the board
         this.drawGrid();

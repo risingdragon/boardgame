@@ -27,6 +27,46 @@ export class GameRenderer {
         this.passButtonElement = null;
         this.gameOverLayerElement = null;
         this.board = board;
+
+        // 在初始化后记录棋盘位置
+        setTimeout(() => this.logBoardPosition(), 500);
+    }
+
+    // 记录棋盘位置的帮助方法
+    private logBoardPosition(): void {
+        if (!this.boardElement) return;
+
+        console.log('======= 棋盘位置信息 =======');
+
+        // 获取棋盘元素的位置和尺寸
+        const boardRect = this.boardElement.getBoundingClientRect();
+        console.log(`棋盘元素: left=${boardRect.left}, top=${boardRect.top}, width=${boardRect.width}, height=${boardRect.height}`);
+
+        // 获取棋盘样式信息
+        const boardStyle = window.getComputedStyle(this.boardElement);
+        console.log(`棋盘样式: position=${boardStyle.position}, display=${boardStyle.display}`);
+        console.log(`棋盘边框: left=${boardStyle.borderLeftWidth}, top=${boardStyle.borderTopWidth}`);
+        console.log(`棋盘边距: margin=${boardStyle.margin}, padding=${boardStyle.padding}`);
+
+        // 获取Canvas元素信息
+        const canvasElement = this.boardElement.querySelector('canvas');
+        if (canvasElement) {
+            const canvasRect = canvasElement.getBoundingClientRect();
+            console.log(`Canvas元素: left=${canvasRect.left}, top=${canvasRect.top}, width=${canvasRect.width}, height=${canvasRect.height}`);
+
+            // 相对于棋盘的位置
+            console.log(`Canvas相对位置: left=${canvasRect.left - boardRect.left}, top=${canvasRect.top - boardRect.top}`);
+
+            // Canvas样式信息
+            const canvasStyle = window.getComputedStyle(canvasElement);
+            console.log(`Canvas样式: position=${canvasStyle.position}, display=${canvasStyle.display}`);
+            console.log(`Canvas边框: left=${canvasStyle.borderLeftWidth}, top=${canvasStyle.borderTopWidth}`);
+            console.log(`Canvas边距: margin=${canvasStyle.margin}, padding=${canvasStyle.padding}`);
+        } else {
+            console.log('未找到Canvas元素');
+        }
+
+        console.log('======= 棋盘位置信息结束 =======');
     }
 
     // 渲染棋盘
@@ -36,6 +76,9 @@ export class GameRenderer {
 
             // 如果有AI最后的移动位置，在渲染棋盘后高亮显示
             this.highlightLastAIMove();
+
+            // 记录最新的棋盘位置
+            setTimeout(() => this.logBoardPosition(), 100);
         }
     }
 
@@ -63,25 +106,46 @@ export class GameRenderer {
         // 如果没有最后移动位置或没有棋盘元素，则返回
         if (!this.lastAIMovePosition || !this.boardElement) return;
 
+        console.log('======= AI最后移动高亮 =======');
+        console.log(`AI最后移动位置: x=${this.lastAIMovePosition.x}, y=${this.lastAIMovePosition.y}`);
+        console.log(`棋子尺寸: width=${this.lastAIMovePosition.width}, height=${this.lastAIMovePosition.height}`);
+
+        // 检测棋盘元素及其边框
+        let boardBorderLeft = 0;
+        let boardBorderTop = 0;
+
+        // 获取棋盘元素的计算样式
+        const boardStyle = window.getComputedStyle(this.boardElement);
+        // 获取边框宽度
+        boardBorderLeft = parseInt(boardStyle.borderLeftWidth || '0', 10);
+        boardBorderTop = parseInt(boardStyle.borderTopWidth || '0', 10);
+        console.log(`棋盘边框: left=${boardBorderLeft}px, top=${boardBorderTop}px`);
+
         // 创建高亮元素
         const highlightElement = document.createElement('div');
         highlightElement.id = 'ai-last-move-highlight';
         highlightElement.style.position = 'absolute';
         highlightElement.style.pointerEvents = 'none'; // 确保不会干扰用户交互
         highlightElement.style.zIndex = '90';
+        highlightElement.style.boxSizing = 'content-box';
 
         // 设置高亮样式
         const cellSize = this.board.getCellSize();
-        const boardPadding = 15;
-        const x = this.lastAIMovePosition.x * cellSize + boardPadding;
-        const y = this.lastAIMovePosition.y * cellSize + boardPadding;
+        const boardPadding = 20; // 棋盘内边距，匹配CSS中的20px
+
+        // 计算坐标时考虑边框宽度
+        const x = this.lastAIMovePosition.x * cellSize + boardPadding + boardBorderLeft;
+        const y = this.lastAIMovePosition.y * cellSize + boardPadding + boardBorderTop;
         const width = this.lastAIMovePosition.width * cellSize;
         const height = this.lastAIMovePosition.height * cellSize;
 
-        highlightElement.style.left = `${x}px`;
-        highlightElement.style.top = `${y}px`;
-        highlightElement.style.width = `${width}px`;
-        highlightElement.style.height = `${height}px`;
+        console.log(`计算后的高亮坐标: x=${x}, y=${y}, width=${width}, height=${height}`);
+
+        // 使用整数像素值
+        highlightElement.style.left = `${Math.floor(x)}px`;
+        highlightElement.style.top = `${Math.floor(y)}px`;
+        highlightElement.style.width = `${Math.floor(width)}px`;
+        highlightElement.style.height = `${Math.floor(height)}px`;
         highlightElement.style.border = '2px solid yellow';
         highlightElement.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.8)';
         highlightElement.style.borderRadius = '3px';
@@ -114,6 +178,7 @@ export class GameRenderer {
 
         // 添加到棋盘
         this.boardElement.appendChild(highlightElement);
+        console.log('======= AI最后移动高亮结束 =======');
 
         // 5秒后自动移除高亮（可选，取决于你想要的效果）
         setTimeout(() => {
@@ -386,6 +451,11 @@ export class GameRenderer {
 
     // 创建和更新悬浮显示的棋子
     public createHoveredPiece(piece: Piece, playerColor: string, boardRect: DOMRect): HTMLElement {
+        console.log('======= 创建悬浮棋子 =======');
+        console.log(`棋子ID: ${piece.id}`);
+        console.log(`玩家颜色: ${playerColor}`);
+        console.log(`棋盘矩形: left=${boardRect.left}, top=${boardRect.top}, width=${boardRect.width}, height=${boardRect.height}`);
+
         // 创建悬浮棋子元素
         const hoveredPiece = document.createElement('div');
         hoveredPiece.classList.add('hovered-piece');
@@ -395,29 +465,77 @@ export class GameRenderer {
         hoveredPiece.style.zIndex = '100';
         hoveredPiece.style.transition = 'filter 0.2s'; // 添加过渡效果使颜色变化更平滑
         hoveredPiece.style.transformOrigin = 'top left'; // 修改变换原点为左上角
+        hoveredPiece.style.outline = 'none'; // 移除可能的轮廓
+        hoveredPiece.style.border = 'none'; // 确保没有边框
+        hoveredPiece.style.margin = '0'; // 移除可能的外边距
+        hoveredPiece.style.padding = '0'; // 移除可能的内边距
+        hoveredPiece.style.backgroundColor = 'transparent'; // 确保背景透明
+        hoveredPiece.style.boxSizing = 'content-box'; // 使用content-box确保与棋盘格子精确对齐
+        hoveredPiece.style.imageRendering = 'pixelated'; // 像素化渲染，防止模糊
+        hoveredPiece.style.willChange = 'left, top'; // 优化性能
+        hoveredPiece.style.backfaceVisibility = 'hidden'; // 禁用3D效果
 
-        // 使用board的动态cellSize，而不是固定值
+        // 使用board的动态cellSize，与Board类保持一致
         const cellSize = this.board.getCellSize();
+        console.log(`单元格尺寸: cellSize=${cellSize}`);
+
+        // 记录棋子形状
+        console.log('棋子形状:');
+        piece.shape.forEach(row => {
+            console.log(row.map(cell => cell ? '■' : '□').join(''));
+        });
 
         // 创建画布显示棋子
         const canvas = document.createElement('canvas');
-        canvas.width = piece.shape[0].length * cellSize;
-        canvas.height = piece.shape.length * cellSize;
 
-        const ctx = canvas.getContext('2d');
+        // 确保使用整数像素值
+        canvas.width = Math.floor(piece.shape[0].length * cellSize);
+        canvas.height = Math.floor(piece.shape.length * cellSize);
+        console.log(`Canvas尺寸: width=${canvas.width}, height=${canvas.height}`);
+
+        canvas.style.display = 'block'; // 防止canvas周围出现额外空白
+        canvas.style.border = 'none'; // 确保canvas没有边框
+        canvas.style.margin = '0'; // 移除可能的外边距
+        canvas.style.padding = '0'; // 移除可能的内边距
+        canvas.style.backgroundColor = 'transparent'; // 确保背景透明
+        canvas.style.imageRendering = 'pixelated'; // 像素化渲染，防止模糊
+
+        const ctx = canvas.getContext('2d', { alpha: true });
         if (ctx) {
-            // 绘制棋子
+            // 完全禁用抗锯齿
+            ctx.imageSmoothingEnabled = false;
+
+            // 清除整个Canvas，确保透明
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 使用与Board.drawGrid方法相同的绘制逻辑
             piece.shape.forEach((row, rowIndex) => {
                 row.forEach((cell, colIndex) => {
                     if (cell) {
+                        // 计算绘制坐标
+                        const drawX = colIndex * cellSize;
+                        const drawY = rowIndex * cellSize;
+                        console.log(`绘制单元格: colIndex=${colIndex}, rowIndex=${rowIndex}`);
+                        console.log(`绘制坐标: drawX=${drawX}, drawY=${drawY}, width=${cellSize}, height=${cellSize}`);
+
+                        // 完全匹配Board.drawGrid的绘制方式，去除任何偏移
                         ctx.fillStyle = playerColor;
-                        ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                        ctx.globalAlpha = 1.0;
+                        ctx.fillRect(
+                            drawX,
+                            drawY,
+                            cellSize,
+                            cellSize
+                        );
                     }
                 });
             });
         }
 
         hoveredPiece.appendChild(canvas);
+
+        console.log('悬浮棋子创建完成');
+        console.log('======= 创建悬浮棋子结束 =======');
 
         // 创建网格高亮显示
         const gridHighlight = document.createElement('div');
@@ -438,26 +556,70 @@ export class GameRenderer {
 
     // 更新悬浮棋子的显示内容
     public updateHoveredPieceDisplay(hoveredPieceElement: HTMLElement, piece: Piece, playerColor: string): void {
+        console.log('======= 更新悬浮棋子显示 =======');
+        console.log(`棋子ID: ${piece.id}`);
+        console.log(`玩家颜色: ${playerColor}`);
+
         // 找到并移除旧的canvas
         const oldCanvas = hoveredPieceElement.querySelector('canvas');
-        if (!oldCanvas) return;
+        if (!oldCanvas) {
+            console.log('未找到Canvas元素，更新中止');
+            console.log('======= 更新悬浮棋子显示结束 =======');
+            return;
+        }
 
-        // 使用board的动态cellSize，而不是固定值
+        // 使用board的动态cellSize
         const cellSize = this.board.getCellSize();
+        console.log(`单元格尺寸: cellSize=${cellSize}`);
+
+        // 记录棋子形状
+        console.log('棋子形状:');
+        piece.shape.forEach(row => {
+            console.log(row.map(cell => cell ? '■' : '□').join(''));
+        });
 
         // 创建新的canvas
         const canvas = document.createElement('canvas');
-        canvas.width = piece.shape[0].length * cellSize;
-        canvas.height = piece.shape.length * cellSize;
 
-        const ctx = canvas.getContext('2d');
+        // 确保使用整数像素值
+        canvas.width = Math.floor(piece.shape[0].length * cellSize);
+        canvas.height = Math.floor(piece.shape.length * cellSize);
+        console.log(`新Canvas尺寸: width=${canvas.width}, height=${canvas.height}`);
+
+        canvas.style.display = 'block'; // 防止canvas周围出现额外空白
+        canvas.style.border = 'none'; // 确保canvas没有边框
+        canvas.style.margin = '0'; // 移除可能的外边距
+        canvas.style.padding = '0'; // 移除可能的内边距
+        canvas.style.backgroundColor = 'transparent'; // 确保背景透明
+        canvas.style.imageRendering = 'pixelated'; // 像素化渲染，防止模糊
+
+        const ctx = canvas.getContext('2d', { alpha: true });
         if (ctx) {
-            // 绘制棋子
+            // 完全禁用抗锯齿
+            ctx.imageSmoothingEnabled = false;
+
+            // 清除整个Canvas，确保透明
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 使用与Board.drawGrid方法相同的绘制逻辑
             piece.shape.forEach((row, rowIndex) => {
                 row.forEach((cell, colIndex) => {
                     if (cell) {
+                        // 计算绘制坐标
+                        const drawX = colIndex * cellSize;
+                        const drawY = rowIndex * cellSize;
+                        console.log(`绘制单元格: colIndex=${colIndex}, rowIndex=${rowIndex}`);
+                        console.log(`绘制坐标: drawX=${drawX}, drawY=${drawY}, width=${cellSize}, height=${cellSize}`);
+
+                        // 完全匹配Board.drawGrid的绘制方式，去除任何偏移
                         ctx.fillStyle = playerColor;
-                        ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                        ctx.globalAlpha = 1.0;
+                        ctx.fillRect(
+                            drawX,
+                            drawY,
+                            cellSize,
+                            cellSize
+                        );
                     }
                 });
             });
@@ -465,6 +627,20 @@ export class GameRenderer {
 
         // 替换旧的canvas
         hoveredPieceElement.replaceChild(canvas, oldCanvas);
+        console.log('Canvas已替换');
+
+        // 更新悬浮棋子元素的样式，确保一致性
+        hoveredPieceElement.style.margin = '0';
+        hoveredPieceElement.style.padding = '0';
+        hoveredPieceElement.style.border = 'none';
+        hoveredPieceElement.style.outline = 'none';
+        hoveredPieceElement.style.backgroundColor = 'transparent';
+        hoveredPieceElement.style.boxSizing = 'content-box';
+        hoveredPieceElement.style.imageRendering = 'pixelated';
+        hoveredPieceElement.style.willChange = 'left, top';
+        hoveredPieceElement.style.backfaceVisibility = 'hidden';
+
+        console.log('======= 更新悬浮棋子显示结束 =======');
     }
 
     // 更新悬浮棋子的位置和显示状态
@@ -474,17 +650,69 @@ export class GameRenderer {
         gridY: number,
         isValidPlacement: boolean
     ): void {
-        const boardPadding = 15;
+        const boardPadding = 20; // 棋盘内边距，匹配CSS中的20px
         const cellSize = this.board.getCellSize();
 
-        // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
-        const snapX = gridX * cellSize + boardPadding;
-        const snapY = gridY * cellSize + boardPadding;
+        // 检测棋盘元素及其边框
+        let boardBorderLeft = 0;
+        let boardBorderTop = 0;
 
-        // 更新悬浮棋子的位置
-        hoveredPieceElement.style.left = `${snapX}px`;
-        hoveredPieceElement.style.top = `${snapY}px`;
+        if (this.boardElement) {
+            // 获取棋盘元素的计算样式
+            const boardStyle = window.getComputedStyle(this.boardElement);
+            // 获取边框宽度
+            boardBorderLeft = parseInt(boardStyle.borderLeftWidth || '0', 10);
+            boardBorderTop = parseInt(boardStyle.borderTopWidth || '0', 10);
+
+            console.log(`棋盘边框: left=${boardBorderLeft}px, top=${boardBorderTop}px`);
+        }
+
+        // 添加日志输出计算过程
+        console.log('======= 悬浮棋子坐标计算 =======');
+        console.log(`网格坐标: gridX=${gridX}, gridY=${gridY}`);
+        console.log(`单元格尺寸: cellSize=${cellSize}`);
+        console.log(`棋盘内边距: boardPadding=${boardPadding}`);
+
+        // 如果canvas本身有边框，或者棋盘容器有边框，考虑这些边框的宽度
+        // 完全匹配Board.drawGrid中的坐标计算方式并考虑边框宽度
+        const snapX = gridX * cellSize + boardPadding + boardBorderLeft;
+        const snapY = gridY * cellSize + boardPadding + boardBorderTop;
+
+        console.log(`精确计算坐标(考虑边框): snapX=${snapX}, snapY=${snapY}`);
+
+        // 取整后的坐标值
+        const finalX = Math.floor(snapX);
+        const finalY = Math.floor(snapY);
+        console.log(`取整后坐标: finalX=${finalX}, finalY=${finalY}`);
+
+        // 应用整数像素值，避免子像素渲染的模糊
+        hoveredPieceElement.style.position = 'absolute';
+        hoveredPieceElement.style.left = `${finalX}px`;
+        hoveredPieceElement.style.top = `${finalY}px`;
         hoveredPieceElement.style.transform = ''; // 移除transform，直接使用left/top定位
+        hoveredPieceElement.style.boxSizing = 'content-box'; // 使用content-box确保与棋盘格子精确对齐
+        hoveredPieceElement.style.imageRendering = 'pixelated'; // 像素化渲染，防止模糊
+
+        // 记录元素的最终样式属性
+        console.log(`设置的DOM样式: left=${hoveredPieceElement.style.left}, top=${hoveredPieceElement.style.top}`);
+        console.log(`元素宽高: width=${hoveredPieceElement.offsetWidth}px, height=${hoveredPieceElement.offsetHeight}px`);
+
+        // 获取棋盘元素上Canvas的位置信息
+        if (this.boardElement) {
+            const canvasElement = this.boardElement.querySelector('canvas');
+            if (canvasElement) {
+                const canvasRect = canvasElement.getBoundingClientRect();
+                const boardRect = this.boardElement.getBoundingClientRect();
+                console.log(`Canvas位置: left=${canvasRect.left - boardRect.left}px, top=${canvasRect.top - boardRect.top}px`);
+                console.log(`Canvas尺寸: width=${canvasRect.width}px, height=${canvasRect.height}px`);
+            }
+        }
+
+        console.log('======= 悬浮棋子坐标计算结束 =======');
+
+        // 优化渲染性能
+        hoveredPieceElement.style.backfaceVisibility = 'hidden';
+        hoveredPieceElement.style.willChange = 'left, top';
 
         // 存储网格坐标到数据集，用于后续放置
         hoveredPieceElement.dataset.gridX = gridX.toString();
@@ -505,21 +733,26 @@ export class GameRenderer {
         const gridHighlight = document.querySelector('.grid-highlight');
         if (!gridHighlight || !this.boardElement) return;
 
-        const cellSize = this.board.getCellSize();
-        const boardPadding = 15; // 棋盘内边距
+        // 根据实际测试情况，暂时禁用网格高亮，避免干扰视觉效果
+        (gridHighlight as HTMLElement).style.display = 'none';
 
-        // 计算高亮区域的位置和大小
+        /* 如需启用网格高亮，可取消下面注释并删除上面的display:none行
+        const cellSize = this.board.getCellSize();
+        const boardPadding = 20; // 棋盘内边距，匹配CSS中的20px
+
+        // 使用与Board.drawGrid和updateHoveredPiecePosition相同的计算方式
         const width = piece.shape[0].length * cellSize;
         const height = piece.shape.length * cellSize;
         const left = gridX * cellSize + boardPadding;
         const top = gridY * cellSize + boardPadding;
 
-        // 更新高亮区域的样式
-        (gridHighlight as HTMLElement).style.width = `${width}px`;
-        (gridHighlight as HTMLElement).style.height = `${height}px`;
-        (gridHighlight as HTMLElement).style.left = `${left}px`;
-        (gridHighlight as HTMLElement).style.top = `${top}px`;
+        // 应用整数像素值
+        (gridHighlight as HTMLElement).style.width = `${Math.floor(width)}px`;
+        (gridHighlight as HTMLElement).style.height = `${Math.floor(height)}px`;
+        (gridHighlight as HTMLElement).style.left = `${Math.floor(left)}px`;
+        (gridHighlight as HTMLElement).style.top = `${Math.floor(top)}px`;
         (gridHighlight as HTMLElement).style.display = 'block';
+        (gridHighlight as HTMLElement).style.boxSizing = 'content-box';
 
         // 根据放置有效性设置不同颜色
         if (isValidPlacement) {
@@ -527,6 +760,7 @@ export class GameRenderer {
         } else {
             (gridHighlight as HTMLElement).style.borderColor = 'rgba(255, 0, 0, 0.5)';
         }
+        */
     }
 
     // 移除悬浮棋子
