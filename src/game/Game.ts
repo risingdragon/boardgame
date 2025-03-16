@@ -844,50 +844,37 @@ export class Game {
 
     // 显示游戏结束界面
     private showGameOverScreen(): void {
-        if (!this.gameContainer) return;
+        if (!this.gameContainer || !this.controlTipsElement) return;
 
         // 计算最终得分
         const humanScore = this.calculateFinalScore(this.humanPlayer);
         const aiScore = this.calculateFinalScore(this.aiPlayer);
 
-        // 创建游戏结束遮罩层
+        // 创建游戏结束面板（而不是全屏遮罩）
         this.gameOverLayerElement = document.createElement('div');
-        this.gameOverLayerElement.style.position = 'absolute';
-        this.gameOverLayerElement.style.top = '0';
-        this.gameOverLayerElement.style.left = '0';
+        this.gameOverLayerElement.id = 'game-over-panel';
         this.gameOverLayerElement.style.width = '100%';
-        this.gameOverLayerElement.style.height = '100%';
-        this.gameOverLayerElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        this.gameOverLayerElement.style.display = 'flex';
-        this.gameOverLayerElement.style.flexDirection = 'column';
-        this.gameOverLayerElement.style.justifyContent = 'center';
-        this.gameOverLayerElement.style.alignItems = 'center';
-        this.gameOverLayerElement.style.zIndex = '1000';
-        this.gameOverLayerElement.style.color = 'white';
+        this.gameOverLayerElement.style.marginTop = '20px';
+        this.gameOverLayerElement.style.backgroundColor = 'rgba(30, 30, 30, 0.9)';
+        this.gameOverLayerElement.style.borderRadius = '10px';
         this.gameOverLayerElement.style.padding = '20px';
+        this.gameOverLayerElement.style.color = 'white';
         this.gameOverLayerElement.style.boxSizing = 'border-box';
-
-        // 创建游戏结束内容面板
-        const gameOverPanel = document.createElement('div');
-        gameOverPanel.style.backgroundColor = 'rgba(30, 30, 30, 0.9)';
-        gameOverPanel.style.borderRadius = '10px';
-        gameOverPanel.style.padding = '30px';
-        gameOverPanel.style.maxWidth = '500px';
-        gameOverPanel.style.width = '90%';
-        gameOverPanel.style.textAlign = 'center';
-        gameOverPanel.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+        this.gameOverLayerElement.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.5)';
+        this.gameOverLayerElement.style.textAlign = 'center';
 
         // 标题
-        const titleElement = document.createElement('h1');
+        const titleElement = document.createElement('h2');
         titleElement.textContent = '游戏结束';
-        titleElement.style.marginBottom = '20px';
+        titleElement.style.marginTop = '0';
+        titleElement.style.marginBottom = '15px';
         titleElement.style.color = '#fff';
-        titleElement.style.fontSize = '32px';
+        titleElement.style.fontSize = '24px';
 
         // 结果
         const resultElement = document.createElement('div');
-        resultElement.style.fontSize = '20px';
-        resultElement.style.marginBottom = '30px';
+        resultElement.style.fontSize = '18px';
+        resultElement.style.marginBottom = '15px';
 
         let resultText = '';
         if (humanScore > aiScore) {
@@ -905,38 +892,39 @@ export class Game {
         // 得分
         const scoreElement = document.createElement('div');
         scoreElement.innerHTML = `
-            <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
-                <div style="text-align: center; padding: 10px;">
-                    <div style="font-size: 18px; margin-bottom: 5px;">玩家得分</div>
-                    <div style="font-size: 28px; color: #3F51B5;">${humanScore}</div>
+            <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+                <div style="text-align: center; padding: 5px;">
+                    <div style="font-size: 14px; margin-bottom: 3px;">玩家得分</div>
+                    <div style="font-size: 24px; color: #3F51B5;">${humanScore}</div>
                 </div>
-                <div style="text-align: center; padding: 10px;">
-                    <div style="font-size: 18px; margin-bottom: 5px;">AI得分</div>
-                    <div style="font-size: 28px; color: #E91E63;">${aiScore}</div>
+                <div style="text-align: center; padding: 5px;">
+                    <div style="font-size: 14px; margin-bottom: 3px;">AI得分</div>
+                    <div style="font-size: 24px; color: #E91E63;">${aiScore}</div>
                 </div>
             </div>
         `;
 
         // 剩余棋子信息
         const piecesInfoElement = document.createElement('div');
-        piecesInfoElement.style.marginBottom = '20px';
-        piecesInfoElement.style.lineHeight = '1.6';
+        piecesInfoElement.style.marginBottom = '15px';
+        piecesInfoElement.style.fontSize = '14px';
+        piecesInfoElement.style.lineHeight = '1.5';
         piecesInfoElement.innerHTML = `
-            <div style="margin-bottom: 10px; color: #ccc;">玩家剩余棋子: ${this.humanPlayer.getAvailablePieces().length} 个</div>
-            <div style="color: #ccc;">AI剩余棋子: ${this.aiPlayer.getAvailablePieces().length} 个</div>
+            <div style="margin-bottom: 5px; color: #ddd;">玩家剩余棋子: ${this.humanPlayer.getAvailablePieces().length} 个</div>
+            <div style="color: #ddd;">AI剩余棋子: ${this.aiPlayer.getAvailablePieces().length} 个</div>
         `;
 
         // 添加重新开始按钮
         const restartButton = document.createElement('button');
         restartButton.textContent = '重新开始游戏';
-        restartButton.style.padding = '12px 24px';
+        restartButton.style.padding = '8px 20px';
         restartButton.style.backgroundColor = '#4CAF50';
         restartButton.style.color = 'white';
         restartButton.style.border = 'none';
         restartButton.style.borderRadius = '4px';
         restartButton.style.fontSize = '16px';
         restartButton.style.cursor = 'pointer';
-        restartButton.style.marginTop = '20px';
+        restartButton.style.marginTop = '5px';
         restartButton.style.transition = 'background-color 0.3s';
 
         restartButton.addEventListener('mouseover', () => {
@@ -952,17 +940,22 @@ export class Game {
         });
 
         // 组装面板
-        gameOverPanel.appendChild(titleElement);
-        gameOverPanel.appendChild(resultElement);
-        gameOverPanel.appendChild(scoreElement);
-        gameOverPanel.appendChild(piecesInfoElement);
-        gameOverPanel.appendChild(restartButton);
+        this.gameOverLayerElement.appendChild(titleElement);
+        this.gameOverLayerElement.appendChild(resultElement);
+        this.gameOverLayerElement.appendChild(scoreElement);
+        this.gameOverLayerElement.appendChild(piecesInfoElement);
+        this.gameOverLayerElement.appendChild(restartButton);
 
-        // 将面板添加到遮罩层
-        this.gameOverLayerElement.appendChild(gameOverPanel);
+        // 将游戏结束面板添加到控制提示下方
+        this.controlTipsElement.insertAdjacentElement('afterend', this.gameOverLayerElement);
 
-        // 将遮罩层添加到游戏容器
-        this.gameContainer.appendChild(this.gameOverLayerElement);
+        // 更新游戏信息显示，清晰地表明游戏已结束
+        if (this.gameInfoElement) {
+            this.gameInfoElement.innerHTML = `
+                <h2 style="color: #f44336;">游戏已结束</h2>
+                <p>请查看下方的游戏结果</p>
+            `;
+        }
 
         console.log(`游戏结束！玩家得分：${humanScore}，AI得分：${aiScore}`);
     }
