@@ -805,7 +805,6 @@ export class Game {
 
                 this.gameInfoElement.innerHTML = `
                     <h2>当前回合: 玩家 (蓝色)</h2>
-                    <p>可用棋子: ${this.humanPlayer.getAvailablePieces().length}</p>
                     ${!hasValidMoves && this.humanPlayer.canPlacePieces() ? '<p style="color: #f44336; font-weight: bold;">没有可放置的位置！请使用Pass按钮跳过回合。</p>' : ''}
                 `;
 
