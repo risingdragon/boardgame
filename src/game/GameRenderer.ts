@@ -257,8 +257,6 @@ export class GameRenderer {
                             if (cell) {
                                 ctx.fillStyle = currentPlayer.color;
                                 ctx.fillRect(colIndex * trayCellSize, rowIndex * trayCellSize, trayCellSize, trayCellSize);
-                                ctx.strokeStyle = '#000';
-                                ctx.strokeRect(colIndex * trayCellSize, rowIndex * trayCellSize, trayCellSize, trayCellSize);
                             }
                         });
                     });
@@ -414,8 +412,6 @@ export class GameRenderer {
                     if (cell) {
                         ctx.fillStyle = playerColor;
                         ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
                     }
                 });
             });
@@ -462,8 +458,6 @@ export class GameRenderer {
                     if (cell) {
                         ctx.fillStyle = playerColor;
                         ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
                     }
                 });
             });
@@ -567,8 +561,6 @@ export class GameRenderer {
                     if (cell) {
                         ctx.fillStyle = playerColor;
                         ctx.fillRect(colIndex * 20, rowIndex * 20, 20, 20);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(colIndex * 20, rowIndex * 20, 20, 20);
                     }
                 });
             });

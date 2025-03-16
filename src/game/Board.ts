@@ -107,8 +107,8 @@ export class Board {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
 
-        // Draw grid lines
-        this.ctx.strokeStyle = '#ccc';
+        // Draw grid lines - 使用更淡的颜色
+        this.ctx.strokeStyle = '#ddd';
         this.ctx.lineWidth = 1;
 
         // Draw vertical lines
@@ -134,11 +134,12 @@ export class Board {
                 if (cellValue !== 0) {
                     // Different colors for different players
                     this.ctx.fillStyle = cellValue === 1 ? 'blue' : 'red';
+                    // 移除+1和-2的偏移，让棋子完全填充单元格
                     this.ctx.fillRect(
-                        x * this.cellSize + 1,
-                        y * this.cellSize + 1,
-                        this.cellSize - 2,
-                        this.cellSize - 2
+                        x * this.cellSize,
+                        y * this.cellSize,
+                        this.cellSize,
+                        this.cellSize
                     );
                 }
             }

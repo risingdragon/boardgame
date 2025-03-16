@@ -15,6 +15,7 @@ export interface GameState {
     consecutivePasses: number;
     isGameOver: boolean;
     savedAt?: string; // 保存时间戳
+    waitingForAIMove?: boolean; // 标记是否正在等待AI移动
 }
 
 export class GameManager {
@@ -55,8 +56,16 @@ export class GameManager {
 
         // 如果有保存的游戏状态，恢复游戏
         if (savedState) {
+            console.log('Found saved state, restoring game...', savedState);
             this.restoreGameState(savedState);
+        } else {
+            console.log('No saved state found, starting new game with human player first');
+            // 确保新游戏从人类玩家开始
+            this.currentPlayer = this.humanPlayer;
+            this.eventHandler.setIsHumanTurn(true);
         }
+
+        console.log('Current player after initialization:', this.currentPlayer === this.humanPlayer ? 'Human' : 'AI');
 
         // 渲染棋盘
         this.renderer.renderBoard(this.board);
@@ -67,10 +76,13 @@ export class GameManager {
         // 创建Pass按钮
         const passButton = this.renderer.createPassButton(() => this.handlePassTurn());
 
-        // 渲染玩家棋子托盘
+        // 确保棋盘UI反映当前玩家的回合
+        const isHumanTurn = this.currentPlayer === this.humanPlayer;
+
+        // 渲染玩家棋子托盘，确保它反映当前玩家的回合
         this.renderer.renderPieceTray(
             this.humanPlayer,
-            this.currentPlayer === this.humanPlayer,
+            isHumanTurn,
             (pieceId, element) => this.selectPiece(pieceId, element)
         );
 
@@ -83,12 +95,21 @@ export class GameManager {
         // 检查是否需要显示pass按钮
         this.updatePassButtonVisibility();
 
-        console.log('Game initialized successfully!');
+        console.log('Game initialized successfully with current player:', this.currentPlayer === this.humanPlayer ? 'Human' : 'AI');
+
+        // 如果恢复的状态显示当前是AI回合，且标记为等待AI移动，则自动执行AI的移动
+        if (savedState && !savedState.currentPlayerIsHuman && savedState.waitingForAIMove && !this.isGameOver) {
+            console.log('Restored game state with AI turn waiting for move, triggering AI move...');
+            // 给一些延迟以确保UI已更新
+            setTimeout(() => {
+                this.performAIMove();
+            }, 1500);
+        }
     }
 
     // 恢复游戏状态
     private restoreGameState(savedState: GameState): void {
-        console.log('Restoring game state...');
+        console.log('Restoring game state...', savedState);
 
         // 恢复棋盘状态
         const grid = this.board.getGrid();
@@ -103,14 +124,17 @@ export class GameManager {
         this.restorePlayerPieces(this.aiPlayer, savedState.aiPlayerPieces);
 
         // 恢复当前玩家
-        this.currentPlayer = savedState.currentPlayerIsHuman ? this.humanPlayer : this.aiPlayer;
-        this.eventHandler.setIsHumanTurn(savedState.currentPlayerIsHuman);
+        const isHumanTurn = savedState.currentPlayerIsHuman;
+        console.log('Saved state indicates it is human turn:', isHumanTurn);
+
+        this.currentPlayer = isHumanTurn ? this.humanPlayer : this.aiPlayer;
+        this.eventHandler.setIsHumanTurn(isHumanTurn);
 
         // 恢复其他游戏状态
         this.consecutivePasses = savedState.consecutivePasses;
         this.isGameOver = savedState.isGameOver;
 
-        console.log('Game state restored successfully');
+        console.log('Game state restored successfully, current player:', this.currentPlayer === this.humanPlayer ? 'Human' : 'AI');
     }
 
     // 恢复玩家的棋子状态
@@ -125,7 +149,7 @@ export class GameManager {
     }
 
     // 创建当前游戏状态的快照
-    private createGameState(): GameState {
+    private createGameState(waitingForAIMove: boolean = false): GameState {
         const humanPlayerPieces: { [id: number]: boolean } = {};
         const aiPlayerPieces: { [id: number]: boolean } = {};
 
@@ -145,22 +169,31 @@ export class GameManager {
             aiPlayerPieces[id] = false;
         });
 
-        return {
+        // 确保currentPlayerIsHuman反映当前的游戏状态
+        const currentPlayerIsHuman = this.currentPlayer === this.humanPlayer;
+
+        console.log('Creating game state snapshot. Current player is:', currentPlayerIsHuman ? 'Human' : 'AI',
+            'Waiting for AI move:', waitingForAIMove);
+
+        const gameState: GameState = {
             boardGrid: this.board.getGrid(),
             humanPlayerPieces,
             aiPlayerPieces,
-            currentPlayerIsHuman: this.currentPlayer === this.humanPlayer,
+            currentPlayerIsHuman,
             consecutivePasses: this.consecutivePasses,
-            isGameOver: this.isGameOver
+            isGameOver: this.isGameOver,
+            waitingForAIMove: waitingForAIMove
         };
+
+        return gameState;
     }
 
     // 保存当前游戏状态
-    private saveGameState(): void {
+    private saveGameState(waitingForAIMove: boolean = false): void {
         // 如果游戏已结束，不需要保存
         if (this.isGameOver) return;
 
-        const gameState = this.createGameState();
+        const gameState = this.createGameState(waitingForAIMove);
         this.saveGameCallback(gameState);
     }
 
@@ -250,8 +283,8 @@ export class GameManager {
             // 取消选择棋子
             this.deselectPiece();
 
-            // 保存游戏状态
-            this.saveGameState();
+            // 保存游戏状态 - 显式设置为false，表示不是在等待AI移动
+            this.saveGameState(false);
 
             // 切换到AI玩家
             this.switchToAIPlayer();
@@ -289,8 +322,8 @@ export class GameManager {
         // 取消选中的棋子
         this.deselectPiece();
 
-        // 保存游戏状态
-        this.saveGameState();
+        // 保存游戏状态 - 显式设置为false，表示不是在等待AI移动
+        this.saveGameState(false);
 
         // 切换到AI玩家
         this.switchToAIPlayer();
@@ -319,6 +352,9 @@ export class GameManager {
 
         // 隐藏Pass按钮（AI回合不需要）
         this.renderer.updatePassButtonVisibility(false);
+
+        // 保存游戏状态，标记为等待AI移动
+        this.saveGameState(true);
 
         // 给AI一些思考时间
         setTimeout(() => {
@@ -356,8 +392,8 @@ export class GameManager {
             this.consecutivePasses++;
         }
 
-        // 保存游戏状态
-        this.saveGameState();
+        // 保存游戏状态，AI已完成移动，不再等待
+        this.saveGameState(false);
 
         // 检查是否游戏结束
         if (this.checkGameOver()) {
@@ -405,6 +441,9 @@ export class GameManager {
 
         // 检查是否需要显示pass按钮
         this.updatePassButtonVisibility();
+
+        // 保存游戏状态 - 明确表示不是在等待AI移动
+        this.saveGameState(false);
     }
 
     // 检查玩家是否有有效的移动
