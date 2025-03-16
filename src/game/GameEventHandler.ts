@@ -282,8 +282,10 @@ export class GameEventHandler {
         const adjustedX = x - boardPadding;
         const adjustedY = y - boardPadding;
 
+        // 获取当前的cellSize
+        const cellSize = this.board.getCellSize();
+
         // 计算棋盘格子坐标
-        const cellSize = 30; // 与Board类中定义的一致
         const gridX = Math.floor(adjustedX / cellSize);
         const gridY = Math.floor(adjustedY / cellSize);
 
@@ -309,8 +311,14 @@ export class GameEventHandler {
                     this.hoveredPieceElement,
                     adjustedGridX,
                     adjustedGridY,
-                    pieceWidth,
-                    pieceHeight,
+                    isValid
+                );
+
+                // 更新网格高亮
+                this.renderer.updateGridHighlight(
+                    piece,
+                    adjustedGridX,
+                    adjustedGridY,
                     isValid
                 );
             }

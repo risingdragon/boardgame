@@ -28,8 +28,8 @@ export class GameManager {
         this.aiPlayer = new AIPlayer('AI', 'red', this.pieceFactory.createAllPieces());
         this.currentPlayer = this.humanPlayer; // 人类玩家先行
 
-        // 创建渲染器
-        this.renderer = new GameRenderer(boardElement, pieceTrayElement, gameInfoElement);
+        // 创建渲染器，传递board实例
+        this.renderer = new GameRenderer(boardElement, pieceTrayElement, gameInfoElement, this.board);
 
         // 创建事件处理器
         this.eventHandler = new GameEventHandler(this.board, boardElement, this.renderer);

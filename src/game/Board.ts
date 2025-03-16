@@ -2,7 +2,7 @@ export class Board {
     private grid: number[][];
     private width: number;
     private height: number;
-    private cellSize: number = 30; // Size of each cell in pixels
+    private cellSize: number = 30; // Default size for desktop
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
     // 定义特定的起始位置，而不是角落
@@ -19,14 +19,72 @@ export class Board {
         this.grid = Array(height).fill(0).map(() => Array(width).fill(0));
     }
 
+    // 提供一个公共方法获取当前的cellSize
+    public getCellSize(): number {
+        return this.cellSize;
+    }
+
+    // 计算合适的单元格大小
+    private calculateCellSize(containerWidth: number): number {
+        // 是否为移动设备
+        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window && window.matchMedia("(max-width: 1024px)").matches);
+
+        // 为棋盘留出边距，计算可用宽度
+        const availableWidth = containerWidth - 30; // 减去padding
+
+        // 根据可用宽度计算单元格大小，确保棋盘能完全显示
+        let calculatedSize = Math.floor(availableWidth / this.width);
+
+        // 移动设备上限制最大尺寸
+        if (isMobile) {
+            calculatedSize = Math.min(calculatedSize, 22); // 移动设备上单元格最大22px
+        } else {
+            calculatedSize = Math.min(calculatedSize, 30); // 桌面设备上保持原来的30px为上限
+        }
+
+        // 确保单元格尺寸至少为16px，以保持可见性
+        return Math.max(calculatedSize, 16);
+    }
+
+    // 调整画布尺寸方法
+    private resizeCanvas(): void {
+        if (!this.canvas || !this.canvas.parentElement) return;
+
+        // 获取父容器宽度
+        const containerWidth = this.canvas.parentElement.clientWidth;
+
+        // 计算单元格尺寸
+        this.cellSize = this.calculateCellSize(containerWidth);
+
+        // 更新画布尺寸
+        this.canvas.width = this.width * this.cellSize;
+        this.canvas.height = this.height * this.cellSize;
+
+        // 重绘棋盘
+        this.drawGrid();
+    }
+
     public render(container: HTMLElement): void {
         // Create canvas element if it doesn't exist
         if (!this.canvas) {
             this.canvas = document.createElement('canvas');
+
+            // 创建时先设置初始大小
+            const containerWidth = container.clientWidth;
+            this.cellSize = this.calculateCellSize(containerWidth);
+
             this.canvas.width = this.width * this.cellSize;
             this.canvas.height = this.height * this.cellSize;
             this.ctx = this.canvas.getContext('2d');
             container.appendChild(this.canvas);
+
+            // 添加窗口大小改变事件监听
+            window.addEventListener('resize', () => {
+                this.resizeCanvas();
+            });
+        } else {
+            // 更新尺寸
+            this.resizeCanvas();
         }
 
         this.drawGrid();

@@ -148,6 +148,9 @@ canvas {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     position: relative;
     /* 确保game-board是相对定位，其中的绝对定位元素才能正确定位 */
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* 右侧广告区域 */
@@ -355,8 +358,10 @@ button:disabled {
     /* 调整游戏板样式，利用更多可用空间 */
     #game-board {
         padding: 10px;
-        width: calc(100% - 20px);
-        overflow: hidden;
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+        margin: 0 auto;
     }
 
     /* 调整游戏信息区域 */
@@ -418,7 +423,6 @@ button:disabled {
     /* 更小的棋盘尺寸 */
     #game-board {
         padding: 5px;
-        transform: scale(0.9);
         transform-origin: top center;
     }
 
