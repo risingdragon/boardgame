@@ -1,23 +1,16 @@
-import { Player } from './Player';
-import { Piece } from './Piece';
-import { Board } from './Board';
+import { Player } from '../Player';
+import { Piece } from '../Piece';
+import { Board } from '../Board';
 import { BoardAnalyzer } from './BoardAnalyzer';
-import { MoveEvaluator } from './MoveEvaluator';
+import { MoveEvaluator, MoveEvaluation } from './MoveEvaluator';
 import { PieceUtilities } from './PieceUtilities';
-
-interface MoveEvaluation {
-    piece: Piece;
-    x: number;
-    y: number;
-    score: number;
-    rotation: number;
-    flip: number;
-}
+import { RegionAnalyzer } from './RegionAnalyzer';
 
 export class AIPlayer extends Player {
     private boardAnalyzer: BoardAnalyzer | null = null;
     private moveEvaluator: MoveEvaluator | null = null;
     private pieceUtilities: PieceUtilities | null = null;
+    private regionAnalyzer: RegionAnalyzer | null = null;
 
     constructor(name: string, color: string, pieces: Piece[]) {
         super(name, color, pieces);
@@ -35,6 +28,10 @@ export class AIPlayer extends Player {
 
         if (!this.moveEvaluator) {
             this.moveEvaluator = new MoveEvaluator(board);
+        }
+
+        if (!this.regionAnalyzer) {
+            this.regionAnalyzer = new RegionAnalyzer(board);
         }
     }
 
@@ -82,12 +79,150 @@ export class AIPlayer extends Player {
         // 假设对手是人类玩家
         const humanPlayer = new Player("Human", "blue", []);
 
-        // 按照棋子大小排序，但不完全以大小为唯一标准
+        // 获取所有大小为5的棋子（优先考虑最大的棋子）
+        const bigPieces = this.availablePieces.filter(piece => {
+            const size = this.pieceUtilities!.getPieceSize(piece);
+            return size === 5; // 只选择5方块的大棋子
+        });
+
+        // 如果没有大小为5的棋子，则回退到按大小排序的策略
+        const piecesToUse = bigPieces.length > 0 ? bigPieces : [...this.availablePieces].sort((a, b) => {
+            // 计算每个棋子的方块数量
+            const countA = this.pieceUtilities!.getPieceSize(a);
+            const countB = this.pieceUtilities!.getPieceSize(b);
+            return countB - countA; // 大的优先
+        });
+
+        // 如果有多个大小为5的棋子，随机选择其中的几个增加开局变化
+        let candidatePieces = piecesToUse;
+        if (bigPieces.length > 1) {
+            // 随机打乱5方块棋子的顺序
+            const shuffledBigPieces = [...bigPieces].sort(() => Math.random() - 0.5);
+            // 取前3个或全部（如果不足3个）
+            candidatePieces = shuffledBigPieces.slice(0, Math.min(3, shuffledBigPieces.length));
+        }
+
+        // 为每个候选棋子生成所有可能的放置位置
+        for (const originalPiece of candidatePieces) {
+            // 创建基础副本
+            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
+
+            // 尝试不同的旋转和翻转
+            for (let rotation = 0; rotation < 4; rotation++) {
+                for (let flip = 0; flip < 2; flip++) {
+                    // 创建当前旋转和翻转的副本
+                    const pieceCopy = this.pieceUtilities!.getPieceWithTransformation(basePiece, rotation, flip);
+
+                    // 遍历不同的放置方式，使得棋子能覆盖起始位置
+                    for (let offsetY = 0; offsetY < pieceCopy.shape.length; offsetY++) {
+                        for (let offsetX = 0; offsetX < pieceCopy.shape[0].length; offsetX++) {
+                            if (pieceCopy.shape[offsetY][offsetX]) {
+                                const x = startX - offsetX;
+                                const y = startY - offsetY;
+
+                                // 检查是否可以放置
+                                if (x >= 0 && y >= 0 &&
+                                    x + pieceCopy.shape[0].length <= boardSize &&
+                                    y + pieceCopy.shape.length <= boardSize) {
+                                    if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
+                                        // 评估这个放置的得分
+                                        const score = this.moveEvaluator.evaluateFirstMove(
+                                            pieceCopy, x, y, this, humanPlayer
+                                        );
+
+                                        // 添加到候选列表
+                                        firstMoveCandidates.push({
+                                            piece: originalPiece,
+                                            x,
+                                            y,
+                                            rotation,
+                                            flip,
+                                            score
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 如果没有找到有效放置，尝试使用所有棋子
+        if (firstMoveCandidates.length === 0 && candidatePieces.length < this.availablePieces.length) {
+            // 尝试用所有棋子重新寻找第一步
+            console.log("使用所有棋子尝试找到第一步放置");
+            return this.findFirstMoveWithAllPieces(board, aiPlayerId);
+        }
+
+        // 如果没有找到有效放置，返回null
+        if (firstMoveCandidates.length === 0) {
+            return null;
+        }
+
+        // 按得分排序
+        firstMoveCandidates.sort((a, b) => b.score - a.score);
+
+        // 从前几个高分候选中随机选择一个，增加变化性
+        const topCandidatesCount = Math.min(3, firstMoveCandidates.length);
+        const selectedIndex = Math.floor(Math.random() * topCandidatesCount);
+        const bestCandidate = firstMoveCandidates[selectedIndex];
+
+        // 将原始棋子旋转和翻转到最佳状态
+        const piece = this.getPiece(bestCandidate.piece.id);
+        if (!piece) return null;
+
+        // 重置棋子的变形状态
+        this.pieceUtilities!.resetPieceOrientation(piece);
+
+        // 应用最佳的旋转和翻转
+        for (let r = 0; r < bestCandidate.rotation; r++) {
+            piece.rotate();
+        }
+
+        if (bestCandidate.flip === 1) {
+            piece.flip();
+        }
+
+        console.log(`AI 选择了棋子ID: ${piece.id}，大小为: ${this.pieceUtilities!.getPieceSize(piece)}，放置位置: (${bestCandidate.x}, ${bestCandidate.y})，旋转: ${bestCandidate.rotation}，翻转: ${bestCandidate.flip}`);
+
+        return {
+            piece,
+            x: bestCandidate.x,
+            y: bestCandidate.y
+        };
+    }
+
+    // 使用所有棋子寻找第一步（备用方法）
+    private findFirstMoveWithAllPieces(board: Board, aiPlayerId: number): { piece: Piece, x: number, y: number } | null {
+        if (!this.moveEvaluator) {
+            throw new Error("MoveEvaluator not initialized");
+        }
+
+        // 获取棋盘上的起始位置坐标(9, 9)
+        const startX = 9;
+        const startY = 9;
+        const boardSize = 14;
+
+        // 创建评分列表存储所有可能的第一步放置
+        const firstMoveCandidates: {
+            piece: Piece;
+            x: number;
+            y: number;
+            rotation: number;
+            flip: number;
+            score: number;
+        }[] = [];
+
+        // 假设对手是人类玩家
+        const humanPlayer = new Player("Human", "blue", []);
+
+        // 按照棋子大小排序
         const sortedPieces = [...this.availablePieces].sort((a, b) => {
             // 计算每个棋子的方块数量
-            const countA = a.shape.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
-            const countB = b.shape.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
-            return countB - countA; // 大的优先，但会在后续评分中考虑其他因素
+            const countA = this.pieceUtilities!.getPieceSize(a);
+            const countB = this.pieceUtilities!.getPieceSize(b);
+            return countB - countA; // 大的优先
         });
 
         // 尝试放置排序后的棋子
@@ -99,16 +234,7 @@ export class AIPlayer extends Player {
             for (let rotation = 0; rotation < 4; rotation++) {
                 for (let flip = 0; flip < 2; flip++) {
                     // 创建当前旋转和翻转的副本
-                    const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-                    // 应用旋转和翻转
-                    for (let r = 0; r < rotation; r++) {
-                        pieceCopy.rotate();
-                    }
-
-                    if (flip === 1) {
-                        pieceCopy.flip();
-                    }
+                    const pieceCopy = this.pieceUtilities!.getPieceWithTransformation(basePiece, rotation, flip);
 
                     // 遍历不同的放置方式，使得棋子能覆盖起始位置
                     for (let offsetY = 0; offsetY < pieceCopy.shape.length; offsetY++) {
@@ -158,8 +284,8 @@ export class AIPlayer extends Player {
         const piece = this.getPiece(bestCandidate.piece.id);
         if (!piece) return null;
 
-        // 重置棋子的变形状态 - 由于Piece没有resetOrientation方法，我们手动实现
-        this.resetPieceOrientation(piece);
+        // 重置棋子的变形状态
+        this.pieceUtilities!.resetPieceOrientation(piece);
 
         // 应用最佳的旋转和翻转
         for (let r = 0; r < bestCandidate.rotation; r++) {
@@ -175,321 +301,6 @@ export class AIPlayer extends Player {
             x: bestCandidate.x,
             y: bestCandidate.y
         };
-    }
-
-    // 寻找棋盘上的空白区域
-    private findEmptyRegions(board: Board): { x: number, y: number, width: number, height: number, expansionPotential: number }[] {
-        const grid = board.getGrid();
-        const boardSize = grid.length;
-        const regions: { x: number, y: number, width: number, height: number, expansionPotential: number }[] = [];
-        const visited = Array(boardSize).fill(0).map(() => Array(boardSize).fill(false));
-
-        // 寻找所有空白区域，包括1x2的小区域
-        for (let y = 0; y < boardSize - 1; y++) {
-            for (let x = 0; x < boardSize - 1; x++) {
-                // 跳过已经访问过的单元格
-                if (visited[y][x]) continue;
-
-                // 检查是否是空白单元格
-                if (grid[y][x] === 0) {
-                    // 尝试找到最大的矩形空白区域
-                    let maxWidth = 1;
-                    let maxHeight = 1;
-
-                    // 向右扩展
-                    while (x + maxWidth < boardSize && grid[y][x + maxWidth] === 0) {
-                        maxWidth++;
-                    }
-
-                    // 向下扩展
-                    while (y + maxHeight < boardSize) {
-                        let canExpand = true;
-                        for (let i = 0; i < maxWidth; i++) {
-                            if (x + i >= boardSize || grid[y + maxHeight][x + i] !== 0) {
-                                canExpand = false;
-                                break;
-                            }
-                        }
-                        if (canExpand) {
-                            maxHeight++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    // 标记此区域为已访问
-                    for (let j = 0; j < maxHeight; j++) {
-                        for (let i = 0; i < maxWidth; i++) {
-                            visited[y + j][x + i] = true;
-                        }
-                    }
-
-                    // 只记录1x2及以上的区域（增加了对1x2和2x1区域的检测）
-                    if ((maxWidth >= 2 && maxHeight >= 1) || (maxWidth >= 1 && maxHeight >= 2)) {
-                        // 计算这个区域的扩展潜力
-                        const expansionPotential = this.calculateExpansionPotential(grid, x, y, maxWidth, maxHeight, boardSize);
-
-                        // 计算区域的面积
-                        const area = maxWidth * maxHeight;
-
-                        regions.push({
-                            x,
-                            y,
-                            width: maxWidth,
-                            height: maxHeight,
-                            expansionPotential
-                        });
-                    }
-                }
-            }
-        }
-
-        // 增加对大面积区域的偏好，但保留小区域的价值
-        regions.sort((a, b) => {
-            // 计算综合评分
-            const areaA = a.width * a.height;
-            const areaB = b.width * b.height;
-
-            // 大区域获得额外奖励
-            const largeAreaBonusA = areaA > 25 ? 20 : (areaA > 16 ? 15 : (areaA > 9 ? 10 : 0));
-            const largeAreaBonusB = areaB > 25 ? 20 : (areaB > 16 ? 15 : (areaB > 9 ? 10 : 0));
-
-            const scoreA = areaA + a.expansionPotential * 2 + largeAreaBonusA;
-            const scoreB = areaB + b.expansionPotential * 2 + largeAreaBonusB;
-
-            return scoreB - scoreA;
-        });
-
-        return regions;
-    }
-
-    // 计算区域的扩展潜力 - 评估周围有多少可以扩展的空间
-    private calculateExpansionPotential(grid: number[][], x: number, y: number, width: number, height: number, boardSize: number): number {
-        let potential = 0;
-        const directions = [
-            { dx: -1, dy: 0 },  // 左
-            { dx: 1, dy: 0 },   // 右
-            { dx: 0, dy: -1 },  // 上
-            { dx: 0, dy: 1 }    // 下
-        ];
-
-        // 检查区域周围的每个方向
-        for (const dir of directions) {
-            // 检查这个方向上的扩展潜力
-            if (dir.dx < 0) { // 左侧
-                for (let j = 0; j < height; j++) {
-                    let expandCount = 0;
-                    let nx = x - 1;
-                    while (nx >= 0 && grid[y + j][nx] === 0) {
-                        expandCount++;
-                        nx--;
-                    }
-                    potential += expandCount;
-                }
-            } else if (dir.dx > 0) { // 右侧
-                for (let j = 0; j < height; j++) {
-                    let expandCount = 0;
-                    let nx = x + width;
-                    while (nx < boardSize && grid[y + j][nx] === 0) {
-                        expandCount++;
-                        nx++;
-                    }
-                    potential += expandCount;
-                }
-            } else if (dir.dy < 0) { // 上方
-                for (let i = 0; i < width; i++) {
-                    let expandCount = 0;
-                    let ny = y - 1;
-                    while (ny >= 0 && grid[ny][x + i] === 0) {
-                        expandCount++;
-                        ny--;
-                    }
-                    potential += expandCount;
-                }
-            } else if (dir.dy > 0) { // 下方
-                for (let i = 0; i < width; i++) {
-                    let expandCount = 0;
-                    let ny = y + height;
-                    while (ny < boardSize && grid[ny][x + i] === 0) {
-                        expandCount++;
-                        ny++;
-                    }
-                    potential += expandCount;
-                }
-            }
-        }
-
-        // 分析该区域是否靠近棋盘边缘
-        const isNearLeftEdge = x <= 2;
-        const isNearRightEdge = x + width >= boardSize - 2;
-        const isNearTopEdge = y <= 2;
-        const isNearBottomEdge = y + height >= boardSize - 2;
-
-        // 为远离边缘的区域增加额外分数，鼓励AI向棋盘中心和空白区域发展
-        if (!isNearLeftEdge && !isNearRightEdge && !isNearTopEdge && !isNearBottomEdge) {
-            potential += 10;
-        }
-
-        // 检测该区域是否位于棋盘左侧
-        if (x < boardSize / 2) {
-            // 给左侧区域额外的扩展分数
-            potential += width * height / 4;
-        }
-
-        return potential;
-    }
-
-    // 获取棋子的大小（格子数量）
-    private getPieceSize(piece: Piece): number {
-        let count = 0;
-        for (const row of piece.shape) {
-            for (const cell of row) {
-                if (cell) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    // 寻找防御性着法
-    private findDefensiveMoves(
-        board: Board,
-        aiPlayerId: number,
-        gameProgress: number,
-        humanPlayer: Player
-    ): MoveEvaluation[] {
-        if (!this.moveEvaluator) {
-            throw new Error("MoveEvaluator not initialized");
-        }
-
-        const boardSize = 14;
-        const defensiveMoves: MoveEvaluation[] = [];
-
-        // 评估所有可能的着法作为防御
-        for (const originalPiece of this.availablePieces) {
-            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
-
-            for (let rotation = 0; rotation < 4; rotation++) {
-                for (let flip = 0; flip < 2; flip++) {
-                    const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-                    for (let r = 0; r < rotation; r++) {
-                        pieceCopy.rotate();
-                    }
-
-                    if (flip === 1) {
-                        pieceCopy.flip();
-                    }
-
-                    // 检查是否可以阻止对手的关键连接点
-                    for (let y = 0; y < boardSize; y++) {
-                        for (let x = 0; x < boardSize; x++) {
-                            if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
-                                // 检查此着法是否能阻断对手连接
-                                const canBlock = this.moveEvaluator.canBlockOpponentConnections(
-                                    pieceCopy, x, y, this, humanPlayer
-                                );
-
-                                if (canBlock) {
-                                    // 评估防御价值
-                                    const defensiveScore = this.moveEvaluator.evaluateDefensiveMove(
-                                        pieceCopy, x, y, this, humanPlayer
-                                    );
-
-                                    defensiveMoves.push({
-                                        piece: originalPiece,
-                                        x,
-                                        y,
-                                        rotation,
-                                        flip,
-                                        score: defensiveScore
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 按防御价值排序
-        defensiveMoves.sort((a, b) => b.score - a.score);
-
-        return defensiveMoves;
-    }
-
-    // 后备方案 - 当没有找到理想着法时
-    private findFallbackMove(board: Board, aiPlayerId: number): { piece: Piece, x: number, y: number } | null {
-        console.log("Using fallback move strategy");
-        const boardSize = 14;
-
-        // 尝试放置最小的棋子
-        const smallestPieces = [...this.availablePieces].sort((a, b) => {
-            const sizeA = this.getPieceSize(a);
-            const sizeB = this.getPieceSize(b);
-            return sizeA - sizeB;
-        });
-
-        for (const originalPiece of smallestPieces) {
-            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
-
-            for (let rotation = 0; rotation < 4; rotation++) {
-                for (let flip = 0; flip < 2; flip++) {
-                    const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-                    for (let r = 0; r < rotation; r++) {
-                        pieceCopy.rotate();
-                    }
-
-                    if (flip === 1) {
-                        pieceCopy.flip();
-                    }
-
-                    // 尝试找到任何有效位置
-                    for (let y = 0; y < boardSize; y++) {
-                        for (let x = 0; x < boardSize; x++) {
-                            if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
-                                const piece = this.getPiece(originalPiece.id);
-                                if (!piece) continue;
-
-                                // 重置棋子的变形状态 - 由于Piece没有resetOrientation方法，我们手动实现
-                                this.resetPieceOrientation(piece);
-
-                                for (let r = 0; r < rotation; r++) {
-                                    piece.rotate();
-                                }
-
-                                if (flip === 1) {
-                                    piece.flip();
-                                }
-
-                                return {
-                                    piece,
-                                    x,
-                                    y
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return null; // 如果找不到任何有效着法
-    }
-
-    // 计数棋盘上已经放置的棋子数量
-    private countPlacedCells(grid: number[][]): number {
-        let count = 0;
-        for (const row of grid) {
-            for (const cell of row) {
-                if (cell !== 0) {
-                    count++;
-                }
-            }
-        }
-        return count;
     }
 
     /**
@@ -511,25 +322,6 @@ export class AIPlayer extends Player {
     }
 
     /**
-     * 重置棋子到原始状态
-     * 由于Piece类没有resetOrientation方法，我们在这里实现
-     */
-    private resetPieceOrientation(piece: Piece): void {
-        // 策略：创建一个新的棋子副本，然后用它的形状替换原来的
-        const originalShape = this.getPieceOriginalShape(piece.id);
-        if (originalShape) {
-            // 直接替换形状
-            piece.shape = originalShape;
-        } else {
-            // 如果找不到原始形状，可以旋转4次回到原始状态
-            // (4次90度旋转等于360度，回到原始状态)
-            for (let i = 0; i < 4; i++) {
-                piece.rotate();
-            }
-        }
-    }
-
-    /**
      * 获取棋子的原始形状
      */
     private getPieceOriginalShape(pieceId: number): boolean[][] | null {
@@ -544,17 +336,9 @@ export class AIPlayer extends Player {
         return clonedShape;
     }
 
-    // 克隆棋子 - 使用PieceUtilities替代
-    private clonePiece(piece: Piece): Piece {
-        if (this.pieceUtilities) {
-            return this.pieceUtilities.clonePiece(piece);
-        }
-        return piece.clone();
-    }
-
     // 不是第一步棋，找到最佳放置位置
     private findBestMove(board: Board, aiPlayerId: number): { piece: Piece, x: number, y: number } | null {
-        if (!this.moveEvaluator || !this.boardAnalyzer) {
+        if (!this.moveEvaluator || !this.boardAnalyzer || !this.regionAnalyzer) {
             throw new Error("Analysis tools not initialized");
         }
 
@@ -562,9 +346,7 @@ export class AIPlayer extends Player {
         const grid = board.getGrid();
 
         // 计算游戏进程 (0-1范围), 用于调整策略
-        const placedCellsCount = this.countPlacedCells(grid);
-        const totalCells = boardSize * boardSize;
-        const gameProgress = Math.min(1, placedCellsCount / (totalCells * 0.6));
+        const gameProgress = this.moveEvaluator.calculateGameProgress();
 
         // 创建评分列表存储所有可能的放置方案
         const moveCandidates: MoveEvaluation[] = [];
@@ -574,7 +356,7 @@ export class AIPlayer extends Player {
 
         // 首先检查是否有特别有价值的防御性着法
         // 例如，阻止对手的连接点或关键扩展路径
-        const defensiveMoves = this.findDefensiveMoves(board, aiPlayerId, gameProgress, humanPlayer);
+        const defensiveMoves = this.moveEvaluator.findDefensiveMoves(this, humanPlayer, gameProgress);
 
         // 如果找到高价值的防御性着法，直接使用
         // 但要确保不会过早使用小棋子，特别是单格棋子
@@ -584,7 +366,7 @@ export class AIPlayer extends Player {
             if (!piece) return null;
 
             // 获取棋子大小
-            const pieceSize = this.getPieceSize(piece);
+            const pieceSize = this.pieceUtilities!.getPieceSize(piece);
 
             // 如果是单格棋子，且游戏进程不到50%，降低其优先级
             // 除非防御得分非常高（超过80）
@@ -593,7 +375,7 @@ export class AIPlayer extends Player {
                 // 不使用这个防御着法，继续评估其他着法
             } else {
                 // 重置棋子的变形状态
-                this.resetPieceOrientation(piece);
+                this.pieceUtilities!.resetPieceOrientation(piece);
 
                 // 应用最佳的旋转和翻转
                 for (let r = 0; r < bestDefense.rotation; r++) {
@@ -613,11 +395,11 @@ export class AIPlayer extends Player {
         }
 
         // 寻找棋盘上的空白区域
-        const emptyRegions = this.findEmptyRegions(board);
+        const emptyRegions = this.regionAnalyzer.findEmptyRegions();
 
         // 分析棋盘左右两侧的空间分布
-        const leftSideEmptyCount = this.countEmptyCellsInRegion(grid, 0, 0, Math.floor(boardSize / 2), boardSize);
-        const rightSideEmptyCount = this.countEmptyCellsInRegion(grid, Math.floor(boardSize / 2), 0, boardSize, boardSize);
+        const leftSideEmptyCount = this.regionAnalyzer.countEmptyCellsInRegion(0, 0, Math.floor(boardSize / 2), boardSize);
+        const rightSideEmptyCount = this.regionAnalyzer.countEmptyCellsInRegion(Math.floor(boardSize / 2), 0, boardSize, boardSize);
 
         // 如果左侧空间明显多于右侧，增加对左侧区域的偏好
         const favorLeftSide = leftSideEmptyCount > rightSideEmptyCount * 1.5;
@@ -638,14 +420,14 @@ export class AIPlayer extends Player {
 
             // 按照棋子大小排序，优先考虑大棋子但要确保能放入该区域
             const sortedPieces = [...this.availablePieces].sort((a, b) => {
-                const sizeA = this.getPieceSize(a);
-                const sizeB = this.getPieceSize(b);
+                const sizeA = this.pieceUtilities!.getPieceSize(a);
+                const sizeB = this.pieceUtilities!.getPieceSize(b);
                 return sizeB - sizeA; // 大的优先
             });
 
             // 检查每个棋子是否适合这个区域
             for (const originalPiece of sortedPieces) {
-                const pieceSize = this.getPieceSize(originalPiece);
+                const pieceSize = this.pieceUtilities!.getPieceSize(originalPiece);
 
                 // 跳过显然太大而无法放入该区域的棋子
                 if (pieceSize > regionArea) continue;
@@ -662,17 +444,7 @@ export class AIPlayer extends Player {
 
                 for (let rotation = 0; rotation < 4; rotation++) {
                     for (let flip = 0; flip < 2; flip++) {
-                        const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-                        // 应用旋转
-                        for (let r = 0; r < rotation; r++) {
-                            pieceCopy.rotate();
-                        }
-
-                        // 应用翻转
-                        if (flip === 1) {
-                            pieceCopy.flip();
-                        }
+                        const pieceCopy = this.pieceUtilities!.getPieceWithTransformation(basePiece, rotation, flip);
 
                         // 检查棋子形状是否适合该区域
                         if (pieceCopy.shape[0].length <= region.width && pieceCopy.shape.length <= region.height) {
@@ -721,18 +493,7 @@ export class AIPlayer extends Player {
             const pieceSize = candidate.pieceSize;
 
             // 重新创建棋子副本并应用变换
-            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
-            const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-            // 应用旋转
-            for (let r = 0; r < rotation; r++) {
-                pieceCopy.rotate();
-            }
-
-            // 应用翻转
-            if (flip === 1) {
-                pieceCopy.flip();
-            }
+            const pieceCopy = this.pieceUtilities!.getPieceWithTransformation(originalPiece, rotation, flip);
 
             // 验证放置是否有效
             if (board.isValidPlacement(pieceCopy, region.x, region.y, aiPlayerId)) {
@@ -795,15 +556,15 @@ export class AIPlayer extends Player {
         if (moveCandidates.length === 0) {
             // 按照棋子大小排序，优先考虑大棋子
             const sortedPieces = [...this.availablePieces].sort((a, b) => {
-                const sizeA = this.getPieceSize(a);
-                const sizeB = this.getPieceSize(b);
+                const sizeA = this.pieceUtilities!.getPieceSize(a);
+                const sizeB = this.pieceUtilities!.getPieceSize(b);
                 return sizeB - sizeA; // 大的优先
             });
 
             // 如果没有紧急的防御需求，评估所有可能的着法
             for (const originalPiece of sortedPieces) {
                 // 获取棋子大小
-                const pieceSize = this.getPieceSize(originalPiece);
+                const pieceSize = this.pieceUtilities!.getPieceSize(originalPiece);
 
                 // 如果是单格棋子，且游戏进程不到70%，大幅降低其优先级
                 if (pieceSize === 1 && gameProgress < 0.7) {
@@ -820,16 +581,7 @@ export class AIPlayer extends Player {
                 for (let rotation = 0; rotation < 4; rotation++) {
                     for (let flip = 0; flip < 2; flip++) {
                         // 创建当前旋转和翻转的副本
-                        const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
-
-                        // 应用旋转和翻转
-                        for (let r = 0; r < rotation; r++) {
-                            pieceCopy.rotate();
-                        }
-
-                        if (flip === 1) {
-                            pieceCopy.flip();
-                        }
+                        const pieceCopy = this.pieceUtilities!.getPieceWithTransformation(basePiece, rotation, flip);
 
                         // 遍历棋盘寻找可能的放置位置
                         for (let y = 0; y < boardSize; y++) {
@@ -875,7 +627,7 @@ export class AIPlayer extends Player {
 
         // 如果没有找到有效着法，尝试用更宽松的标准重新搜索
         if (moveCandidates.length === 0) {
-            return this.findFallbackMove(board, aiPlayerId);
+            return this.moveEvaluator.findFallbackMove(this);
         }
 
         // 按得分排序，选择最高分
@@ -886,7 +638,7 @@ export class AIPlayer extends Player {
             const piece = this.getPiece(c.piece.id);
             return {
                 pieceId: c.piece.id,
-                pieceSize: piece ? this.getPieceSize(piece) : 0,
+                pieceSize: piece ? this.pieceUtilities!.getPieceSize(piece) : 0,
                 x: c.x,
                 y: c.y,
                 score: c.score
@@ -902,8 +654,8 @@ export class AIPlayer extends Player {
         const piece = this.getPiece(selectedCandidate.piece.id);
         if (!piece) return null;
 
-        // 重置棋子的变形状态 - 由于Piece没有resetOrientation方法，我们手动实现
-        this.resetPieceOrientation(piece);
+        // 重置棋子的变形状态
+        this.pieceUtilities!.resetPieceOrientation(piece);
 
         // 应用选定的旋转和翻转
         for (let r = 0; r < selectedCandidate.rotation; r++) {
@@ -919,18 +671,5 @@ export class AIPlayer extends Player {
             x: selectedCandidate.x,
             y: selectedCandidate.y
         };
-    }
-
-    // 计算指定区域内的空白单元格数量
-    private countEmptyCellsInRegion(grid: number[][], startX: number, startY: number, endX: number, endY: number): number {
-        let count = 0;
-        for (let y = startY; y < endY; y++) {
-            for (let x = startX; x < endX; x++) {
-                if (grid[y][x] === 0) {
-                    count++;
-                }
-            }
-        }
-        return count;
     }
 } 

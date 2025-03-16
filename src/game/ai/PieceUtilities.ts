@@ -1,4 +1,4 @@
-import { Piece } from './Piece';
+import { Piece } from '../Piece';
 
 /**
  * PieceUtilities类 - 负责处理棋子操作的工具函数
@@ -134,5 +134,55 @@ export class PieceUtilities {
      */
     public clonePiece(piece: Piece): Piece {
         return piece.clone();
+    }
+
+    /**
+     * 获取棋子的大小（格子数量）
+     */
+    public getPieceSize(piece: Piece): number {
+        let count = 0;
+        for (const row of piece.shape) {
+            for (const cell of row) {
+                if (cell) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 重置棋子到原始状态
+     */
+    public resetPieceOrientation(piece: Piece, originalShape?: boolean[][]): void {
+        if (originalShape) {
+            // 如果提供了原始形状，直接替换
+            piece.shape = originalShape.map(row => [...row]);
+        } else {
+            // 如果没有提供原始形状，旋转4次回到原始状态
+            // (4次90度旋转等于360度，回到原始状态)
+            for (let i = 0; i < 4; i++) {
+                piece.rotate();
+            }
+        }
+    }
+
+    /**
+     * 获取特定旋转和翻转后的棋子
+     */
+    public getPieceWithTransformation(piece: Piece, rotation: number, flip: number): Piece {
+        const transformedPiece = this.clonePiece(piece);
+
+        // 应用旋转
+        for (let r = 0; r < rotation; r++) {
+            transformedPiece.rotate();
+        }
+
+        // 应用翻转
+        if (flip === 1) {
+            transformedPiece.flip();
+        }
+
+        return transformedPiece;
     }
 } 

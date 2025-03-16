@@ -1,6 +1,6 @@
 import { Board } from './Board';
 import { Player } from './Player';
-import { AIPlayer } from './AIPlayer';
+import { AIPlayer } from './ai/AIPlayer';
 import { PieceFactory } from './PieceFactory';
 import { Piece } from './Piece';
 import { GameRenderer } from './GameRenderer';

@@ -1,5 +1,5 @@
-import { Board } from './Board';
-import { Player } from './Player';
+import { Board } from '../Board';
+import { Player } from '../Player';
 
 /**
  * 棋盘分析器 - 负责分析棋盘状态、区域控制和潜在机会

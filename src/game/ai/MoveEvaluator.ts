@@ -1,8 +1,18 @@
-import { Board } from './Board';
-import { Piece } from './Piece';
-import { Player } from './Player';
+import { Board } from '../Board';
+import { Piece } from '../Piece';
+import { Player } from '../Player';
 import { BoardAnalyzer } from './BoardAnalyzer';
 import { PieceUtilities } from './PieceUtilities';
+
+// 着法评估结果接口
+export interface MoveEvaluation {
+    piece: Piece;
+    x: number;
+    y: number;
+    score: number;
+    rotation: number;
+    flip: number;
+}
 
 /**
  * 着法评估器 - 负责评估所有可能的着法，根据战略价值排序
@@ -254,5 +264,154 @@ export class MoveEvaluator {
         }
 
         return false;
+    }
+
+    /**
+     * 寻找防御性着法
+     */
+    public findDefensiveMoves(
+        aiPlayer: Player,
+        humanPlayer: Player,
+        gameProgress: number
+    ): MoveEvaluation[] {
+        const defensiveMoves: MoveEvaluation[] = [];
+        const aiPlayerId = 2; // 假设AI的ID为2
+
+        // 评估所有可能的着法作为防御
+        for (const originalPiece of aiPlayer.getAvailablePieces()) {
+            const basePiece = this.pieceUtilities.clonePiece(originalPiece);
+
+            for (let rotation = 0; rotation < 4; rotation++) {
+                for (let flip = 0; flip < 2; flip++) {
+                    const pieceCopy = this.pieceUtilities.clonePiece(basePiece);
+
+                    for (let r = 0; r < rotation; r++) {
+                        pieceCopy.rotate();
+                    }
+
+                    if (flip === 1) {
+                        pieceCopy.flip();
+                    }
+
+                    // 检查是否可以阻止对手的关键连接点
+                    for (let y = 0; y < this.boardSize; y++) {
+                        for (let x = 0; x < this.boardSize; x++) {
+                            if (this.board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
+                                // 检查此着法是否能阻断对手连接
+                                const canBlock = this.canBlockOpponentConnections(
+                                    pieceCopy, x, y, aiPlayer, humanPlayer
+                                );
+
+                                if (canBlock) {
+                                    // 评估防御价值
+                                    const defensiveScore = this.evaluateDefensiveMove(
+                                        pieceCopy, x, y, aiPlayer, humanPlayer
+                                    );
+
+                                    defensiveMoves.push({
+                                        piece: originalPiece,
+                                        x,
+                                        y,
+                                        rotation,
+                                        flip,
+                                        score: defensiveScore
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 按防御价值排序
+        defensiveMoves.sort((a, b) => b.score - a.score);
+
+        return defensiveMoves;
+    }
+
+    /**
+     * 后备方案 - 当没有找到理想着法时
+     */
+    public findFallbackMove(aiPlayer: Player): { piece: Piece, x: number, y: number } | null {
+        console.log("Using fallback move strategy");
+        const aiPlayerId = 2; // 假设AI的ID为2
+
+        // 尝试放置最小的棋子
+        const smallestPieces = [...aiPlayer.getAvailablePieces()].sort((a, b) => {
+            const sizeA = this.pieceUtilities.getPieceSize(a);
+            const sizeB = this.pieceUtilities.getPieceSize(b);
+            return sizeA - sizeB;
+        });
+
+        for (const originalPiece of smallestPieces) {
+            const basePiece = this.pieceUtilities.clonePiece(originalPiece);
+
+            for (let rotation = 0; rotation < 4; rotation++) {
+                for (let flip = 0; flip < 2; flip++) {
+                    const pieceCopy = this.pieceUtilities.clonePiece(basePiece);
+
+                    for (let r = 0; r < rotation; r++) {
+                        pieceCopy.rotate();
+                    }
+
+                    if (flip === 1) {
+                        pieceCopy.flip();
+                    }
+
+                    // 尝试找到任何有效位置
+                    for (let y = 0; y < this.boardSize; y++) {
+                        for (let x = 0; x < this.boardSize; x++) {
+                            if (this.board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
+                                // 获取对应的实际棋子（不是副本）
+                                const piece = aiPlayer.getPiece(originalPiece.id);
+                                if (!piece) continue;
+
+                                // 重置棋子的变形状态
+                                this.pieceUtilities.resetPieceOrientation(piece);
+
+                                // 应用最佳的旋转和翻转
+                                for (let r = 0; r < rotation; r++) {
+                                    piece.rotate();
+                                }
+
+                                if (flip === 1) {
+                                    piece.flip();
+                                }
+
+                                return {
+                                    piece,
+                                    x,
+                                    y
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null; // 如果找不到任何有效着法
+    }
+
+    /**
+     * 计算游戏进度（0-1之间的值）
+     */
+    public calculateGameProgress(): number {
+        const grid = this.board.getGrid();
+        const totalCells = this.boardSize * this.boardSize;
+
+        // 计数棋盘上已经放置的棋子数量
+        let placedCellsCount = 0;
+        for (const row of grid) {
+            for (const cell of row) {
+                if (cell !== 0) {
+                    placedCellsCount++;
+                }
+            }
+        }
+
+        // 返回一个0-1之间的值表示游戏进度
+        return Math.min(1, placedCellsCount / (totalCells * 0.6));
     }
 } 
