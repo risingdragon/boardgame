@@ -180,104 +180,234 @@ export class Game {
             }
         });
 
-        // 添加鼠标移动事件用于显示棋子悬浮效果
+        // 添加触摸设备操作按钮（如果在移动设备上）
+        this.createMobileTouchControls();
+
+        // 添加鼠标和触摸事件用于显示棋子悬浮效果
         if (this.boardElement) {
             // 确保棋盘元素为相对定位
             if (this.boardElement.style.position !== 'relative') {
                 this.boardElement.style.position = 'relative';
             }
 
-            // 鼠标进入棋盘时创建悬浮棋子
-            this.boardElement.addEventListener('mouseenter', (event) => {
+            // 鼠标/触摸进入棋盘时创建悬浮棋子
+            this.boardElement.addEventListener('mouseenter', () => {
                 if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
                     this.createHoveredPiece();
                 }
             });
+
+            this.boardElement.addEventListener('touchstart', (event) => {
+                if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
+                    // 阻止默认行为，避免滚动和缩放
+                    event.preventDefault();
+                    this.createHoveredPiece();
+
+                    // 获取第一个触摸点位置
+                    const touch = event.touches[0];
+                    this.updateHoveredPiecePositionForTouch(touch);
+                }
+            }, { passive: false });
 
             // 鼠标离开棋盘时移除悬浮棋子
             this.boardElement.addEventListener('mouseleave', () => {
                 this.removeHoveredPiece();
             });
 
+            this.boardElement.addEventListener('touchend', () => {
+                // 不要立即移除，让click事件能够触发
+                setTimeout(() => {
+                    if (!this.isGameOver) {
+                        this.removeHoveredPiece();
+                    }
+                }, 100);
+            });
+
+            this.boardElement.addEventListener('touchcancel', () => {
+                this.removeHoveredPiece();
+            });
+
             // 鼠标在棋盘上移动时更新悬浮棋子位置
             this.boardElement.addEventListener('mousemove', (event) => {
                 if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
-                    const rect = this.boardElement.getBoundingClientRect();
-                    // 计算鼠标相对于棋盘的位置
-                    const x = event.clientX - rect.left;
-                    const y = event.clientY - rect.top;
-
-                    // 棋盘有15px的内边距，需要考虑这个偏移
-                    const boardPadding = 15;
-
-                    // 调整鼠标位置，考虑内边距
-                    const adjustedX = x - boardPadding;
-                    const adjustedY = y - boardPadding;
-
-                    // 计算棋盘格子坐标
-                    const cellSize = 30; // 与Board类中定义的一致
-                    const gridX = Math.floor(adjustedX / cellSize);
-                    const gridY = Math.floor(adjustedY / cellSize);
-
-                    // 只有当鼠标在有效的棋盘区域内才更新棋子位置
-                    if (gridX >= 0 && gridY >= 0) {
-                        // 获取选中的棋子
-                        const piece = this.humanPlayer.getPiece(this.selectedPieceId);
-                        if (piece) {
-                            // 获取棋子尺寸
-                            const pieceWidth = piece.shape[0].length;
-                            const pieceHeight = piece.shape.length;
-
-                            // 计算棋子左上角对应的格子坐标（考虑居中调整）
-                            const adjustedGridX = Math.max(0, gridX - Math.floor(pieceWidth / 2));
-                            const adjustedGridY = Math.max(0, gridY - Math.floor(pieceHeight / 2));
-
-                            // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
-                            const snapX = adjustedGridX * cellSize + boardPadding;
-                            const snapY = adjustedGridY * cellSize + boardPadding;
-
-                            // 使用直接定位方式
-                            this.hoveredPieceElement.style.left = `${snapX}px`;
-                            this.hoveredPieceElement.style.top = `${snapY}px`;
-                            this.hoveredPieceElement.style.transform = ''; // 移除transform，直接使用left/top定位
-
-                            // 检查放置是否有效
-                            const humanPlayerId = 1;
-                            const isValid = this.board.isValidPlacement(piece, adjustedGridX, adjustedGridY, humanPlayerId);
-
-                            // 根据有效性更新悬浮棋子的外观
-                            if (isValid) {
-                                this.hoveredPieceElement.style.opacity = '0.7';
-                                this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px green)';
-                            } else {
-                                this.hoveredPieceElement.style.opacity = '0.5';
-                                this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px red)';
-                            }
-
-                            // 将调整后的坐标存储在悬浮元素上，以便点击时使用
-                            this.hoveredPieceElement.dataset.gridX = adjustedGridX.toString();
-                            this.hoveredPieceElement.dataset.gridY = adjustedGridY.toString();
-
-                            // 添加网格辅助线以更清晰地显示棋子将放置的位置
-                            this.updateGridHighlight(adjustedGridX, adjustedGridY, pieceWidth, pieceHeight, isValid);
-                        }
-                    }
+                    this.updateHoveredPiecePosition(event.clientX, event.clientY);
                 }
             });
+
+            // 触摸移动事件
+            this.boardElement.addEventListener('touchmove', (event) => {
+                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
+                    // 阻止默认行为，避免滚动
+                    event.preventDefault();
+                    const touch = event.touches[0];
+                    this.updateHoveredPiecePositionForTouch(touch);
+                }
+            }, { passive: false });
 
             // 添加棋盘点击事件用于放置棋子
-            this.boardElement.addEventListener('click', (event) => {
-                if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
-                    // 使用存储在悬浮元素上的坐标，而不是再次计算
-                    const gridX = parseInt(this.hoveredPieceElement.dataset.gridX || '0', 10);
-                    const gridY = parseInt(this.hoveredPieceElement.dataset.gridY || '0', 10);
-
-                    console.log(`Attempting to place piece at grid position: ${gridX}, ${gridY}`);
-
-                    // 尝试放置棋子
-                    this.tryPlacePiece(gridX, gridY);
-                }
+            this.boardElement.addEventListener('click', () => {
+                this.tryPlacePieceAtHoveredPosition();
             });
+
+            // 触摸结束事件也尝试放置棋子
+            this.boardElement.addEventListener('touchend', (event) => {
+                // 阻止默认行为，防止点击事件被触发
+                event.preventDefault();
+                this.tryPlacePieceAtHoveredPosition();
+            }, { passive: false });
+        }
+    }
+
+    // 创建移动设备的触摸控制按钮
+    private createMobileTouchControls(): void {
+        // 检测是否在触摸设备上
+        const isTouchDevice = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (navigator as any).msMaxTouchPoints > 0;
+
+        if (!isTouchDevice) return;
+
+        // 创建控制按钮容器
+        const touchControlsContainer = document.createElement('div');
+        touchControlsContainer.id = 'touch-controls';
+        touchControlsContainer.style.display = 'flex';
+        touchControlsContainer.style.justifyContent = 'center';
+        touchControlsContainer.style.gap = '10px';
+        touchControlsContainer.style.marginTop = '10px';
+
+        // 创建旋转按钮
+        const rotateButton = document.createElement('button');
+        rotateButton.textContent = '旋转 (R)';
+        rotateButton.style.flex = '1';
+        rotateButton.style.maxWidth = '45%';
+        rotateButton.style.backgroundColor = '#2196F3';
+
+        rotateButton.addEventListener('click', () => {
+            if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
+                const rotatedPiece = this.humanPlayer.rotatePiece(this.selectedPieceId);
+                if (rotatedPiece) {
+                    this.updatePieceDisplay(rotatedPiece);
+                    if (this.hoveredPieceElement) {
+                        this.updateHoveredPieceDisplay(rotatedPiece);
+                    }
+                }
+            }
+        });
+
+        // 创建翻转按钮
+        const flipButton = document.createElement('button');
+        flipButton.textContent = '翻转 (F)';
+        flipButton.style.flex = '1';
+        flipButton.style.maxWidth = '45%';
+        flipButton.style.backgroundColor = '#FF9800';
+
+        flipButton.addEventListener('click', () => {
+            if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
+                const flippedPiece = this.humanPlayer.flipPiece(this.selectedPieceId);
+                if (flippedPiece) {
+                    this.updatePieceDisplay(flippedPiece);
+                    if (this.hoveredPieceElement) {
+                        this.updateHoveredPieceDisplay(flippedPiece);
+                    }
+                }
+            }
+        });
+
+        // 添加按钮到容器
+        touchControlsContainer.appendChild(rotateButton);
+        touchControlsContainer.appendChild(flipButton);
+
+        // 添加到游戏信息区域下方
+        if (this.gameInfoElement) {
+            this.gameInfoElement.appendChild(touchControlsContainer);
+        }
+    }
+
+    // 处理触摸事件的悬浮棋子位置更新
+    private updateHoveredPiecePositionForTouch(touch: Touch): void {
+        if (!this.boardElement || !this.hoveredPieceElement) return;
+
+        const rect = this.boardElement.getBoundingClientRect();
+        this.updateHoveredPiecePosition(touch.clientX, touch.clientY);
+    }
+
+    // 统一处理鼠标和触摸的悬浮棋子位置更新
+    private updateHoveredPiecePosition(clientX: number, clientY: number): void {
+        if (!this.boardElement || !this.hoveredPieceElement) return;
+
+        const rect = this.boardElement.getBoundingClientRect();
+        // 计算鼠标/触摸点相对于棋盘的位置
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        // 棋盘有15px的内边距，需要考虑这个偏移
+        const boardPadding = 15;
+
+        // 调整位置，考虑内边距
+        const adjustedX = x - boardPadding;
+        const adjustedY = y - boardPadding;
+
+        // 计算棋盘格子坐标
+        const cellSize = 30; // 与Board类中定义的一致
+        const gridX = Math.floor(adjustedX / cellSize);
+        const gridY = Math.floor(adjustedY / cellSize);
+
+        // 只有当鼠标在有效的棋盘区域内才更新棋子位置
+        if (gridX >= 0 && gridY >= 0) {
+            // 获取选中的棋子
+            const piece = this.humanPlayer.getPiece(this.selectedPieceId!);
+            if (piece) {
+                // 获取棋子尺寸
+                const pieceWidth = piece.shape[0].length;
+                const pieceHeight = piece.shape.length;
+
+                // 计算棋子左上角对应的格子坐标（考虑居中调整）
+                const adjustedGridX = Math.max(0, gridX - Math.floor(pieceWidth / 2));
+                const adjustedGridY = Math.max(0, gridY - Math.floor(pieceHeight / 2));
+
+                // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
+                const snapX = adjustedGridX * cellSize + boardPadding;
+                const snapY = adjustedGridY * cellSize + boardPadding;
+
+                // 使用直接定位方式
+                this.hoveredPieceElement.style.left = `${snapX}px`;
+                this.hoveredPieceElement.style.top = `${snapY}px`;
+                this.hoveredPieceElement.style.transform = ''; // 移除transform，直接使用left/top定位
+
+                // 检查放置是否有效
+                const humanPlayerId = 1;
+                const isValid = this.board.isValidPlacement(piece, adjustedGridX, adjustedGridY, humanPlayerId);
+
+                // 根据有效性更新悬浮棋子的外观
+                if (isValid) {
+                    this.hoveredPieceElement.style.opacity = '0.7';
+                    this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px green)';
+                } else {
+                    this.hoveredPieceElement.style.opacity = '0.5';
+                    this.hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px red)';
+                }
+
+                // 将调整后的坐标存储在悬浮元素上，以便点击时使用
+                this.hoveredPieceElement.dataset.gridX = adjustedGridX.toString();
+                this.hoveredPieceElement.dataset.gridY = adjustedGridY.toString();
+
+                // 添加网格辅助线以更清晰地显示棋子将放置的位置
+                this.updateGridHighlight(adjustedGridX, adjustedGridY, pieceWidth, pieceHeight, isValid);
+            }
+        }
+    }
+
+    // 尝试在悬浮位置放置棋子
+    private tryPlacePieceAtHoveredPosition(): void {
+        if (this.selectedPieceId !== null && this.hoveredPieceElement && this.boardElement && this.currentPlayer === this.humanPlayer) {
+            // 使用存储在悬浮元素上的坐标
+            const gridX = parseInt(this.hoveredPieceElement.dataset.gridX || '0', 10);
+            const gridY = parseInt(this.hoveredPieceElement.dataset.gridY || '0', 10);
+
+            console.log(`Attempting to place piece at grid position: ${gridX}, ${gridY}`);
+
+            // 尝试放置棋子
+            this.tryPlacePiece(gridX, gridY);
         }
     }
 

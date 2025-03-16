@@ -202,7 +202,21 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* 响应式设计 */
+/* 游戏结束面板样式 */
+#game-over-panel {
+    background-color: rgba(30, 30, 30, 0.9);
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    box-sizing: border-box;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* 增强响应式设计 */
+/* 平板电脑布局 */
 @media (max-width: 1200px) {
     #game-container {
         flex-direction: column;
@@ -222,5 +236,213 @@ button:disabled {
         min-height: auto;
         max-height: none;
         /* 移除最大高度限制 */
+    }
+}
+
+/* 移动设备 - 一般适配 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 24px;
+        position: static;
+        margin-bottom: 15px;
+    }
+
+    #game-container {
+        margin-top: 10px;
+        padding: 10px;
+    }
+
+    #left-column,
+    #center-column,
+    #right-column {
+        width: 100%;
+    }
+
+    /* 隐藏广告区域以节省空间 */
+    #right-column {
+        display: none;
+    }
+
+    /* 调整游戏板样式 */
+    #game-board {
+        padding: 10px;
+        width: calc(100% - 20px);
+        overflow: hidden;
+    }
+
+    /* 调整游戏信息区域 */
+    #game-info {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    /* 调整棋子托盘 */
+    #piece-tray {
+        padding: 8px;
+        gap: 5px;
+        min-height: auto;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .piece {
+        transform: scale(0.9);
+    }
+
+    /* 按钮样式调整 */
+    button {
+        padding: 10px 15px;
+        font-size: 16px;
+        margin: 5px;
+    }
+
+    /* Pass按钮样式调整 */
+    #pass-button {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+        padding: 12px 0;
+        font-size: 18px;
+    }
+
+    /* 游戏结束面板样式调整 */
+    #game-over-panel {
+        width: calc(100% - 20px);
+        padding: 15px;
+    }
+}
+
+/* 小屏幕移动设备（iPhone SE等） */
+@media (max-width: 375px) {
+    body {
+        padding: 5px;
+    }
+
+    h1 {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+
+    #game-container {
+        padding: 5px;
+    }
+
+    /* 更小的棋盘尺寸 */
+    #game-board {
+        padding: 5px;
+        transform: scale(0.9);
+        transform-origin: top center;
+    }
+
+    /* 更紧凑的棋子托盘 */
+    #piece-tray {
+        padding: 5px;
+        gap: 2px;
+    }
+
+    .piece {
+        transform: scale(0.8);
+        padding: 2px;
+    }
+
+    /* 更小的按钮 */
+    button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+/* 触摸设备交互优化 */
+@media (hover: none) and (pointer: coarse) {
+
+    /* 移除悬停效果，在触摸设备上不适用 */
+    .piece:hover {
+        transform: none;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 增强所选棋子的可见性 */
+    .piece.selected {
+        border: 3px solid #fb0;
+        transform: scale(1.1);
+    }
+
+    /* 增加按钮的触摸区域 */
+    button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* 增强操作提示区域可见性 */
+    #control-tips {
+        padding: 12px;
+        font-size: 16px;
+        background-color: #f0f8ff;
+        border: 1px solid #ccc;
+    }
+}
+
+/* 纵向/横向屏幕适配 */
+@media (orientation: portrait) and (max-width: 768px) {
+
+    /* 纵向手机布局优化 */
+    #piece-tray {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        max-height: 250px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+
+    /* 横向手机布局优化 */
+    body {
+        min-height: auto;
+    }
+
+    h1 {
+        position: static;
+        margin: 5px 0;
+        font-size: 18px;
+    }
+
+    #game-container {
+        flex-direction: row;
+        margin-top: 0;
+    }
+
+    #left-column {
+        width: 35%;
+    }
+
+    #center-column {
+        width: 65%;
+    }
+
+    #piece-tray {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+/* 针对游戏结束屏幕的移动适配 */
+@media (max-width: 768px) {
+    #game-over-panel h2 {
+        font-size: 20px;
+        margin: 10px 0;
+    }
+
+    #game-over-panel div {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    #game-over-panel button {
+        width: 100%;
+        padding: 12px 0;
+        margin-top: 10px;
     }
 }
