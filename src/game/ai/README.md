@@ -120,3 +120,8 @@ AI 具有复杂的空白区域检测：
 - 改进棋子放置的模式识别
 - 从过去的游戏中学习以调整策略
 - 进一步优化防御性阻断策略
+
+我们首先看看游戏的胜利条件：
+When a player is blocked from being able to make a move, they must lose a turn until another move
+becomes available for them.  When both players are blocked from making moves, they count the
+number of individual squares they have left in their reserve.  The player who has the least amount of squares remaining is the winner.  If a player managed to use up all their pieces, they are the winner unless another player managed to use all of their pieces, as well as using their single square piece as the last piece placed on the board.

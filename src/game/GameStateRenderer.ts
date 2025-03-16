@@ -85,9 +85,6 @@ export class GameStateRenderer {
         // 添加得分
         const scoreElement = this.createGameOverScore(humanScore, aiScore);
 
-        // 添加剩余棋子信息
-        const piecesInfoElement = this.createGameOverPiecesInfo(humanPiecesLeft, aiPiecesLeft);
-
         // 添加重新开始按钮
         const restartButton = this.createRestartButton();
 
@@ -95,7 +92,6 @@ export class GameStateRenderer {
         gameOverPanel.appendChild(titleElement);
         gameOverPanel.appendChild(resultElement);
         gameOverPanel.appendChild(scoreElement);
-        gameOverPanel.appendChild(piecesInfoElement);
         gameOverPanel.appendChild(restartButton);
 
         // 将游戏结束面板添加到控制提示下方
@@ -140,10 +136,10 @@ export class GameStateRenderer {
         result.style.marginBottom = '15px';
 
         let resultText = '';
-        if (humanScore > aiScore) {
+        if (humanScore < aiScore) {
             resultText = `🎉 恭喜，你获胜了！`;
             result.style.color = '#4CAF50';
-        } else if (aiScore > humanScore) {
+        } else if (aiScore < humanScore) {
             resultText = `😔 AI获胜了！`;
             result.style.color = '#F44336';
         } else {
@@ -160,28 +156,16 @@ export class GameStateRenderer {
         scoreElement.innerHTML = `
             <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
                 <div style="text-align: center; padding: 5px;">
-                    <div style="font-size: 14px; margin-bottom: 3px;">玩家得分</div>
+                    <div style="font-size: 14px; margin-bottom: 3px;">玩家剩余方块数</div>
                     <div style="font-size: 24px; color: #3F51B5;">${humanScore}</div>
                 </div>
                 <div style="text-align: center; padding: 5px;">
-                    <div style="font-size: 14px; margin-bottom: 3px;">AI得分</div>
+                    <div style="font-size: 14px; margin-bottom: 3px;">AI剩余方块数</div>
                     <div style="font-size: 24px; color: #E91E63;">${aiScore}</div>
                 </div>
             </div>
         `;
         return scoreElement;
-    }
-
-    private createGameOverPiecesInfo(humanPiecesLeft: number, aiPiecesLeft: number): HTMLElement {
-        const piecesInfo = document.createElement('div');
-        piecesInfo.style.marginBottom = '15px';
-        piecesInfo.style.fontSize = '14px';
-        piecesInfo.style.lineHeight = '1.5';
-        piecesInfo.innerHTML = `
-            <div style="margin-bottom: 5px; color: #ddd;">玩家剩余棋子: ${humanPiecesLeft} 个</div>
-            <div style="color: #ddd;">AI剩余棋子: ${aiPiecesLeft} 个</div>
-        `;
-        return piecesInfo;
     }
 
     private createRestartButton(): HTMLElement {

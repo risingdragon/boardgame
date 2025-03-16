@@ -596,14 +596,14 @@ export class GameManager {
 
     // 显示游戏结束界面
     private showGameOverScreen(): void {
-        // 计算最终得分
-        const humanScore = this.calculateFinalScore(this.humanPlayer);
-        const aiScore = this.calculateFinalScore(this.aiPlayer);
+        // 获取双方剩余的方块数
+        const humanRemainingSquares = this.humanPlayer.getScore();
+        const aiRemainingSquares = this.aiPlayer.getScore();
 
         // 显示游戏结束界面
         this.renderer.showGameOverScreen(
-            humanScore,
-            aiScore,
+            humanRemainingSquares,
+            aiRemainingSquares,
             this.humanPlayer.getAvailablePieces().length,
             this.aiPlayer.getAvailablePieces().length
         );
@@ -619,7 +619,7 @@ export class GameManager {
         // 清除保存的游戏状态（游戏已结束，下次开始新游戏）
         localStorage.removeItem('blokus_game_save');
 
-        console.log(`游戏结束！玩家得分：${humanScore}，AI得分：${aiScore}`);
+        console.log(`游戏结束！玩家剩余方块数：${humanRemainingSquares}，AI剩余方块数：${aiRemainingSquares}`);
     }
 
     // 计算最终得分

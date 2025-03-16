@@ -1,4 +1,4 @@
-# 方块游戏 (Blokus)
+# 角斗士 (Blokus Duo)
 
 一个使用 TypeScript 实现的经典方块棋盘游戏，带有 AI 对手。
 
@@ -79,7 +79,7 @@ blokus-game/
 
 * **玩家**
   * `Player.ts`: 具有棋子管理功能的基础玩家类
-  * `AIPlayer.ts`: 具有决策能力的 AI 对手
+  * `ai/AIPlayer.ts`: 具有决策能力的 AI 对手
 
 * **AI 组件**
   * `BoardAnalyzer.ts`: 分析棋盘状态以找到战略机会
