@@ -402,6 +402,13 @@ export class GameManager {
 
             // AI无法移动，增加连续跳过回合的计数
             this.consecutivePasses++;
+
+            // AI无法放置棋子，立即更新UI显示玩家的棋子托盘而不是"AI正在思考中..."
+            this.renderer.renderPieceTray(
+                this.humanPlayer,
+                true,
+                (pieceId, element) => this.selectPiece(pieceId, element)
+            );
         }
 
         // 保存游戏状态，AI已完成移动，不再等待
