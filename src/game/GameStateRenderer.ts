@@ -43,12 +43,11 @@ export class GameStateRenderer {
                 this.gameInfoElement.appendChild(this.passButtonElement);
             }
         } else {
-            // AI回合使用相同的布局方式
+            // AI回合使用相同的布局方式，但不显示"AI正在思考..."消息
             this.gameInfoElement.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h2 style="margin: 0;">当前回合: AI (红色)</h2>
                 </div>
-                <p>AI正在思考...</p>
             `;
 
             // 获取flex容器

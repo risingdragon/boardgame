@@ -34,49 +34,38 @@ export class PieceRenderer {
             trayCellSize = Math.min(16, trayCellSize);
         }
 
-        // 只在人类玩家回合显示棋子托盘内容
-        if (isHumanTurn) {
-            // Render human player's available pieces
-            currentPlayer.getAvailablePieces().forEach(piece => {
-                const pieceElement = document.createElement('div');
-                pieceElement.classList.add('piece');
-                pieceElement.dataset.pieceId = piece.id.toString();
+        // Render human player's available pieces
+        currentPlayer.getAvailablePieces().forEach(piece => {
+            const pieceElement = document.createElement('div');
+            pieceElement.classList.add('piece');
+            pieceElement.dataset.pieceId = piece.id.toString();
 
-                // Create a mini canvas to display the piece
-                const canvas = document.createElement('canvas');
-                canvas.width = piece.shape[0].length * trayCellSize;
-                canvas.height = piece.shape.length * trayCellSize;
-                pieceElement.appendChild(canvas);
+            // Create a mini canvas to display the piece
+            const canvas = document.createElement('canvas');
+            canvas.width = piece.shape[0].length * trayCellSize;
+            canvas.height = piece.shape.length * trayCellSize;
+            pieceElement.appendChild(canvas);
 
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    // Draw the piece
-                    piece.shape.forEach((row, rowIndex) => {
-                        row.forEach((cell, colIndex) => {
-                            if (cell) {
-                                ctx.fillStyle = currentPlayer.color;
-                                ctx.fillRect(colIndex * trayCellSize, rowIndex * trayCellSize, trayCellSize, trayCellSize);
-                            }
-                        });
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                // Draw the piece
+                piece.shape.forEach((row, rowIndex) => {
+                    row.forEach((cell, colIndex) => {
+                        if (cell) {
+                            ctx.fillStyle = currentPlayer.color;
+                            ctx.fillRect(colIndex * trayCellSize, rowIndex * trayCellSize, trayCellSize, trayCellSize);
+                        }
                     });
-                }
-
-                // 添加点击事件用于选择棋子
-                pieceElement.addEventListener('click', () => {
-                    onPieceSelect(piece.id, pieceElement);
                 });
+            }
 
-                pieceTrayElement.appendChild(pieceElement);
+            // 添加点击事件用于选择棋子
+            pieceElement.addEventListener('click', () => {
+                onPieceSelect(piece.id, pieceElement);
             });
-        } else {
-            // AI回合时显示提示信息
-            const aiTurnMessage = document.createElement('div');
-            aiTurnMessage.style.padding = '20px';
-            aiTurnMessage.style.textAlign = 'center';
-            aiTurnMessage.style.fontSize = '18px';
-            aiTurnMessage.innerHTML = 'AI正在思考中...';
-            pieceTrayElement.appendChild(aiTurnMessage);
-        }
+
+            pieceTrayElement.appendChild(pieceElement);
+        });
     }
 
     /**

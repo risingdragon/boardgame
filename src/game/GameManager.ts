@@ -335,7 +335,7 @@ export class GameManager {
         this.switchToAIPlayer();
     }
 
-    // 切换到AI玩家并执行AI回合
+    // 切换到AI玩家
     private switchToAIPlayer(): void {
         // 如果游戏已结束，不执行后续操作
         if (this.isGameOver) return;
@@ -346,15 +346,8 @@ export class GameManager {
         // 更新事件处理器中的玩家回合状态
         this.eventHandler.setIsHumanTurn(false);
 
-        // 更新玩家棋盘UI
-        this.renderer.renderPieceTray(
-            this.aiPlayer,
-            false,
-            () => { } // AI回合没有棋子选择
-        );
-
-        // 确保AI棋子托盘显示最新状态
-        this.renderer.renderAIPieceTray(this.aiPlayer);
+        // 切换到AI回合前，清理人类玩家的交互状态
+        this.deselectPiece();
 
         // 更新游戏信息显示
         this.updateGameInfo();
@@ -362,17 +355,26 @@ export class GameManager {
         // 隐藏Pass按钮（AI回合不需要）
         this.renderer.updatePassButtonVisibility(false);
 
-        // 保存游戏状态，标记为等待AI移动
+        // 立即显示AI棋子托盘，不依赖于"AI正在思考中..."消息
+        this.renderer.renderAIPieceTray(this.aiPlayer);
+
+        // 保存游戏状态，标记为正在等待AI移动
         this.saveGameState(true);
 
-        // 给AI一些思考时间
+        // 使用setTimeout来模拟AI的思考时间
         setTimeout(() => {
-            this.performAIMove();
-        }, 1000);
+            // 在游戏还未结束的情况下，执行AI的移动
+            if (!this.isGameOver) {
+                this.performAIMove();
+            }
+        }, 500); // 增加一点延迟，让玩家看清切换到AI回合
     }
 
     // 执行AI玩家的移动
     private performAIMove(): void {
+        // 确保AI的棋子托盘显示最新状态
+        this.renderer.renderAIPieceTray(this.aiPlayer);
+
         // AI尝试放置一个棋子
         const moveResult = this.aiPlayer.makeMove(this.board);
 
@@ -402,13 +404,6 @@ export class GameManager {
 
             // AI无法移动，增加连续跳过回合的计数
             this.consecutivePasses++;
-
-            // AI无法放置棋子，立即更新UI显示玩家的棋子托盘而不是"AI正在思考中..."
-            this.renderer.renderPieceTray(
-                this.humanPlayer,
-                true,
-                (pieceId, element) => this.selectPiece(pieceId, element)
-            );
         }
 
         // 保存游戏状态，AI已完成移动，不再等待

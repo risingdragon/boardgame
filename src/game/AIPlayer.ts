@@ -184,7 +184,7 @@ export class AIPlayer extends Player {
         const regions: { x: number, y: number, width: number, height: number, expansionPotential: number }[] = [];
         const visited = Array(boardSize).fill(0).map(() => Array(boardSize).fill(false));
 
-        // 寻找2x2及以上的空白区域
+        // 寻找所有空白区域，包括1x2的小区域
         for (let y = 0; y < boardSize - 1; y++) {
             for (let x = 0; x < boardSize - 1; x++) {
                 // 跳过已经访问过的单元格
@@ -224,8 +224,8 @@ export class AIPlayer extends Player {
                         }
                     }
 
-                    // 只记录2x2及以上的区域
-                    if (maxWidth >= 2 && maxHeight >= 2) {
+                    // 只记录1x2及以上的区域（增加了对1x2和2x1区域的检测）
+                    if ((maxWidth >= 2 && maxHeight >= 1) || (maxWidth >= 1 && maxHeight >= 2)) {
                         // 计算这个区域的扩展潜力
                         const expansionPotential = this.calculateExpansionPotential(grid, x, y, maxWidth, maxHeight, boardSize);
 
@@ -244,7 +244,7 @@ export class AIPlayer extends Player {
             }
         }
 
-        // 增加对大面积区域的偏好
+        // 增加对大面积区域的偏好，但保留小区域的价值
         regions.sort((a, b) => {
             // 计算综合评分
             const areaA = a.width * a.height;
@@ -622,131 +622,250 @@ export class AIPlayer extends Player {
         // 如果左侧空间明显多于右侧，增加对左侧区域的偏好
         const favorLeftSide = leftSideEmptyCount > rightSideEmptyCount * 1.5;
 
-        // 按照棋子大小排序，优先考虑大棋子
-        const sortedPieces = [...this.availablePieces].sort((a, b) => {
-            const sizeA = this.getPieceSize(a);
-            const sizeB = this.getPieceSize(b);
-            return sizeB - sizeA; // 大的优先
-        });
+        // 首先找出所有可能的放置候选项
+        const placementCandidates: Array<{
+            piece: Piece,
+            region: { x: number, y: number, width: number, height: number, expansionPotential: number },
+            sizeMatch: number,
+            pieceSize: number,
+            rotation: number,
+            flip: number
+        }> = [];
 
-        // 如果没有紧急的防御需求，评估所有可能的着法
-        for (const originalPiece of sortedPieces) {
-            // 获取棋子大小
-            const pieceSize = this.getPieceSize(originalPiece);
+        // 为每个区域找到最适合的棋子
+        for (const region of emptyRegions) {
+            const regionArea = region.width * region.height;
 
-            // 如果是单格棋子，且游戏进程不到70%，大幅降低其优先级
-            if (pieceSize === 1 && gameProgress < 0.7) {
-                // 在游戏早期和中期，几乎不使用单格棋子
-                if (Math.random() > 0.1) {
-                    continue; // 90%的概率跳过单格棋子
+            // 按照棋子大小排序，优先考虑大棋子但要确保能放入该区域
+            const sortedPieces = [...this.availablePieces].sort((a, b) => {
+                const sizeA = this.getPieceSize(a);
+                const sizeB = this.getPieceSize(b);
+                return sizeB - sizeA; // 大的优先
+            });
+
+            // 检查每个棋子是否适合这个区域
+            for (const originalPiece of sortedPieces) {
+                const pieceSize = this.getPieceSize(originalPiece);
+
+                // 跳过显然太大而无法放入该区域的棋子
+                if (pieceSize > regionArea) continue;
+
+                // 单格棋子只考虑用于1x1区域，除非已进入游戏后期
+                if (pieceSize === 1 && regionArea > 1 && gameProgress < 0.7) {
+                    if (Math.random() > 0.05) {  // 95%的可能性跳过
+                        continue;
+                    }
                 }
-            }
 
-            // 拷贝棋子以进行变换
-            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
+                // 拷贝棋子以进行变换
+                const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
 
-            // 尝试所有旋转和翻转组合
-            for (let rotation = 0; rotation < 4; rotation++) {
-                for (let flip = 0; flip < 2; flip++) {
-                    // 创建当前旋转和翻转的副本
-                    const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
+                for (let rotation = 0; rotation < 4; rotation++) {
+                    for (let flip = 0; flip < 2; flip++) {
+                        const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
 
-                    // 应用旋转和翻转
-                    for (let r = 0; r < rotation; r++) {
-                        pieceCopy.rotate();
-                    }
+                        // 应用旋转
+                        for (let r = 0; r < rotation; r++) {
+                            pieceCopy.rotate();
+                        }
 
-                    if (flip === 1) {
-                        pieceCopy.flip();
-                    }
+                        // 应用翻转
+                        if (flip === 1) {
+                            pieceCopy.flip();
+                        }
 
-                    // 首先尝试在找到的空白区域放置棋子
-                    let foundPlacementInEmptyRegion = false;
-
-                    // 按照区域大小和潜力排序后的空白区域列表，优先考虑更大和更有潜力的区域
-                    for (const region of emptyRegions) {
-                        if (region.width >= pieceCopy.shape[0].length && region.height >= pieceCopy.shape.length) {
-                            // 尝试在这个区域放置
-                            const x = region.x;
-                            const y = region.y;
-
-                            if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
-                                // 评估这个着法
-                                let score = this.moveEvaluator.evaluateMove(
-                                    pieceCopy, x, y, this, humanPlayer, gameProgress
-                                );
-
-                                // 给予空白区域放置额外奖励，考虑扩展潜力
-                                const expansionBonus = Math.min(30, region.expansionPotential * 2);
-                                score += 20 + expansionBonus;
-
-                                // 根据棋子大小调整得分
-                                const sizeBonus = Math.log2(pieceSize) * 8; // 增加大棋子的奖励
-                                score += sizeBonus;
-
-                                // 如果左侧空间明显多于右侧，偏好左侧放置
-                                if (favorLeftSide && x < Math.floor(boardSize / 2)) {
-                                    score += 15; // 给左侧位置额外分数
-                                }
-
-                                // 单格棋子在游戏早期和中期额外惩罚
-                                if (pieceSize === 1 && gameProgress < 0.7) {
-                                    score -= 25; // 显著降低单格棋子的得分
-                                }
+                        // 检查棋子形状是否适合该区域
+                        if (pieceCopy.shape[0].length <= region.width && pieceCopy.shape.length <= region.height) {
+                            // 验证放置是否有效
+                            if (board.isValidPlacement(pieceCopy, region.x, region.y, aiPlayerId)) {
+                                // 计算棋子与区域的匹配度 (0-1之间的值，越接近1表示越匹配)
+                                const sizeMatch = pieceSize / regionArea;
 
                                 // 添加到候选列表
-                                moveCandidates.push({
+                                placementCandidates.push({
                                     piece: originalPiece,
-                                    x,
-                                    y,
+                                    region,
+                                    sizeMatch,
+                                    pieceSize,
                                     rotation,
-                                    flip,
-                                    score
+                                    flip
                                 });
-
-                                foundPlacementInEmptyRegion = true;
-                                break; // 找到一个可行的放置就跳出循环
                             }
                         }
                     }
+                }
+            }
+        }
 
-                    // 如果在空白区域找到了放置位置，跳过常规的棋盘扫描
-                    if (foundPlacementInEmptyRegion) continue;
+        // 对放置候选项进行排序，优先考虑更好的尺寸匹配度和更大的棋子
+        placementCandidates.sort((a, b) => {
+            // 对于小区域(1x2, 2x1等)，优先使用匹配尺寸的棋子
+            if (a.region.width * a.region.height <= 2 && b.region.width * b.region.height <= 2) {
+                // 如果都是小区域，优先使用尺寸匹配更好的
+                return b.sizeMatch - a.sizeMatch;
+            }
 
-                    // 遍历棋盘寻找可能的放置位置
-                    for (let y = 0; y < boardSize; y++) {
-                        for (let x = 0; x < boardSize; x++) {
-                            // 验证放置是否有效
-                            if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
-                                // 评估这个着法
-                                let score = this.moveEvaluator.evaluateMove(
-                                    pieceCopy, x, y, this, humanPlayer, gameProgress
-                                );
+            // 对于大区域，优先使用更大的棋子
+            return b.pieceSize - a.pieceSize;
+        });
 
-                                // 根据棋子大小调整得分
-                                // 大棋子得分提升，小棋子得分降低
-                                const sizeBonus = Math.log2(pieceSize) * 8; // 增加大棋子的奖励
-                                score += sizeBonus;
+        // 使用最佳的前10个候选或所有候选（取较小值）
+        const topCandidates = placementCandidates.slice(0, Math.min(10, placementCandidates.length));
 
-                                // 如果左侧空间明显多于右侧，偏好左侧放置
-                                if (favorLeftSide && x < Math.floor(boardSize / 2)) {
-                                    score += 15; // 给左侧位置额外分数
+        // 评估筛选出的候选放置
+        for (const candidate of topCandidates) {
+            const originalPiece = candidate.piece;
+            const region = candidate.region;
+            const rotation = candidate.rotation;
+            const flip = candidate.flip;
+            const pieceSize = candidate.pieceSize;
+
+            // 重新创建棋子副本并应用变换
+            const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
+            const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
+
+            // 应用旋转
+            for (let r = 0; r < rotation; r++) {
+                pieceCopy.rotate();
+            }
+
+            // 应用翻转
+            if (flip === 1) {
+                pieceCopy.flip();
+            }
+
+            // 验证放置是否有效
+            if (board.isValidPlacement(pieceCopy, region.x, region.y, aiPlayerId)) {
+                // 评估这个着法
+                let score = this.moveEvaluator.evaluateMove(
+                    pieceCopy, region.x, region.y, this, humanPlayer, gameProgress
+                );
+
+                // 给予空白区域放置额外奖励，考虑扩展潜力
+                const expansionBonus = Math.min(30, region.expansionPotential * 2);
+                score += 20 + expansionBonus;
+
+                // 根据棋子大小调整得分
+                const sizeBonus = Math.log2(pieceSize) * 8; // 增加大棋子的奖励
+                score += sizeBonus;
+
+                // 如果左侧空间明显多于右侧，偏好左侧放置
+                if (favorLeftSide && region.x < Math.floor(boardSize / 2)) {
+                    score += 15; // 给左侧位置额外分数
+                }
+
+                // 为尺寸匹配良好的棋子提供额外奖励
+                // 对于小区域，高度重视尺寸匹配
+                if (region.width * region.height <= 2) {
+                    // 小区域中的尺寸匹配非常重要，给予显著加分
+                    if (candidate.sizeMatch > 0.9) {  // 如果匹配度超过90%
+                        score += 50;  // 显著提高分数
+                    } else if (candidate.sizeMatch > 0.7) {  // 如果匹配度超过70%
+                        score += 30;
+                    }
+                } else {
+                    // 对于较大区域，尺寸匹配仍然重要但不那么关键
+                    score += candidate.sizeMatch * 20;
+                }
+
+                // 单格棋子在游戏早期和中期额外惩罚，除非是放在1x1区域
+                if (pieceSize === 1 && gameProgress < 0.7) {
+                    if (region.width * region.height == 1) {
+                        // 如果是放在1x1区域，稍微减少惩罚
+                        score -= 10;
+                    } else {
+                        // 否则显著降低单格棋子的得分
+                        score -= 30;
+                    }
+                }
+
+                // 添加到候选列表
+                moveCandidates.push({
+                    piece: originalPiece,
+                    x: region.x,
+                    y: region.y,
+                    rotation,
+                    flip,
+                    score
+                });
+            }
+        }
+
+        // 如果没有找到区域放置候选，则尝试常规的棋盘扫描
+        if (moveCandidates.length === 0) {
+            // 按照棋子大小排序，优先考虑大棋子
+            const sortedPieces = [...this.availablePieces].sort((a, b) => {
+                const sizeA = this.getPieceSize(a);
+                const sizeB = this.getPieceSize(b);
+                return sizeB - sizeA; // 大的优先
+            });
+
+            // 如果没有紧急的防御需求，评估所有可能的着法
+            for (const originalPiece of sortedPieces) {
+                // 获取棋子大小
+                const pieceSize = this.getPieceSize(originalPiece);
+
+                // 如果是单格棋子，且游戏进程不到70%，大幅降低其优先级
+                if (pieceSize === 1 && gameProgress < 0.7) {
+                    // 在游戏早期和中期，几乎不使用单格棋子
+                    if (Math.random() > 0.1) {
+                        continue; // 90%的概率跳过单格棋子
+                    }
+                }
+
+                // 拷贝棋子以进行变换
+                const basePiece = this.pieceUtilities!.clonePiece(originalPiece);
+
+                // 尝试所有旋转和翻转组合
+                for (let rotation = 0; rotation < 4; rotation++) {
+                    for (let flip = 0; flip < 2; flip++) {
+                        // 创建当前旋转和翻转的副本
+                        const pieceCopy = this.pieceUtilities!.clonePiece(basePiece);
+
+                        // 应用旋转和翻转
+                        for (let r = 0; r < rotation; r++) {
+                            pieceCopy.rotate();
+                        }
+
+                        if (flip === 1) {
+                            pieceCopy.flip();
+                        }
+
+                        // 遍历棋盘寻找可能的放置位置
+                        for (let y = 0; y < boardSize; y++) {
+                            for (let x = 0; x < boardSize; x++) {
+                                // 验证放置是否有效
+                                if (board.isValidPlacement(pieceCopy, x, y, aiPlayerId)) {
+                                    // 评估这个着法
+                                    let score = this.moveEvaluator.evaluateMove(
+                                        pieceCopy, x, y, this, humanPlayer, gameProgress
+                                    );
+
+                                    // 根据棋子大小调整得分
+                                    // 大棋子得分提升，小棋子得分降低
+                                    const sizeBonus = Math.log2(pieceSize) * 8; // 增加大棋子的奖励
+                                    score += sizeBonus;
+
+                                    // 如果左侧空间明显多于右侧，偏好左侧放置
+                                    if (favorLeftSide && x < Math.floor(boardSize / 2)) {
+                                        score += 15; // 给左侧位置额外分数
+                                    }
+
+                                    // 单格棋子在游戏早期和中期额外惩罚
+                                    if (pieceSize === 1 && gameProgress < 0.7) {
+                                        score -= 25; // 显著降低单格棋子的得分
+                                    }
+
+                                    // 添加到候选列表
+                                    moveCandidates.push({
+                                        piece: originalPiece,
+                                        x,
+                                        y,
+                                        rotation,
+                                        flip,
+                                        score
+                                    });
                                 }
-
-                                // 单格棋子在游戏早期和中期额外惩罚
-                                if (pieceSize === 1 && gameProgress < 0.7) {
-                                    score -= 25; // 显著降低单格棋子的得分
-                                }
-
-                                // 添加到候选列表
-                                moveCandidates.push({
-                                    piece: originalPiece,
-                                    x,
-                                    y,
-                                    rotation,
-                                    flip,
-                                    score
-                                });
                             }
                         }
                     }
@@ -761,6 +880,18 @@ export class AIPlayer extends Player {
 
         // 按得分排序，选择最高分
         moveCandidates.sort((a, b) => b.score - a.score);
+
+        // 记录评分最高的几个候选
+        console.log("Top move candidates:", moveCandidates.slice(0, 3).map(c => {
+            const piece = this.getPiece(c.piece.id);
+            return {
+                pieceId: c.piece.id,
+                pieceSize: piece ? this.getPieceSize(piece) : 0,
+                x: c.x,
+                y: c.y,
+                score: c.score
+            };
+        }));
 
         // 从前N个候选项中随机选择一个，增加游戏的多样性
         // 但是总是偏好最高分的
