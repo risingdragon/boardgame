@@ -49,6 +49,11 @@ export class Player {
         return this.placedPieces;
     }
 
+    // 获取已使用棋子的ID列表
+    public getUsedPieceIds(): number[] {
+        return this.placedPieces.map(piece => piece.id);
+    }
+
     public canPlacePieces(): boolean {
         return this.availablePieces.length > 0;
     }

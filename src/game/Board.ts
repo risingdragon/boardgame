@@ -25,40 +25,50 @@ export class Board {
     }
 
     // 计算合适的单元格大小
-    private calculateCellSize(containerWidth: number): number {
-        // 是否为移动设备
-        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window && window.matchMedia("(max-width: 1024px)").matches);
+    private calculateCellSize(): number {
+        // 根据是否移动设备，使用不同的计算逻辑
+        const isMobile = window.innerWidth <= 768 ||
+            ('ontouchstart' in window && window.innerWidth <= 1024);
 
-        // 为棋盘留出边距，计算可用宽度
-        const availableWidth = containerWidth - 30; // 减去padding
+        if (!isMobile) {
+            // PC设备 - 使用更大的单元格尺寸
+            // 根据容器宽度计算可能的单元格尺寸
+            const containerWidth = document.getElementById('center-column')?.clientWidth || 600;
+            const boardContainerPadding = 40; // 考虑内边距
+            const availableWidth = containerWidth - boardContainerPadding;
 
-        // 根据可用宽度计算单元格大小，确保棋盘能完全显示
-        let calculatedSize = Math.floor(availableWidth / this.width);
+            // 计算可能的单元格尺寸 (考虑有20个单元格的宽度)
+            let calculatedSize = Math.floor(availableWidth / 20);
 
-        // 移动设备上限制最大尺寸
-        if (isMobile) {
-            calculatedSize = Math.min(calculatedSize, 22); // 移动设备上单元格最大22px
+            // 确保单元格尺寸在合理范围内
+            calculatedSize = Math.max(30, calculatedSize); // 最小不低于30px
+            calculatedSize = Math.min(38, calculatedSize); // 最大不超过38px
+
+            console.log(`PC Board - calculated cell size: ${calculatedSize}px`);
+            return calculatedSize;
         } else {
-            calculatedSize = Math.min(calculatedSize, 30); // 桌面设备上保持原来的30px为上限
-        }
+            // 移动设备 - 使用较小的自适应单元格尺寸
+            // 初始尺寸
+            let cellSize = Math.min(22, Math.floor((window.innerWidth - 40) / 14));
+            cellSize = Math.max(16, cellSize); // 保证最小可视性
 
-        // 确保单元格尺寸至少为16px，以保持可见性
-        return Math.max(calculatedSize, 16);
+            console.log(`Mobile Board - calculated cell size: ${cellSize}px`);
+            return cellSize;
+        }
     }
 
     // 调整画布尺寸方法
     private resizeCanvas(): void {
-        if (!this.canvas || !this.canvas.parentElement) return;
+        if (!this.canvas) return;
 
-        // 获取父容器宽度
-        const containerWidth = this.canvas.parentElement.clientWidth;
-
-        // 计算单元格尺寸
-        this.cellSize = this.calculateCellSize(containerWidth);
+        // 重新计算单元格大小
+        this.cellSize = this.calculateCellSize();
 
         // 更新画布尺寸
         this.canvas.width = this.width * this.cellSize;
         this.canvas.height = this.height * this.cellSize;
+
+        console.log(`Board resized with cell size: ${this.cellSize}px`);
 
         // 重绘棋盘
         this.drawGrid();
@@ -69,9 +79,8 @@ export class Board {
         if (!this.canvas) {
             this.canvas = document.createElement('canvas');
 
-            // 创建时先设置初始大小
-            const containerWidth = container.clientWidth;
-            this.cellSize = this.calculateCellSize(containerWidth);
+            // 创建时先设置单元格大小
+            this.cellSize = this.calculateCellSize();
 
             this.canvas.width = this.width * this.cellSize;
             this.canvas.height = this.height * this.cellSize;
@@ -82,6 +91,8 @@ export class Board {
             window.addEventListener('resize', () => {
                 this.resizeCanvas();
             });
+
+            console.log(`Initial board created with cell size: ${this.cellSize}px`);
         } else {
             // 更新尺寸
             this.resizeCanvas();

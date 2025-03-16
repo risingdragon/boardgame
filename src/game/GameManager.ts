@@ -6,6 +6,17 @@ import { Piece } from './Piece';
 import { GameRenderer } from './GameRenderer';
 import { GameEventHandler } from './GameEventHandler';
 
+// 定义游戏状态接口
+export interface GameState {
+    boardGrid: number[][];
+    humanPlayerPieces: { [id: number]: boolean }; // true表示可用，false表示已使用
+    aiPlayerPieces: { [id: number]: boolean };
+    currentPlayerIsHuman: boolean;
+    consecutivePasses: number;
+    isGameOver: boolean;
+    savedAt?: string; // 保存时间戳
+}
+
 export class GameManager {
     private board: Board;
     private humanPlayer: Player;
@@ -16,17 +27,20 @@ export class GameManager {
     private eventHandler: GameEventHandler;
     private consecutivePasses: number = 0;
     private isGameOver: boolean = false;
+    private saveGameCallback: (gameState: GameState) => void; // 保存游戏的回调函数
 
     constructor(
         boardElement: HTMLElement | null,
         pieceTrayElement: HTMLElement | null,
-        gameInfoElement: HTMLElement | null
+        gameInfoElement: HTMLElement | null,
+        saveGameCallback: (gameState: GameState) => void
     ) {
         this.board = new Board(14, 14); // 14x14棋盘
         this.pieceFactory = new PieceFactory();
         this.humanPlayer = new Player('玩家', 'blue', this.pieceFactory.createAllPieces());
         this.aiPlayer = new AIPlayer('AI', 'red', this.pieceFactory.createAllPieces());
         this.currentPlayer = this.humanPlayer; // 人类玩家先行
+        this.saveGameCallback = saveGameCallback;
 
         // 创建渲染器，传递board实例
         this.renderer = new GameRenderer(boardElement, pieceTrayElement, gameInfoElement, this.board);
@@ -36,8 +50,13 @@ export class GameManager {
     }
 
     // 初始化游戏
-    public initialize(): void {
+    public initialize(savedState: GameState | null = null): void {
         console.log('Initializing Blokus game...');
+
+        // 如果有保存的游戏状态，恢复游戏
+        if (savedState) {
+            this.restoreGameState(savedState);
+        }
 
         // 渲染棋盘
         this.renderer.renderBoard(this.board);
@@ -65,6 +84,84 @@ export class GameManager {
         this.updatePassButtonVisibility();
 
         console.log('Game initialized successfully!');
+    }
+
+    // 恢复游戏状态
+    private restoreGameState(savedState: GameState): void {
+        console.log('Restoring game state...');
+
+        // 恢复棋盘状态
+        const grid = this.board.getGrid();
+        for (let y = 0; y < savedState.boardGrid.length; y++) {
+            for (let x = 0; x < savedState.boardGrid[y].length; x++) {
+                grid[y][x] = savedState.boardGrid[y][x];
+            }
+        }
+
+        // 恢复玩家棋子状态
+        this.restorePlayerPieces(this.humanPlayer, savedState.humanPlayerPieces);
+        this.restorePlayerPieces(this.aiPlayer, savedState.aiPlayerPieces);
+
+        // 恢复当前玩家
+        this.currentPlayer = savedState.currentPlayerIsHuman ? this.humanPlayer : this.aiPlayer;
+        this.eventHandler.setIsHumanTurn(savedState.currentPlayerIsHuman);
+
+        // 恢复其他游戏状态
+        this.consecutivePasses = savedState.consecutivePasses;
+        this.isGameOver = savedState.isGameOver;
+
+        console.log('Game state restored successfully');
+    }
+
+    // 恢复玩家的棋子状态
+    private restorePlayerPieces(player: Player, piecesState: { [id: number]: boolean }): void {
+        // 对于每个棋子ID，如果它在状态中标记为false（已使用），则从玩家可用棋子中移除
+        Object.entries(piecesState).forEach(([pieceIdStr, isAvailable]) => {
+            const pieceId = parseInt(pieceIdStr);
+            if (!isAvailable) {
+                player.placePiece(pieceId);
+            }
+        });
+    }
+
+    // 创建当前游戏状态的快照
+    private createGameState(): GameState {
+        const humanPlayerPieces: { [id: number]: boolean } = {};
+        const aiPlayerPieces: { [id: number]: boolean } = {};
+
+        // 获取所有可能的棋子ID
+        this.pieceFactory.createAllPieces().forEach(piece => {
+            // 默认所有棋子都是可用的
+            humanPlayerPieces[piece.id] = true;
+            aiPlayerPieces[piece.id] = true;
+        });
+
+        // 标记已使用的棋子
+        this.humanPlayer.getUsedPieceIds().forEach(id => {
+            humanPlayerPieces[id] = false;
+        });
+
+        this.aiPlayer.getUsedPieceIds().forEach(id => {
+            aiPlayerPieces[id] = false;
+        });
+
+        return {
+            boardGrid: this.board.getGrid(),
+            humanPlayerPieces,
+            aiPlayerPieces,
+            currentPlayerIsHuman: this.currentPlayer === this.humanPlayer,
+            consecutivePasses: this.consecutivePasses,
+            isGameOver: this.isGameOver
+        };
+    }
+
+    // 保存当前游戏状态
+    private saveGameState(): void {
+        // 如果游戏已结束，不需要保存
+        if (this.isGameOver) return;
+
+        const gameState = this.createGameState();
+        this.saveGameCallback(gameState);
     }
 
     // 设置事件监听器
@@ -153,6 +250,9 @@ export class GameManager {
             // 取消选择棋子
             this.deselectPiece();
 
+            // 保存游戏状态
+            this.saveGameState();
+
             // 切换到AI玩家
             this.switchToAIPlayer();
         } else {
@@ -188,6 +288,9 @@ export class GameManager {
 
         // 取消选中的棋子
         this.deselectPiece();
+
+        // 保存游戏状态
+        this.saveGameState();
 
         // 切换到AI玩家
         this.switchToAIPlayer();
@@ -252,6 +355,9 @@ export class GameManager {
             // AI无法移动，增加连续跳过回合的计数
             this.consecutivePasses++;
         }
+
+        // 保存游戏状态
+        this.saveGameState();
 
         // 检查是否游戏结束
         if (this.checkGameOver()) {
@@ -445,6 +551,9 @@ export class GameManager {
             this.humanPlayer.getAvailablePieces().length,
             this.aiPlayer.getAvailablePieces().length
         );
+
+        // 清除保存的游戏状态（游戏已结束，下次开始新游戏）
+        localStorage.removeItem('blokus_game_save');
 
         console.log(`游戏结束！玩家得分：${humanScore}，AI得分：${aiScore}`);
     }
