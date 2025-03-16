@@ -313,14 +313,6 @@ export class GameEventHandler {
                     adjustedGridY,
                     isValid
                 );
-
-                // 更新网格高亮
-                this.renderer.updateGridHighlight(
-                    piece,
-                    adjustedGridX,
-                    adjustedGridY,
-                    isValid
-                );
             }
         }
     }
