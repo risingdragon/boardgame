@@ -1,0 +1,546 @@
+import { Board } from './Board';
+import { Player } from './Player';
+import { Piece } from './Piece';
+
+export class GameRenderer {
+    private boardElement: HTMLElement | null;
+    private pieceTrayElement: HTMLElement | null;
+    private gameInfoElement: HTMLElement | null;
+    private controlTipsElement: HTMLElement | null;
+    private touchControlsElement: HTMLElement | null;
+    private passButtonElement: HTMLElement | null;
+    private gameOverLayerElement: HTMLElement | null;
+
+    constructor(
+        boardElement: HTMLElement | null,
+        pieceTrayElement: HTMLElement | null,
+        gameInfoElement: HTMLElement | null
+    ) {
+        this.boardElement = boardElement;
+        this.pieceTrayElement = pieceTrayElement;
+        this.gameInfoElement = gameInfoElement;
+        this.controlTipsElement = null;
+        this.touchControlsElement = null;
+        this.passButtonElement = null;
+        this.gameOverLayerElement = null;
+    }
+
+    // 渲染棋盘
+    public renderBoard(board: Board): void {
+        if (this.boardElement) {
+            board.render(this.boardElement);
+        }
+    }
+
+    // 创建控制提示区域
+    public createControlTips(): HTMLElement | null {
+        if (!this.boardElement) return null;
+
+        // 创建控制提示元素
+        this.controlTipsElement = document.createElement('div');
+        this.controlTipsElement.id = 'control-tips';
+        this.controlTipsElement.style.width = '100%';
+        this.controlTipsElement.style.padding = '10px';
+        this.controlTipsElement.style.marginTop = '10px';
+        this.controlTipsElement.style.backgroundColor = '#f5f5f5';
+        this.controlTipsElement.style.borderRadius = '5px';
+        this.controlTipsElement.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        this.controlTipsElement.style.textAlign = 'center';
+        this.controlTipsElement.style.fontSize = '14px';
+
+        // 设置控制提示内容
+        this.controlTipsElement.innerHTML = `
+            <p><strong>操作提示:</strong> 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
+        `;
+
+        // 添加到棋盘元素后面
+        this.boardElement.insertAdjacentElement('afterend', this.controlTipsElement);
+        return this.controlTipsElement;
+    }
+
+    // 创建跳过回合按钮
+    public createPassButton(onPassTurn: () => void): HTMLElement {
+        this.passButtonElement = document.createElement('button');
+        this.passButtonElement.id = 'pass-button';
+        this.passButtonElement.textContent = '跳过回合 (Pass)';
+        this.passButtonElement.style.display = 'none'; // 初始隐藏
+        this.passButtonElement.style.padding = '10px 20px';
+        this.passButtonElement.style.margin = '10px 0';
+        this.passButtonElement.style.backgroundColor = '#f44336';
+        this.passButtonElement.style.color = 'white';
+        this.passButtonElement.style.border = 'none';
+        this.passButtonElement.style.borderRadius = '4px';
+        this.passButtonElement.style.fontSize = '16px';
+        this.passButtonElement.style.cursor = 'pointer';
+        this.passButtonElement.style.fontWeight = 'bold';
+
+        // 鼠标悬停效果
+        this.passButtonElement.style.transition = 'background-color 0.3s';
+        this.passButtonElement.addEventListener('mouseover', () => {
+            if (this.passButtonElement) {
+                this.passButtonElement.style.backgroundColor = '#d32f2f';
+            }
+        });
+        this.passButtonElement.addEventListener('mouseout', () => {
+            if (this.passButtonElement) {
+                this.passButtonElement.style.backgroundColor = '#f44336';
+            }
+        });
+
+        // 点击事件
+        this.passButtonElement.addEventListener('click', onPassTurn);
+
+        // 添加到游戏信息元素下方
+        if (this.gameInfoElement) {
+            this.gameInfoElement.appendChild(this.passButtonElement);
+        }
+
+        return this.passButtonElement;
+    }
+
+    // 更新Pass按钮的显示状态
+    public updatePassButtonVisibility(shouldShow: boolean): void {
+        if (!this.passButtonElement) return;
+        this.passButtonElement.style.display = shouldShow ? 'block' : 'none';
+    }
+
+    // 渲染玩家的棋子托盘
+    public renderPieceTray(currentPlayer: Player, isHumanTurn: boolean, onPieceSelect: (pieceId: number, element: HTMLElement) => void): void {
+        if (!this.pieceTrayElement) return;
+
+        // Clear previous pieces
+        this.pieceTrayElement.innerHTML = '';
+
+        // 只在人类玩家回合显示棋子托盘内容
+        if (isHumanTurn) {
+            // Render human player's available pieces
+            currentPlayer.getAvailablePieces().forEach(piece => {
+                const pieceElement = document.createElement('div');
+                pieceElement.classList.add('piece');
+                pieceElement.dataset.pieceId = piece.id.toString();
+
+                // Create a mini canvas to display the piece
+                const canvas = document.createElement('canvas');
+                canvas.width = piece.shape[0].length * 20;
+                canvas.height = piece.shape.length * 20;
+                pieceElement.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    // Draw the piece
+                    piece.shape.forEach((row, rowIndex) => {
+                        row.forEach((cell, colIndex) => {
+                            if (cell) {
+                                ctx.fillStyle = currentPlayer.color;
+                                ctx.fillRect(colIndex * 20, rowIndex * 20, 20, 20);
+                                ctx.strokeStyle = '#000';
+                                ctx.strokeRect(colIndex * 20, rowIndex * 20, 20, 20);
+                            }
+                        });
+                    });
+                }
+
+                // 添加点击事件用于选择棋子
+                pieceElement.addEventListener('click', () => {
+                    onPieceSelect(piece.id, pieceElement);
+                });
+
+                this.pieceTrayElement?.appendChild(pieceElement);
+            });
+        } else {
+            // AI回合时显示提示信息
+            const aiTurnMessage = document.createElement('div');
+            aiTurnMessage.style.padding = '20px';
+            aiTurnMessage.style.textAlign = 'center';
+            aiTurnMessage.style.fontSize = '18px';
+            aiTurnMessage.innerHTML = 'AI正在思考中...';
+            this.pieceTrayElement.appendChild(aiTurnMessage);
+        }
+    }
+
+    // 更新游戏信息显示
+    public updateGameInfo(isHumanTurn: boolean, hasValidMoves: boolean, canPlacePieces: boolean): void {
+        if (!this.gameInfoElement) return;
+
+        if (isHumanTurn) {
+            this.gameInfoElement.innerHTML = `
+                <h2>当前回合: 玩家 (蓝色)</h2>
+                ${!hasValidMoves && canPlacePieces ? '<p style="color: #f44336; font-weight: bold;">没有可放置的位置！请使用Pass按钮跳过回合。</p>' : ''}
+            `;
+
+            // 重新添加Pass按钮，因为innerHTML会清除所有子元素
+            if (this.passButtonElement) {
+                this.gameInfoElement.appendChild(this.passButtonElement);
+            }
+        } else {
+            this.gameInfoElement.innerHTML = `
+                <h2>当前回合: AI (红色)</h2>
+                <p>AI正在思考...</p>
+            `;
+        }
+    }
+
+    // 创建移动设备的触摸控制按钮
+    public createMobileTouchControls(
+        onRotate: () => void,
+        onFlip: () => void
+    ): HTMLElement | null {
+        // 检测是否在触摸设备上
+        const isTouchDevice = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (navigator as any).msMaxTouchPoints > 0;
+
+        // 在调试时强制显示触摸控制 - 无论是否触摸设备
+        const forceShowControls = true;
+
+        if (!forceShowControls && !isTouchDevice) return null;
+
+        // 检查是否已经存在触摸控制
+        const existingControls = document.getElementById('touch-controls');
+        if (existingControls) return existingControls as HTMLElement;
+
+        // 创建控制按钮容器
+        const touchControlsContainer = document.createElement('div');
+        touchControlsContainer.id = 'touch-controls';
+        touchControlsContainer.style.display = 'flex';
+        touchControlsContainer.style.justifyContent = 'center';
+        touchControlsContainer.style.gap = '10px';
+        touchControlsContainer.style.marginTop = '15px';
+        touchControlsContainer.style.marginBottom = '10px';
+        touchControlsContainer.style.width = '100%';
+
+        // 创建旋转按钮
+        const rotateButton = document.createElement('button');
+        rotateButton.textContent = '旋转 (R)';
+        rotateButton.style.flex = '1';
+        rotateButton.style.maxWidth = '45%';
+        rotateButton.style.backgroundColor = '#2196F3';
+        rotateButton.style.padding = '12px 0';
+        rotateButton.style.fontSize = '16px';
+        rotateButton.style.fontWeight = 'bold';
+        rotateButton.style.borderRadius = '8px';
+        rotateButton.style.border = '2px solid #1976D2';
+        rotateButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+
+        rotateButton.addEventListener('click', onRotate);
+
+        // 创建翻转按钮
+        const flipButton = document.createElement('button');
+        flipButton.textContent = '翻转 (F)';
+        flipButton.style.flex = '1';
+        flipButton.style.maxWidth = '45%';
+        flipButton.style.backgroundColor = '#FF9800';
+        flipButton.style.padding = '12px 0';
+        flipButton.style.fontSize = '16px';
+        flipButton.style.fontWeight = 'bold';
+        flipButton.style.borderRadius = '8px';
+        flipButton.style.border = '2px solid #F57C00';
+        flipButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+
+        flipButton.addEventListener('click', onFlip);
+
+        // 添加按钮到容器
+        touchControlsContainer.appendChild(rotateButton);
+        touchControlsContainer.appendChild(flipButton);
+
+        // 添加到游戏信息区域下方
+        if (this.gameInfoElement) {
+            this.gameInfoElement.appendChild(touchControlsContainer);
+        }
+
+        this.touchControlsElement = touchControlsContainer;
+        return touchControlsContainer;
+    }
+
+    // 创建和更新悬浮显示的棋子
+    public createHoveredPiece(piece: Piece, playerColor: string, boardRect: DOMRect): HTMLElement {
+        // 创建悬浮棋子元素
+        const hoveredPiece = document.createElement('div');
+        hoveredPiece.classList.add('hovered-piece');
+        hoveredPiece.style.position = 'absolute';
+        hoveredPiece.style.pointerEvents = 'none'; // 防止干扰鼠标事件
+        hoveredPiece.style.opacity = '0.7'; // 半透明效果
+        hoveredPiece.style.zIndex = '100';
+        hoveredPiece.style.transition = 'filter 0.2s'; // 添加过渡效果使颜色变化更平滑
+        hoveredPiece.style.transformOrigin = 'top left'; // 修改变换原点为左上角
+
+        // 创建画布显示棋子
+        const canvas = document.createElement('canvas');
+        const cellSize = 30; // 与棋盘格子尺寸匹配
+        canvas.width = piece.shape[0].length * cellSize;
+        canvas.height = piece.shape.length * cellSize;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            // 绘制棋子
+            piece.shape.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    if (cell) {
+                        ctx.fillStyle = playerColor;
+                        ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                    }
+                });
+            });
+        }
+
+        hoveredPiece.appendChild(canvas);
+
+        // 创建网格高亮显示
+        const gridHighlight = document.createElement('div');
+        gridHighlight.classList.add('grid-highlight');
+        gridHighlight.style.position = 'absolute';
+        gridHighlight.style.pointerEvents = 'none';
+        gridHighlight.style.zIndex = '99';
+        gridHighlight.style.border = '2px dashed rgba(255, 255, 255, 0.5)';
+        gridHighlight.style.display = 'none'; // 初始时隐藏
+
+        if (this.boardElement) {
+            this.boardElement.appendChild(gridHighlight);
+            this.boardElement.appendChild(hoveredPiece);
+        }
+
+        return hoveredPiece;
+    }
+
+    // 更新悬浮棋子的显示
+    public updateHoveredPieceDisplay(hoveredPieceElement: HTMLElement, piece: Piece, playerColor: string): void {
+        // 移除旧画布
+        const oldCanvas = hoveredPieceElement.querySelector('canvas');
+        if (!oldCanvas) return;
+
+        // 创建新画布
+        const canvas = document.createElement('canvas');
+        const cellSize = 30; // 与棋盘格子尺寸匹配
+        canvas.width = piece.shape[0].length * cellSize;
+        canvas.height = piece.shape.length * cellSize;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            // 绘制棋子
+            piece.shape.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    if (cell) {
+                        ctx.fillStyle = playerColor;
+                        ctx.fillRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(colIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+                    }
+                });
+            });
+        }
+
+        // 替换旧画布
+        hoveredPieceElement.replaceChild(canvas, oldCanvas);
+    }
+
+    // 更新悬浮棋子的位置和显示状态
+    public updateHoveredPiecePosition(
+        hoveredPieceElement: HTMLElement,
+        gridX: number,
+        gridY: number,
+        pieceWidth: number,
+        pieceHeight: number,
+        isValidPlacement: boolean
+    ): void {
+        const boardPadding = 15;
+        const cellSize = 30;
+
+        // 计算棋子应该贴合的位置 - 需要加回棋盘内边距
+        const snapX = gridX * cellSize + boardPadding;
+        const snapY = gridY * cellSize + boardPadding;
+
+        // 更新悬浮棋子的CSS样式，直接使用left/top定位
+        hoveredPieceElement.style.left = `${snapX}px`;
+        hoveredPieceElement.style.top = `${snapY}px`;
+        hoveredPieceElement.style.transform = ''; // 移除transform，直接使用left/top定位
+
+        // 根据有效性更新悬浮棋子的外观
+        if (isValidPlacement) {
+            hoveredPieceElement.style.opacity = '0.7';
+            hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px green)';
+        } else {
+            hoveredPieceElement.style.opacity = '0.5';
+            hoveredPieceElement.style.filter = 'drop-shadow(0 0 5px red)';
+        }
+
+        // 存储调整后的坐标
+        hoveredPieceElement.dataset.gridX = gridX.toString();
+        hoveredPieceElement.dataset.gridY = gridY.toString();
+
+        // 更新网格高亮
+        this.updateGridHighlight(gridX, gridY, pieceWidth, pieceHeight, isValidPlacement);
+    }
+
+    // 更新棋子放置时的网格高亮显示
+    public updateGridHighlight(gridX: number, gridY: number, width: number, height: number, isValid: boolean): void {
+        const gridHighlight = document.querySelector('.grid-highlight') as HTMLElement;
+        if (!gridHighlight || !this.boardElement) return;
+
+        const cellSize = 30;
+        const boardPadding = 15; // 棋盘内边距
+
+        gridHighlight.style.display = 'block';
+        gridHighlight.style.left = `${gridX * cellSize + boardPadding}px`;
+        gridHighlight.style.top = `${gridY * cellSize + boardPadding}px`;
+        gridHighlight.style.width = `${width * cellSize}px`;
+        gridHighlight.style.height = `${height * cellSize}px`;
+        gridHighlight.style.borderColor = isValid ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+    }
+
+    // 移除悬浮棋子
+    public removeHoveredPiece(hoveredPieceElement: HTMLElement | null): void {
+        if (hoveredPieceElement && hoveredPieceElement.parentNode) {
+            hoveredPieceElement.parentNode.removeChild(hoveredPieceElement);
+        }
+
+        // 移除网格高亮
+        const gridHighlight = document.querySelector('.grid-highlight');
+        if (gridHighlight && gridHighlight.parentNode) {
+            gridHighlight.parentNode.removeChild(gridHighlight);
+        }
+    }
+
+    // 更新棋子在托盘中的显示
+    public updatePieceDisplay(pieceElement: HTMLElement, piece: Piece, playerColor: string): void {
+        // 清除原有的 canvas
+        const oldCanvas = pieceElement.querySelector('canvas');
+        if (!oldCanvas) return;
+
+        // 创建新的 canvas 以正确显示旋转或翻转后的棋子
+        const canvas = document.createElement('canvas');
+        canvas.width = piece.shape[0].length * 20;
+        canvas.height = piece.shape.length * 20;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            // 绘制更新后的棋子形状
+            piece.shape.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    if (cell) {
+                        ctx.fillStyle = playerColor;
+                        ctx.fillRect(colIndex * 20, rowIndex * 20, 20, 20);
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(colIndex * 20, rowIndex * 20, 20, 20);
+                    }
+                });
+            });
+        }
+
+        // 替换旧的 canvas
+        pieceElement.replaceChild(canvas, oldCanvas);
+    }
+
+    // 显示游戏结束界面
+    public showGameOverScreen(humanScore: number, aiScore: number, humanPiecesLeft: number, aiPiecesLeft: number): void {
+        if (!this.controlTipsElement) return;
+
+        // 创建游戏结束面板
+        this.gameOverLayerElement = document.createElement('div');
+        this.gameOverLayerElement.id = 'game-over-panel';
+        this.gameOverLayerElement.style.width = '100%';
+        this.gameOverLayerElement.style.marginTop = '20px';
+        this.gameOverLayerElement.style.backgroundColor = 'rgba(30, 30, 30, 0.9)';
+        this.gameOverLayerElement.style.borderRadius = '10px';
+        this.gameOverLayerElement.style.padding = '20px';
+        this.gameOverLayerElement.style.color = 'white';
+        this.gameOverLayerElement.style.boxSizing = 'border-box';
+        this.gameOverLayerElement.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.5)';
+        this.gameOverLayerElement.style.textAlign = 'center';
+
+        // 标题
+        const titleElement = document.createElement('h2');
+        titleElement.textContent = '游戏结束';
+        titleElement.style.marginTop = '0';
+        titleElement.style.marginBottom = '15px';
+        titleElement.style.color = '#fff';
+        titleElement.style.fontSize = '24px';
+
+        // 结果
+        const resultElement = document.createElement('div');
+        resultElement.style.fontSize = '18px';
+        resultElement.style.marginBottom = '15px';
+
+        let resultText = '';
+        if (humanScore > aiScore) {
+            resultText = `🎉 恭喜，你获胜了！`;
+            resultElement.style.color = '#4CAF50';
+        } else if (aiScore > humanScore) {
+            resultText = `😔 AI获胜了！`;
+            resultElement.style.color = '#F44336';
+        } else {
+            resultText = `🤝 平局！`;
+            resultElement.style.color = '#FFC107';
+        }
+        resultElement.textContent = resultText;
+
+        // 得分
+        const scoreElement = document.createElement('div');
+        scoreElement.innerHTML = `
+            <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+                <div style="text-align: center; padding: 5px;">
+                    <div style="font-size: 14px; margin-bottom: 3px;">玩家得分</div>
+                    <div style="font-size: 24px; color: #3F51B5;">${humanScore}</div>
+                </div>
+                <div style="text-align: center; padding: 5px;">
+                    <div style="font-size: 14px; margin-bottom: 3px;">AI得分</div>
+                    <div style="font-size: 24px; color: #E91E63;">${aiScore}</div>
+                </div>
+            </div>
+        `;
+
+        // 剩余棋子信息
+        const piecesInfoElement = document.createElement('div');
+        piecesInfoElement.style.marginBottom = '15px';
+        piecesInfoElement.style.fontSize = '14px';
+        piecesInfoElement.style.lineHeight = '1.5';
+        piecesInfoElement.innerHTML = `
+            <div style="margin-bottom: 5px; color: #ddd;">玩家剩余棋子: ${humanPiecesLeft} 个</div>
+            <div style="color: #ddd;">AI剩余棋子: ${aiPiecesLeft} 个</div>
+        `;
+
+        // 添加重新开始按钮
+        const restartButton = document.createElement('button');
+        restartButton.textContent = '重新开始游戏';
+        restartButton.style.padding = '8px 20px';
+        restartButton.style.backgroundColor = '#4CAF50';
+        restartButton.style.color = 'white';
+        restartButton.style.border = 'none';
+        restartButton.style.borderRadius = '4px';
+        restartButton.style.fontSize = '16px';
+        restartButton.style.cursor = 'pointer';
+        restartButton.style.marginTop = '5px';
+        restartButton.style.transition = 'background-color 0.3s';
+
+        restartButton.addEventListener('mouseover', () => {
+            restartButton.style.backgroundColor = '#45a049';
+        });
+
+        restartButton.addEventListener('mouseout', () => {
+            restartButton.style.backgroundColor = '#4CAF50';
+        });
+
+        restartButton.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        // 组装面板
+        this.gameOverLayerElement.appendChild(titleElement);
+        this.gameOverLayerElement.appendChild(resultElement);
+        this.gameOverLayerElement.appendChild(scoreElement);
+        this.gameOverLayerElement.appendChild(piecesInfoElement);
+        this.gameOverLayerElement.appendChild(restartButton);
+
+        // 将游戏结束面板添加到控制提示下方
+        this.controlTipsElement.insertAdjacentElement('afterend', this.gameOverLayerElement);
+
+        // 更新游戏信息显示，清晰地表明游戏已结束
+        if (this.gameInfoElement) {
+            this.gameInfoElement.innerHTML = `
+                <h2 style="color: #f44336;">游戏已结束</h2>
+                <p>请查看下方的游戏结果</p>
+            `;
+        }
+    }
+} 
