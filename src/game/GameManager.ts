@@ -89,6 +89,9 @@ export class GameManager {
             (pieceId, element) => this.selectPiece(pieceId, element)
         );
 
+        // 渲染AI棋子托盘
+        this.renderer.renderAIPieceTray(this.aiPlayer);
+
         // 设置事件监听器
         this.setupEventListeners();
 
@@ -350,6 +353,9 @@ export class GameManager {
             () => { } // AI回合没有棋子选择
         );
 
+        // 确保AI棋子托盘显示最新状态
+        this.renderer.renderAIPieceTray(this.aiPlayer);
+
         // 更新游戏信息显示
         this.updateGameInfo();
 
@@ -385,6 +391,9 @@ export class GameManager {
 
             // 更新棋盘UI
             this.renderer.renderBoard(this.board);
+
+            // 更新AI棋子托盘，反映AI使用的棋子
+            this.renderer.renderAIPieceTray(this.aiPlayer);
 
             // 标记并高亮AI最后放置的棋子位置
             this.renderer.setLastAIMove(moveResult.x, moveResult.y, moveResult.piece);
@@ -438,6 +447,9 @@ export class GameManager {
             true,
             (pieceId, element) => this.selectPiece(pieceId, element)
         );
+
+        // 确保AI棋子托盘显示最新状态
+        this.renderer.renderAIPieceTray(this.aiPlayer);
 
         // 更新游戏信息显示
         this.updateGameInfo();
@@ -593,6 +605,14 @@ export class GameManager {
             this.humanPlayer.getAvailablePieces().length,
             this.aiPlayer.getAvailablePieces().length
         );
+
+        // 确保两个棋子托盘都显示最终状态
+        this.renderer.renderPieceTray(
+            this.humanPlayer,
+            false,  // 游戏结束后不允许选择棋子
+            () => { }
+        );
+        this.renderer.renderAIPieceTray(this.aiPlayer);
 
         // 清除保存的游戏状态（游戏已结束，下次开始新游戏）
         localStorage.removeItem('blokus_game_save');

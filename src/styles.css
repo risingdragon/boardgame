@@ -147,6 +147,34 @@ canvas {
     /* 移除垂直滚动条 */
 }
 
+/* AI棋子托盘样式 */
+#ai-piece-tray-container {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#ai-piece-tray {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 5px;
+    width: 100%;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* AI棋子样式 - 相比玩家棋子更小以便在右侧显示更多 */
+#ai-piece-tray .piece {
+    cursor: default;
+    margin: 2px;
+    opacity: 0.85;
+    transform: scale(0.85);
+}
+
 /* 中间游戏区域 */
 #center-column {
     width: 53%;

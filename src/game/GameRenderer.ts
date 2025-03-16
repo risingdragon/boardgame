@@ -13,6 +13,7 @@ export class GameRenderer {
     private lastAIMovePosition: { x: number; y: number; width: number; height: number } | null = null;
     private board: Board;
     private newGameButtonElement: HTMLElement | null = null;
+    private aiPieceTrayElement: HTMLElement | null = null;
 
     constructor(
         boardElement: HTMLElement | null,
@@ -28,6 +29,7 @@ export class GameRenderer {
         this.passButtonElement = null;
         this.gameOverLayerElement = null;
         this.board = board;
+        this.aiPieceTrayElement = document.getElementById('ai-piece-tray');
 
         // 在初始化后记录棋盘位置
         setTimeout(() => this.logBoardPosition(), 500);
@@ -975,5 +977,59 @@ export class GameRenderer {
         this.newGameButtonElement = newGameButtonElement;
 
         return newGameButtonElement;
+    }
+
+    // 新增：渲染AI的棋子托盘
+    public renderAIPieceTray(aiPlayer: Player): void {
+        if (!this.aiPieceTrayElement) return;
+
+        // 清除旧的内容
+        this.aiPieceTrayElement.innerHTML = '';
+
+        // 计算合适的棋子尺寸
+        let trayCellSize = 14; // AI棋子托盘中的棋子尺寸比玩家的小
+
+        // 如果是移动设备，进一步减小尺寸
+        if (window.innerWidth <= 768) {
+            trayCellSize = 12;
+        }
+
+        // 渲染AI的可用棋子
+        aiPlayer.getAvailablePieces().forEach(piece => {
+            const pieceElement = document.createElement('div');
+            pieceElement.classList.add('piece');
+            pieceElement.dataset.pieceId = piece.id.toString();
+
+            // 创建迷你画布显示棋子
+            const canvas = document.createElement('canvas');
+            canvas.width = piece.shape[0].length * trayCellSize;
+            canvas.height = piece.shape.length * trayCellSize;
+            pieceElement.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                // 绘制棋子
+                piece.shape.forEach((row, rowIndex) => {
+                    row.forEach((cell, colIndex) => {
+                        if (cell) {
+                            ctx.fillStyle = aiPlayer.color;
+                            ctx.fillRect(colIndex * trayCellSize, rowIndex * trayCellSize, trayCellSize, trayCellSize);
+                        }
+                    });
+                });
+            }
+
+            this.aiPieceTrayElement?.appendChild(pieceElement);
+        });
+
+        // 如果没有剩余棋子，显示一条消息
+        if (aiPlayer.getAvailablePieces().length === 0) {
+            const noMorePieces = document.createElement('div');
+            noMorePieces.style.padding = '10px';
+            noMorePieces.style.textAlign = 'center';
+            noMorePieces.style.fontSize = '14px';
+            noMorePieces.innerHTML = 'AI 没有剩余棋子';
+            this.aiPieceTrayElement.appendChild(noMorePieces);
+        }
     }
 } 

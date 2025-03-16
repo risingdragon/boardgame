@@ -614,7 +614,11 @@ export class AIPlayer extends Player {
 
         score += diagonalConnections * 8; // 每个对角线连接加8分（增加权重）
 
-        // 计算新创建的连接点
+        // 增强部分：评估新创建的角点和潜在扩展空间
+        let totalFutureExpansionValue = 0;
+        const potentialConnectionPoints: { x: number, y: number, expansionValue: number }[] = [];
+
+        // 计算新创建的连接点及其价值
         for (const cellKey of Object.keys(occupiedCells)) {
             const [cellX, cellY] = cellKey.split(',').map(Number);
 
@@ -661,14 +665,48 @@ export class AIPlayer extends Player {
                     }
 
                     if (!hasAdjacent) {
+                        // 评估这个角点的扩展价值
+                        let expansionValue = 0;
+
+                        // 计算周围8个方向空白格子的数量，表示扩展潜力
+                        const allDirections = [
+                            { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+                            { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
+                            { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+                        ];
+
+                        let emptySpaces = 0;
+                        for (const expDir of allDirections) {
+                            const expX = nx + expDir.dx;
+                            const expY = ny + expDir.dy;
+
+                            if (expX >= 0 && expX < boardSize && expY >= 0 && expY < boardSize &&
+                                gridState[expY][expX] === 0 && !occupiedCells[`${expX},${expY}`]) {
+                                emptySpaces++;
+                            }
+                        }
+
+                        // 根据周围空白格子数量计算扩展价值
+                        expansionValue = Math.pow(emptySpaces, 1.5); // 使用指数增长来强调空白区域扩展的重要性
+
+                        // 将这个连接点添加到列表
+                        potentialConnectionPoints.push({ x: nx, y: ny, expansionValue });
                         newConnectionPoints.push({ x: nx, y: ny });
+                        totalFutureExpansionValue += expansionValue;
                     }
                 }
             }
         }
 
-        // 每个新连接点加分
-        score += newConnectionPoints.length * 10;
+        // 根据角点数量和扩展潜力加分
+        // 大幅增加对角点的价值，特别是那些向空白区域扩展的
+        score += newConnectionPoints.length * 20; // 每个新角点基础分从10提高到20
+        score += totalFutureExpansionValue * 3; // 添加基于扩展价值的额外分数
+
+        // 额外奖励单格棋子所创造的拐角（如果是单格棋子）
+        if (pieceSize === 1 && newConnectionPoints.length >= 3) {
+            score += 50; // 大幅奖励单格棋子创造的多个拐角
+        }
 
         // 检查新连接点的脆弱性
         if (newConnectionPoints.length > 0) {
