@@ -103,6 +103,42 @@ export class BoardAnalyzer {
             heatMap[point.y][point.x] += 5; // 给对手连接点一个较高的分数
         }
 
+        // 查找大的空白区域
+        const emptyRegions = this.findLargeEmptyRegions();
+
+        // 为大的空白区域增加热力值 - 鼓励AI向大的空白区域扩展
+        for (const region of emptyRegions) {
+            // 区域越大，热力值越高
+            const regionBonus = Math.min(5, Math.log2(region.width * region.height) / 2);
+
+            // 左侧区域获得额外奖励
+            const leftSideBonus = region.x < this.boardSize / 2 ? 1 : 0;
+
+            // 为区域中的每个单元格增加热力值
+            for (let y = region.y; y < region.y + region.height; y++) {
+                for (let x = region.x; x < region.x + region.width; x++) {
+                    if (y < this.boardSize && x < this.boardSize && grid[y][x] === 0) {
+                        heatMap[y][x] += regionBonus + leftSideBonus;
+                    }
+                }
+            }
+        }
+
+        // 检查棋盘左右两侧的空间分布
+        const leftSideEmptyCount = this.countEmptyCells(0, 0, Math.floor(this.boardSize / 2), this.boardSize);
+        const rightSideEmptyCount = this.countEmptyCells(Math.floor(this.boardSize / 2), 0, this.boardSize, this.boardSize);
+
+        // 如果左侧空间明显多于右侧，增加左侧区域的热力值
+        if (leftSideEmptyCount > rightSideEmptyCount * 1.5) {
+            for (let y = 0; y < this.boardSize; y++) {
+                for (let x = 0; x < Math.floor(this.boardSize / 2); x++) {
+                    if (grid[y][x] === 0) {
+                        heatMap[y][x] += 2;
+                    }
+                }
+            }
+        }
+
         // 计算控制中心的热力值
         const centerX = Math.floor(this.boardSize / 2);
         const centerY = Math.floor(this.boardSize / 2);
@@ -142,6 +178,88 @@ export class BoardAnalyzer {
         }
 
         return heatMap;
+    }
+
+    /**
+     * 查找棋盘上较大的空白区域
+     */
+    public findLargeEmptyRegions(): { x: number, y: number, width: number, height: number }[] {
+        const grid = this.board.getGrid();
+        const regions: { x: number, y: number, width: number, height: number }[] = [];
+        const visited = Array(this.boardSize).fill(0).map(() => Array(this.boardSize).fill(false));
+
+        // 寻找2x2及以上的空白区域
+        for (let y = 0; y < this.boardSize - 1; y++) {
+            for (let x = 0; x < this.boardSize - 1; x++) {
+                // 跳过已经访问过的单元格
+                if (visited[y][x]) continue;
+
+                // 检查是否是空白单元格
+                if (grid[y][x] === 0) {
+                    // 尝试找到最大的矩形空白区域
+                    let maxWidth = 1;
+                    let maxHeight = 1;
+
+                    // 向右扩展
+                    while (x + maxWidth < this.boardSize && grid[y][x + maxWidth] === 0) {
+                        maxWidth++;
+                    }
+
+                    // 向下扩展
+                    while (y + maxHeight < this.boardSize) {
+                        let canExpand = true;
+                        for (let i = 0; i < maxWidth; i++) {
+                            if (x + i >= this.boardSize || grid[y + maxHeight][x + i] !== 0) {
+                                canExpand = false;
+                                break;
+                            }
+                        }
+                        if (canExpand) {
+                            maxHeight++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // 标记此区域为已访问
+                    for (let j = 0; j < maxHeight; j++) {
+                        for (let i = 0; i < maxWidth; i++) {
+                            visited[y + j][x + i] = true;
+                        }
+                    }
+
+                    // 只记录3x3及以上的区域
+                    if (maxWidth >= 3 && maxHeight >= 3) {
+                        regions.push({
+                            x,
+                            y,
+                            width: maxWidth,
+                            height: maxHeight
+                        });
+                    }
+                }
+            }
+        }
+
+        // 按区域大小排序
+        regions.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+        return regions;
+    }
+
+    /**
+     * 计算指定区域内的空白单元格数量
+     */
+    public countEmptyCells(startX: number, startY: number, endX: number, endY: number): number {
+        const grid = this.board.getGrid();
+        let count = 0;
+        for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+                if (x < this.boardSize && y < this.boardSize && grid[y][x] === 0) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /**
