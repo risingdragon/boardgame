@@ -1,14 +1,34 @@
 {
     "buildCommand": "npm run build",
     "outputDirectory": "public",
+    "headers": [
+        {
+            "source": "/ads.txt",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "text/plain; charset=utf-8"
+                },
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=3600"
+                }
+            ]
+        }
+    ],
     "routes": [
         {
-            "src": "/ads.txt",
+            "src": "/ads\\.txt",
             "dest": "/api/ads.js"
+        },
+        {
+            "src": "/adsense-publisher",
+            "dest": "/api/adsense-publisher.js"
         },
         {
             "src": "/(.*)",
             "dest": "/"
         }
-    ]
+    ],
+    "cleanUrls": true
 }

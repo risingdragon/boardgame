@@ -5,7 +5,6 @@
 
 ## 游戏规则 / Game Rules
 
-* It's played on a 20×20 grid board
 * 玩家与1个AI进行对抗 (Player vs AI)
 * Each player has 21 polyominoes (shapes made of 1-5 squares)
 * Players take turns placing their pieces on the board

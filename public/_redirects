@@ -1,0 +1,2 @@
+# Redirect /ads.txt to the static file
+/ads.txt /ads.txt 200 
