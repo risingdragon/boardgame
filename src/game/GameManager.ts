@@ -355,6 +355,11 @@ export class GameManager {
 
         this.renderer.updateGameInfo(isHumanTurn, hasValidMoves, canPlacePieces);
 
+        // 检测是否为移动设备
+        const isTouchDevice = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (navigator as any).msMaxTouchPoints > 0;
+
         // 如果是人类玩家回合，重新创建触摸控制按钮
         if (isHumanTurn) {
             this.renderer.createMobileTouchControls(
@@ -393,7 +398,9 @@ export class GameManager {
                             }
                         }
                     }
-                }
+                },
+                // 传递设备类型
+                isTouchDevice
             );
         }
     }

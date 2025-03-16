@@ -144,10 +144,23 @@ export class GameRenderer {
         this.controlTipsElement.style.textAlign = 'center';
         this.controlTipsElement.style.fontSize = '14px';
 
-        // 设置控制提示内容
-        this.controlTipsElement.innerHTML = `
-            <p><strong>操作提示:</strong> 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
-        `;
+        // 检测是否为移动设备
+        const isTouchDevice = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (navigator as any).msMaxTouchPoints > 0;
+
+        // 根据设备类型设置不同的提示内容
+        if (isTouchDevice) {
+            // 移动设备操作提示
+            this.controlTipsElement.innerHTML = `
+                <p><strong>操作提示:</strong> 点击选择棋子，点击下方按钮旋转或翻转，点击空白处放置</p>
+            `;
+        } else {
+            // 桌面设备操作提示
+            this.controlTipsElement.innerHTML = `
+                <p><strong>操作提示:</strong> 点击选择棋子，R键旋转，F键翻转，ESC取消选择</p>
+            `;
+        }
 
         // 添加到棋盘元素后面
         this.boardElement.insertAdjacentElement('afterend', this.controlTipsElement);
@@ -279,12 +292,15 @@ export class GameRenderer {
     // 创建移动设备的触摸控制按钮
     public createMobileTouchControls(
         onRotate: () => void,
-        onFlip: () => void
+        onFlip: () => void,
+        isTouchDevice?: boolean
     ): HTMLElement | null {
-        // 检测是否在触摸设备上
-        const isTouchDevice = 'ontouchstart' in window ||
-            navigator.maxTouchPoints > 0 ||
-            (navigator as any).msMaxTouchPoints > 0;
+        // 检测是否在触摸设备上（如果未提供参数）
+        if (isTouchDevice === undefined) {
+            isTouchDevice = 'ontouchstart' in window ||
+                navigator.maxTouchPoints > 0 ||
+                (navigator as any).msMaxTouchPoints > 0;
+        }
 
         // 在调试时强制显示触摸控制 - 无论是否触摸设备
         const forceShowControls = true;
@@ -305,14 +321,21 @@ export class GameRenderer {
         touchControlsContainer.style.marginBottom = '10px';
         touchControlsContainer.style.width = '100%';
 
+        // 移动设备上显示更突出的按钮
+        if (isTouchDevice) {
+            touchControlsContainer.style.padding = '10px';
+            touchControlsContainer.style.backgroundColor = 'rgba(0,0,0,0.05)';
+            touchControlsContainer.style.borderRadius = '8px';
+        }
+
         // 创建旋转按钮
         const rotateButton = document.createElement('button');
-        rotateButton.textContent = '旋转 (R)';
+        rotateButton.textContent = isTouchDevice ? '旋转' : '旋转 (R)';
         rotateButton.style.flex = '1';
         rotateButton.style.maxWidth = '45%';
         rotateButton.style.backgroundColor = '#2196F3';
-        rotateButton.style.padding = '12px 0';
-        rotateButton.style.fontSize = '16px';
+        rotateButton.style.padding = isTouchDevice ? '15px 0' : '12px 0';
+        rotateButton.style.fontSize = isTouchDevice ? '18px' : '16px';
         rotateButton.style.fontWeight = 'bold';
         rotateButton.style.borderRadius = '8px';
         rotateButton.style.border = '2px solid #1976D2';
@@ -322,12 +345,12 @@ export class GameRenderer {
 
         // 创建翻转按钮
         const flipButton = document.createElement('button');
-        flipButton.textContent = '翻转 (F)';
+        flipButton.textContent = isTouchDevice ? '翻转' : '翻转 (F)';
         flipButton.style.flex = '1';
         flipButton.style.maxWidth = '45%';
         flipButton.style.backgroundColor = '#FF9800';
-        flipButton.style.padding = '12px 0';
-        flipButton.style.fontSize = '16px';
+        flipButton.style.padding = isTouchDevice ? '15px 0' : '12px 0';
+        flipButton.style.fontSize = isTouchDevice ? '18px' : '16px';
         flipButton.style.fontWeight = 'bold';
         flipButton.style.borderRadius = '8px';
         flipButton.style.border = '2px solid #F57C00';

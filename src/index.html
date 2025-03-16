@@ -9,6 +9,72 @@
     <title>角斗士 (Blokus)</title>
     <!-- 样式已通过webpack导入处理 -->
 
+    <!-- 预初始化广告容器的尺寸，防止availableWidth=0错误 -->
+    <script>
+        // 检测是否为移动设备
+        function isMobileDevice() {
+            return (window.innerWidth <= 768) ||
+                ('ontouchstart' in window && window.matchMedia("(max-width: 1024px)").matches) ||
+                navigator.maxTouchPoints > 0;
+        }
+
+        // 在页面解析时就初始化广告尺寸
+        (function () {
+            // 如果是移动设备，不初始化广告
+            if (isMobileDevice()) {
+                console.log('移动设备 - 跳过广告初始化');
+                return;
+            }
+
+            // 创建一个全局变量来跟踪广告状态
+            window.adStatus = {
+                initialized: false,
+                containerWidth: 0,
+                retryCount: 0,
+                maxRetries: 3
+            };
+
+            // 在DOMContentLoaded事件之前就预先设置广告尺寸
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('DOMContentLoaded: 预先初始化广告容器');
+                initAdContainer();
+            });
+
+            // 初始化广告容器尺寸
+            function initAdContainer() {
+                setTimeout(function () {
+                    var rightColumn = document.getElementById('right-column');
+                    var adContainer = document.getElementById('ad-container');
+
+                    if (rightColumn && adContainer) {
+                        // 确保容器有明确的尺寸
+                        if (rightColumn.offsetWidth === 0) {
+                            rightColumn.style.width = '336px';
+                            rightColumn.style.minWidth = '336px';
+                        }
+
+                        // 记录广告容器的宽度
+                        window.adStatus.containerWidth = adContainer.offsetWidth;
+                        console.log('广告容器初始宽度:', window.adStatus.containerWidth);
+
+                        // 如果容器尺寸仍然为0，尝试再次设置
+                        if (adContainer.offsetWidth === 0 && window.adStatus.retryCount < window.adStatus.maxRetries) {
+                            window.adStatus.retryCount++;
+                            console.log('广告容器宽度为0，第', window.adStatus.retryCount, '次重试');
+                            adContainer.style.width = '336px';
+                            adContainer.style.minWidth = '300px';
+
+                            // 延迟再次检查
+                            setTimeout(initAdContainer, 100);
+                        } else {
+                            window.adStatus.initialized = true;
+                        }
+                    }
+                }, 10);
+            }
+        })();
+    </script>
+
     <!-- Google AdSense 代码 - 请替换为您的Google AdSense代码 -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
         crossorigin="anonymous"></script>
@@ -30,40 +96,114 @@
         </div>
 
         <div id="right-column">
-            <!-- Google AdSense 广告区域 -->
-            <div id="ad-container"
-                style="width: 100%; height: 90%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <!-- 自适应广告单元 -->
-                <ins class="adsbygoogle" style="display:block; width:100%; height:100%;"
-                    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-
-                <!-- 备用内容：如果广告无法加载 -->
-                <div id="ad-fallback"
-                    style="display:none; width:90%; height:90%; background-color:#eee; color:#999; font-size:1.2em; text-align:center; display:flex; align-items:center; justify-content:center;">
-                    <p>广告加载中...</p>
+            <!-- Google AdSense 广告区域，使用明确的固定尺寸 -->
+            <div id="ad-container">
+                <!-- 添加一个具有固定尺寸的占位符，在广告加载前显示 -->
+                <div id="ad-placeholder"
+                    style="width: 300px; height: 250px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                    <p>广告区域</p>
                 </div>
+
+                <!-- 自适应广告单元，使用明确的尺寸 -->
+                <ins class="adsbygoogle" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"
+                    data-ad-format="auto" data-full-width-responsive="true"></ins>
+
+                <!-- 调试信息显示区域 -->
+                <div id="ad-debug" style="font-size: 10px; color: #999; margin-top: 5px; display: none;"></div>
             </div>
         </div>
     </div>
 
-    <!-- 检测AdBlock的简单脚本 -->
+    <!-- 广告初始化和调试脚本 -->
     <script>
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                var adContainer = document.querySelector('.adsbygoogle');
-                var adFallback = document.getElementById('ad-fallback');
+        // 检测是否为移动设备
+        function isMobileDevice() {
+            return (window.innerWidth <= 768) ||
+                ('ontouchstart' in window && window.matchMedia("(max-width: 1024px)").matches) ||
+                navigator.maxTouchPoints > 0;
+        }
 
-                // 检查广告容器的计算高度，如果为0可能是被广告拦截器阻止了
-                if (adContainer && adContainer.clientHeight === 0) {
-                    if (adFallback) {
-                        adFallback.style.display = 'flex';
-                    }
+        // 页面加载完成后执行
+        window.addEventListener('load', function () {
+            // 获取广告容器元素
+            var adContainer = document.getElementById('ad-container');
+            var adElement = document.querySelector('.adsbygoogle');
+            var adPlaceholder = document.getElementById('ad-placeholder');
+            var adDebug = document.getElementById('ad-debug');
+            var rightColumn = document.getElementById('right-column');
+
+            // 在移动设备上不显示广告
+            if (isMobileDevice()) {
+                console.log('移动设备 - 不加载广告');
+                if (rightColumn) rightColumn.style.display = 'none';
+                return;
+            }
+
+            // 桌面设备才加载广告
+            console.log('桌面设备 - 加载广告');
+            if (rightColumn) rightColumn.style.display = 'flex';
+
+            // 显示调试信息
+            if (adDebug) {
+                adDebug.style.display = 'block';
+                adDebug.innerHTML = '容器初始宽度: ' + (window.adStatus ? window.adStatus.containerWidth : '未知') +
+                    '<br>当前宽度: ' + (adContainer ? adContainer.offsetWidth : '未知') +
+                    '<br>广告尺寸: ' + (adElement ? (adElement.offsetWidth + 'x' + adElement.offsetHeight) : '未知');
+            }
+
+            // 确保广告容器有尺寸
+            if (adContainer && adContainer.offsetWidth === 0) {
+                adContainer.style.width = '336px';
+                adContainer.style.minWidth = '300px';
+                console.log('Ad container width was 0, forced to 336px');
+
+                if (adDebug) {
+                    adDebug.innerHTML += '<br>强制设置宽度: 336px';
                 }
-            }, 2000); // 给广告2秒钟的时间加载
+            }
+
+            // 初始化广告，确保在容器尺寸设置后
+            try {
+                // 隐藏占位符
+                if (adPlaceholder) {
+                    setTimeout(function () {
+                        // 只有在广告加载成功时才隐藏占位符
+                        if (adElement && adElement.clientHeight > 0) {
+                            adPlaceholder.style.display = 'none';
+                        }
+                    }, 2000); // 给广告更多加载时间
+                }
+
+                // 推送广告，如果尚未初始化
+                if (!window.adsbygoogle || window.adsbygoogle.length === 0) {
+                    console.log('初始化广告...');
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                }
+
+                // 广告加载检测
+                setTimeout(function () {
+                    if (adElement) {
+                        // 更新调试信息
+                        if (adDebug) {
+                            adDebug.innerHTML += '<br>广告最终尺寸: ' + adElement.offsetWidth + 'x' + adElement.offsetHeight;
+                        }
+
+                        if (adElement.clientHeight === 0) {
+                            console.log('广告可能被拦截或加载失败');
+                            if (adPlaceholder) adPlaceholder.style.display = 'flex';
+                            if (adDebug) adDebug.innerHTML += '<br>状态: 广告未加载';
+                        } else {
+                            console.log('广告已成功加载');
+                            if (adDebug) adDebug.innerHTML += '<br>状态: 广告已加载';
+                            if (adPlaceholder) adPlaceholder.style.display = 'none';
+                        }
+                    }
+                }, 3000);
+            } catch (e) {
+                console.error('广告初始化错误:', e);
+                if (adDebug) adDebug.innerHTML += '<br>错误: ' + e.message;
+                if (adPlaceholder) adPlaceholder.style.display = 'flex';
+            }
         });
     </script>
 </body>

@@ -123,6 +123,12 @@ export class GameEventHandler {
         onRotate: (pieceId: number) => Piece | null,
         onFlip: (pieceId: number) => Piece | null
     ): void {
+        // 检测是否为移动设备
+        const isTouchDevice = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            (navigator as any).msMaxTouchPoints > 0;
+
+        // 无论设备类型，都创建触摸控制按钮，但移动设备会更加突出显示
         this.renderer.createMobileTouchControls(
             // 旋转按钮回调
             () => {

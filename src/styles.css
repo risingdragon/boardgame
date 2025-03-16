@@ -153,7 +153,11 @@ canvas {
 /* 右侧广告区域 */
 #right-column {
     width: 20%;
+    min-width: 336px;
+    /* 标准广告尺寸 */
     height: 75vh;
+    min-height: 600px;
+    /* 标准广告尺寸 */
     background-color: #fff;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -162,11 +166,40 @@ canvas {
     align-items: center;
     justify-content: center;
     margin-left: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    /* 防止内容溢出 */
 }
 
-.ad-placeholder {
-    width: 90%;
+/* 从index.html移动过来的广告容器样式 */
+#ad-container {
+    width: 100%;
+    min-width: 300px;
     height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* 从index.html移动过来的广告单元样式 */
+.adsbygoogle {
+    display: block !important;
+    min-width: 300px;
+    width: 100%;
+    height: 600px;
+    max-height: 90%;
+    overflow: hidden;
+}
+
+/* 广告占位符 */
+.ad-placeholder {
+    width: 300px;
+    height: 250px;
     background-color: #eee;
     display: flex;
     align-items: center;
@@ -174,6 +207,8 @@ canvas {
     color: #999;
     font-size: 1.2em;
     text-align: center;
+    margin-bottom: 10px;
+    border-radius: 4px;
 }
 
 .piece {
@@ -255,10 +290,20 @@ button:disabled {
         margin: 0 0 20px 0;
     }
 
+    #right-column {
+        min-height: 300px;
+        height: auto;
+    }
+
     #piece-tray {
         min-height: auto;
         max-height: none;
         /* 移除最大高度限制 */
+    }
+
+    #ad-container {
+        min-height: 280px;
+        height: auto;
     }
 }
 
@@ -288,17 +333,26 @@ button:disabled {
     }
 
     #left-column,
-    #center-column,
-    #right-column {
+    #center-column {
         width: 100%;
     }
 
-    /* 隐藏广告区域以节省空间 */
+    /* 在移动设备上完全隐藏广告区域 */
     #right-column {
         display: none;
+        min-width: 300px;
+        width: 100%;
+        height: auto;
+        min-height: 250px;
     }
 
-    /* 调整游戏板样式 */
+    /* 移动设备上的广告单元样式 */
+    .adsbygoogle {
+        min-height: 250px;
+        height: 250px;
+    }
+
+    /* 调整游戏板样式，利用更多可用空间 */
     #game-board {
         padding: 10px;
         width: calc(100% - 20px);
@@ -451,6 +505,11 @@ button:disabled {
 
     #center-column {
         width: 65%;
+    }
+
+    /* 横屏模式下也隐藏广告 */
+    #right-column {
+        display: none;
     }
 
     #piece-tray {
