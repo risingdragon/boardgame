@@ -243,6 +243,9 @@ export class GameManager {
 
             // 更新棋盘UI
             this.renderer.renderBoard(this.board);
+
+            // 标记并高亮AI最后放置的棋子位置
+            this.renderer.setLastAIMove(moveResult.x, moveResult.y, moveResult.piece);
         } else {
             console.log("AI无法进行有效的移动");
 

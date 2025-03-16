@@ -10,6 +10,7 @@ export class GameRenderer {
     private touchControlsElement: HTMLElement | null;
     private passButtonElement: HTMLElement | null;
     private gameOverLayerElement: HTMLElement | null;
+    private lastAIMovePosition: { x: number; y: number; width: number; height: number } | null = null;
 
     constructor(
         boardElement: HTMLElement | null,
@@ -29,7 +30,102 @@ export class GameRenderer {
     public renderBoard(board: Board): void {
         if (this.boardElement) {
             board.render(this.boardElement);
+
+            // 如果有AI最后的移动位置，在渲染棋盘后高亮显示
+            this.highlightLastAIMove();
         }
+    }
+
+    // 设置AI最后放置的棋子位置
+    public setLastAIMove(x: number, y: number, piece: Piece): void {
+        this.lastAIMovePosition = {
+            x: x,
+            y: y,
+            width: piece.shape[0].length,
+            height: piece.shape.length
+        };
+
+        // 立即高亮显示
+        this.highlightLastAIMove();
+    }
+
+    // 高亮显示AI最后放置的棋子
+    private highlightLastAIMove(): void {
+        // 移除之前的高亮效果
+        const existingHighlight = document.getElementById('ai-last-move-highlight');
+        if (existingHighlight && existingHighlight.parentNode) {
+            existingHighlight.parentNode.removeChild(existingHighlight);
+        }
+
+        // 如果没有最后移动位置或没有棋盘元素，则返回
+        if (!this.lastAIMovePosition || !this.boardElement) return;
+
+        // 创建高亮元素
+        const highlightElement = document.createElement('div');
+        highlightElement.id = 'ai-last-move-highlight';
+        highlightElement.style.position = 'absolute';
+        highlightElement.style.pointerEvents = 'none'; // 确保不会干扰用户交互
+        highlightElement.style.zIndex = '90';
+
+        // 设置高亮样式
+        const cellSize = 30;
+        const boardPadding = 15;
+        const x = this.lastAIMovePosition.x * cellSize + boardPadding;
+        const y = this.lastAIMovePosition.y * cellSize + boardPadding;
+        const width = this.lastAIMovePosition.width * cellSize;
+        const height = this.lastAIMovePosition.height * cellSize;
+
+        highlightElement.style.left = `${x}px`;
+        highlightElement.style.top = `${y}px`;
+        highlightElement.style.width = `${width}px`;
+        highlightElement.style.height = `${height}px`;
+        highlightElement.style.border = '2px solid yellow';
+        highlightElement.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.8)';
+        highlightElement.style.borderRadius = '3px';
+        highlightElement.style.animation = 'pulse-ai-move 2s infinite';
+
+        // 添加闪烁动画样式
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            @keyframes pulse-ai-move {
+                0% { opacity: 0.8; }
+                50% { opacity: 0.3; }
+                100% { opacity: 0.8; }
+            }
+        `;
+        document.head.appendChild(styleElement);
+
+        // 添加文字标签
+        const labelElement = document.createElement('div');
+        labelElement.textContent = 'AI';
+        labelElement.style.position = 'absolute';
+        labelElement.style.top = '0';
+        labelElement.style.right = '0';
+        labelElement.style.backgroundColor = 'red';
+        labelElement.style.color = 'white';
+        labelElement.style.padding = '2px 5px';
+        labelElement.style.fontSize = '12px';
+        labelElement.style.fontWeight = 'bold';
+        labelElement.style.borderRadius = '2px';
+        highlightElement.appendChild(labelElement);
+
+        // 添加到棋盘
+        this.boardElement.appendChild(highlightElement);
+
+        // 5秒后自动移除高亮（可选，取决于你想要的效果）
+        setTimeout(() => {
+            if (highlightElement && highlightElement.parentNode) {
+                highlightElement.style.transition = 'opacity 1s';
+                highlightElement.style.opacity = '0';
+
+                // 完全移除元素
+                setTimeout(() => {
+                    if (highlightElement && highlightElement.parentNode) {
+                        highlightElement.parentNode.removeChild(highlightElement);
+                    }
+                }, 1000);
+            }
+        }, 5000);
     }
 
     // 创建控制提示区域
