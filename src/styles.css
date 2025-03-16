@@ -36,9 +36,16 @@ h1 {
     /* 增加顶部边距，为标题留出更多空间 */
 }
 
-canvas {
+/* 棋盘canvas样式 - 仅为游戏主棋盘保留边框 */
+#game-board canvas {
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 移除所有canvas的默认边框 */
+canvas {
+    border: none;
+    box-shadow: none;
 }
 
 /* 悬浮棋子样式 */
@@ -61,6 +68,14 @@ canvas {
     margin: 0;
     /* 移除可能的外边距 */
     box-sizing: border-box;
+    border: none;
+    box-shadow: none;
+}
+
+/* 托盘中的棋子canvas也不要边框 */
+.piece canvas {
+    border: none;
+    box-shadow: none;
 }
 
 /* 网格高亮样式 */
@@ -222,23 +237,26 @@ canvas {
     padding: 4px;
     /* 略微减小内边距 */
     border-radius: 5px;
-    background-color: #fff;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    background-color: transparent;
+    box-shadow: none;
     transition: transform 0.2s;
     margin: 2px;
     /* 确保棋子正确显示 */
     display: flex;
     justify-content: center;
     align-items: center;
+    border: none;
 }
 
 .piece:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    box-shadow: none;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .piece.selected {
     border: 2px solid #fb0;
+    background-color: rgba(255, 187, 0, 0.1);
 }
 
 .controls {
