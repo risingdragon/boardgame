@@ -265,7 +265,14 @@ export class Game {
             navigator.maxTouchPoints > 0 ||
             (navigator as any).msMaxTouchPoints > 0;
 
-        if (!isTouchDevice) return;
+        // 在调试时强制显示触摸控制 - 无论是否触摸设备
+        const forceShowControls = true;
+
+        if (!forceShowControls && !isTouchDevice) return;
+
+        // 检查是否已经存在触摸控制
+        const existingControls = document.getElementById('touch-controls');
+        if (existingControls) return;
 
         // 创建控制按钮容器
         const touchControlsContainer = document.createElement('div');
@@ -273,7 +280,9 @@ export class Game {
         touchControlsContainer.style.display = 'flex';
         touchControlsContainer.style.justifyContent = 'center';
         touchControlsContainer.style.gap = '10px';
-        touchControlsContainer.style.marginTop = '10px';
+        touchControlsContainer.style.marginTop = '15px';
+        touchControlsContainer.style.marginBottom = '10px';
+        touchControlsContainer.style.width = '100%';
 
         // 创建旋转按钮
         const rotateButton = document.createElement('button');
@@ -281,6 +290,12 @@ export class Game {
         rotateButton.style.flex = '1';
         rotateButton.style.maxWidth = '45%';
         rotateButton.style.backgroundColor = '#2196F3';
+        rotateButton.style.padding = '12px 0';
+        rotateButton.style.fontSize = '16px';
+        rotateButton.style.fontWeight = 'bold';
+        rotateButton.style.borderRadius = '8px';
+        rotateButton.style.border = '2px solid #1976D2';
+        rotateButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
 
         rotateButton.addEventListener('click', () => {
             if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
@@ -300,6 +315,12 @@ export class Game {
         flipButton.style.flex = '1';
         flipButton.style.maxWidth = '45%';
         flipButton.style.backgroundColor = '#FF9800';
+        flipButton.style.padding = '12px 0';
+        flipButton.style.fontSize = '16px';
+        flipButton.style.fontWeight = 'bold';
+        flipButton.style.borderRadius = '8px';
+        flipButton.style.border = '2px solid #F57C00';
+        flipButton.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
 
         flipButton.addEventListener('click', () => {
             if (this.selectedPieceId !== null && this.currentPlayer === this.humanPlayer) {
@@ -812,6 +833,9 @@ export class Game {
                 if (this.passButtonElement) {
                     this.gameInfoElement.appendChild(this.passButtonElement);
                 }
+
+                // 重新创建触摸控制按钮
+                this.createMobileTouchControls();
             } else {
                 this.gameInfoElement.innerHTML = `
                     <h2>当前回合: AI (红色)</h2>
